@@ -29,23 +29,19 @@ export async function getEmployees(params?: {
   roleId?: string;
   search?: string;
 }): Promise<Employee[]> {
-  const { data } = await api.get<Employee[]>('/employees', { params });
-  return data;
+  return await api.get('/employees', { params }) as unknown as Employee[];
 }
 
 export async function getEmployee(id: string): Promise<Employee> {
-  const { data } = await api.get<Employee>(`/employees/${id}`);
-  return data;
+  return await api.get(`/employees/${id}`) as unknown as Employee;
 }
 
 export async function createEmployee(dto: CreateEmployeeDto): Promise<Employee> {
-  const { data } = await api.post<Employee>('/employees', dto);
-  return data;
+  return await api.post('/employees', dto) as unknown as Employee;
 }
 
 export async function updateEmployee(id: string, dto: UpdateEmployeeDto): Promise<Employee> {
-  const { data } = await api.patch<Employee>(`/employees/${id}`, dto);
-  return data;
+  return await api.patch(`/employees/${id}`, dto) as unknown as Employee;
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
@@ -63,21 +59,18 @@ export interface CreateBankDetailsDto {
 }
 
 export async function getBankDetails(employeeId: string): Promise<EmployeeBankDetails[]> {
-  const { data } = await api.get<EmployeeBankDetails[]>(`/employees/${employeeId}/bank-details`);
-  return data;
+  return await api.get(`/employees/${employeeId}/bank-details`) as unknown as EmployeeBankDetails[];
 }
 
 export async function addBankDetails(dto: CreateBankDetailsDto): Promise<EmployeeBankDetails> {
-  const { data } = await api.post<EmployeeBankDetails>('/employees/bank-details', dto);
-  return data;
+  return await api.post('/employees/bank-details', dto) as unknown as EmployeeBankDetails;
 }
 
 export async function updateBankDetails(
   id: string,
   dto: Partial<CreateBankDetailsDto>,
 ): Promise<EmployeeBankDetails> {
-  const { data } = await api.patch<EmployeeBankDetails>(`/employees/bank-details/${id}`, dto);
-  return data;
+  return await api.patch(`/employees/bank-details/${id}`, dto) as unknown as EmployeeBankDetails;
 }
 
 export async function deleteBankDetails(id: string): Promise<void> {
@@ -97,38 +90,34 @@ export async function getEmployeeSalaryComponents(
   employeeId: string,
   includeInactive?: boolean,
 ): Promise<EmployeeSalaryComponent[]> {
-  const { data } = await api.get<EmployeeSalaryComponent[]>(
+  return await api.get(
     `/employees/${employeeId}/salary-components`,
     { params: { includeInactive } },
-  );
-  return data;
+  ) as unknown as EmployeeSalaryComponent[];
 }
 
 export async function addEmployeeSalaryComponent(
   dto: EmployeeSalaryComponentDto,
 ): Promise<EmployeeSalaryComponent> {
-  const { data } = await api.post<EmployeeSalaryComponent>('/employees/salary-components', dto);
-  return data;
+  return await api.post('/employees/salary-components', dto) as unknown as EmployeeSalaryComponent;
 }
 
 export async function updateEmployeeSalaryComponent(
   id: string,
   dto: Partial<EmployeeSalaryComponentDto>,
 ): Promise<EmployeeSalaryComponent> {
-  const { data } = await api.patch<EmployeeSalaryComponent>(
+  return await api.patch(
     `/employees/salary-components/${id}`,
     dto,
-  );
-  return data;
+  ) as unknown as EmployeeSalaryComponent;
 }
 
 export async function deactivateEmployeeSalaryComponent(
   id: string,
   effectiveDate: string,
 ): Promise<EmployeeSalaryComponent> {
-  const { data } = await api.patch<EmployeeSalaryComponent>(
+  return await api.patch(
     `/employees/salary-components/${id}/deactivate`,
     { effectiveDate },
-  );
-  return data;
+  ) as unknown as EmployeeSalaryComponent;
 }

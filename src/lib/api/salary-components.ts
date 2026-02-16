@@ -21,26 +21,22 @@ export async function getSalaryComponents(params?: {
   roleId?: string;
   countryId?: string;
 }): Promise<SalaryComponent[]> {
-  const { data } = await api.get<SalaryComponent[]>('/salary-components', { params });
-  return data;
+  return await api.get('/salary-components', { params }) as unknown as SalaryComponent[];
 }
 
 export async function getSalaryComponent(id: string): Promise<SalaryComponent> {
-  const { data } = await api.get<SalaryComponent>(`/salary-components/${id}`);
-  return data;
+  return await api.get(`/salary-components/${id}`) as unknown as SalaryComponent;
 }
 
 export async function createSalaryComponent(dto: CreateSalaryComponentDto): Promise<SalaryComponent> {
-  const { data } = await api.post<SalaryComponent>('/salary-components', dto);
-  return data;
+  return await api.post('/salary-components', dto) as unknown as SalaryComponent;
 }
 
 export async function updateSalaryComponent(
   id: string,
   dto: UpdateSalaryComponentDto,
 ): Promise<SalaryComponent> {
-  const { data } = await api.patch<SalaryComponent>(`/salary-components/${id}`, dto);
-  return data;
+  return await api.patch(`/salary-components/${id}`, dto) as unknown as SalaryComponent;
 }
 
 export async function deleteSalaryComponent(id: string): Promise<void> {

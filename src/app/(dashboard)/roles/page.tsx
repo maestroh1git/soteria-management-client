@@ -253,7 +253,7 @@ function RoleFormDialog({
                 name: '',
                 description: '',
                 departmentId: '',
-                roleType: RoleType.TEACHING,
+                roleType: RoleType.FULL_TIME,
                 permissionIds: [],
             },
     });

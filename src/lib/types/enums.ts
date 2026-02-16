@@ -75,9 +75,9 @@ export enum TaxRuleType {
 
 // From: modules/employees/entities/role.entity.ts
 export enum RoleType {
-  TEACHING = 'TEACHING',
-  NON_TEACHING = 'NON_TEACHING',
-  ADMINISTRATIVE = 'ADMINISTRATIVE',
+  FULL_TIME = 'FULL_TIME',
+  PART_TIME = 'PART_TIME',
+  CONTRACTOR = 'CONTRACTOR',
 }
 
 // System roles from user entity

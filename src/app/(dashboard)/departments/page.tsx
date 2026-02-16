@@ -89,8 +89,8 @@ export default function DepartmentsPage() {
     });
 
     const toggleMutation = useMutation({
-        mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-            isActive ? deactivateDepartment(id) : activateDepartment(id),
+        mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+            active ? deactivateDepartment(id) : activateDepartment(id),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['departments'] });
             toast.success('Status toggled');
@@ -144,8 +144,8 @@ export default function DepartmentsPage() {
                                     {dept.description || '—'}
                                 </td>
                                 <td className="px-4 py-3">
-                                    <Badge variant={dept.isActive ? 'default' : 'secondary'}>
-                                        {dept.isActive ? 'Active' : 'Inactive'}
+                                    <Badge variant={dept.active ? 'default' : 'secondary'}>
+                                        {dept.active ? 'Active' : 'Inactive'}
                                     </Badge>
                                 </td>
                                 <td className="px-4 py-3">
@@ -157,12 +157,12 @@ export default function DepartmentsPage() {
                                             onClick={() =>
                                                 toggleMutation.mutate({
                                                     id: dept.id,
-                                                    isActive: dept.isActive,
+                                                    active: dept.active,
                                                 })
                                             }
-                                            title={dept.isActive ? 'Deactivate' : 'Activate'}
+                                            title={dept.active ? 'Deactivate' : 'Activate'}
                                         >
-                                            {dept.isActive ? (
+                                            {dept.active ? (
                                                 <ToggleRight className="h-4 w-4 text-green-600" />
                                             ) : (
                                                 <ToggleLeft className="h-4 w-4 text-slate-400" />

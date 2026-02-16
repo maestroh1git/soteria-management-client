@@ -15,23 +15,19 @@ export interface CreateRoleDto {
 export type UpdateRoleDto = Partial<CreateRoleDto>;
 
 export async function getRoles(): Promise<Role[]> {
-  const { data } = await api.get<Role[]>('/roles');
-  return data;
+  return await api.get('/roles') as unknown as Role[];
 }
 
 export async function getRole(id: string): Promise<Role> {
-  const { data } = await api.get<Role>(`/roles/${id}`);
-  return data;
+  return await api.get(`/roles/${id}`) as unknown as Role;
 }
 
 export async function createRole(dto: CreateRoleDto): Promise<Role> {
-  const { data } = await api.post<Role>('/roles', dto);
-  return data;
+  return await api.post('/roles', dto) as unknown as Role;
 }
 
 export async function updateRole(id: string, dto: UpdateRoleDto): Promise<Role> {
-  const { data } = await api.patch<Role>(`/roles/${id}`, dto);
-  return data;
+  return await api.patch(`/roles/${id}`, dto) as unknown as Role;
 }
 
 export async function deleteRole(id: string): Promise<void> {
@@ -40,6 +36,5 @@ export async function deleteRole(id: string): Promise<void> {
 
 // ── Permissions ─────────────────────────────────────────────
 export async function getPermissions(): Promise<Permission[]> {
-  const { data } = await api.get<Permission[]>('/permissions');
-  return data;
+  return await api.get('/permissions') as unknown as Permission[];
 }

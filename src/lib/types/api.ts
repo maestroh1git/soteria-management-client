@@ -95,8 +95,9 @@ export interface Department {
   id: string;
   name: string;
   description: string | null;
-  headId: string | null;
-  isActive: boolean;
+  headOfDepartment: string | null;
+  parentDepartmentId: string | null;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }
