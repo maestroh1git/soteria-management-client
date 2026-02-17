@@ -8,6 +8,7 @@ import {
   ComponentType,
   PayslipStatus,
   CalculationType,
+  ComponentApplicability,
   TaxRuleType,
   RoleType,
 } from './enums';
@@ -17,7 +18,7 @@ import {
 // ============================================================
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  items: T[];
   total: number;
   page: number;
   limit: number;
@@ -129,12 +130,18 @@ export interface Permission {
 export interface SalaryComponent {
   id: string;
   name: string;
-  componentType: ComponentType;
+  type: ComponentType;
+  isBase: boolean;
   calculationType: CalculationType;
-  defaultValue: number;
-  description: string | null;
-  isDefault: boolean;
-  isActive: boolean;
+  value: number;
+  formula: string | null;
+  taxable: boolean;
+  showOnPayslip: boolean;
+  roleId: string | null;
+  countryId: string | null;
+  applicability: ComponentApplicability;
+  conditionField: string | null;
+  conditionValue: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -218,6 +225,21 @@ export interface PayrollSettings {
   updatedAt: string;
 }
 
+export interface PayrollProcessResult {
+  totalEmployees: number;
+  processedCount: number;
+  skippedCount: number;
+  totalGrossSalary: number;
+  totalNetSalary: number;
+  errors: Array<{ employeeId: string; message: string }>;
+}
+
+export interface BulkPaymentResult {
+  totalProcessed: number;
+  successful: Array<{ salaryId: string; paymentReference: string }>;
+  failed: Array<{ salaryId: string; reason: string }>;
+}
+
 // ============================================================
 // Tax module
 // ============================================================
@@ -277,10 +299,11 @@ export interface LoanRepayment {
   loanId: string;
   salaryId: string | null;
   amount: number;
-  principalAmount: number;
-  interestAmount: number;
+  principalPortion: number;
+  interestPortion: number;
   balanceAfter: number;
-  repaymentDate: string;
+  dueDate: string;
+  paidDate: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -345,6 +368,10 @@ export interface SalaryFilters extends PaginationParams {
 
 export interface PayPeriodFilters extends PaginationParams {
   status?: PayPeriodStatus;
+  year?: number;
+  month?: number;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface LoanFilters extends PaginationParams {
@@ -357,4 +384,75 @@ export interface ReportFilters {
   month?: number;
   year?: number;
   departmentId?: string;
+}
+
+// ============================================================
+// Report response types
+// ============================================================
+
+export interface MonthlySummary {
+  period: { month: number; year: number };
+  summary: {
+    totalEmployees: number;
+    totalGrossSalary: number;
+    totalNetSalary: number;
+    totalTax: number;
+    totalDeductions: number;
+  };
+  employeeBreakdown: Array<{
+    employeeId: string;
+    employeeName: string;
+    employeeNumber: string;
+    grossSalary: number;
+    totalDeductions: number;
+    netSalary: number;
+  }>;
+}
+
+export interface TaxSummary {
+  year: number;
+  totalTaxCollected: number;
+  monthlyBreakdown: Array<{
+    month: number;
+    totalTax: number;
+    employeeCount: number;
+  }>;
+}
+
+export interface LoanPortfolioReport {
+  totalActiveLoans: number;
+  totalOutstandingBalance: number;
+  totalDisbursed: number;
+  loansByType: Array<{
+    loanType: string;
+    count: number;
+    totalAmount: number;
+    outstandingBalance: number;
+  }>;
+  loansByStatus: Array<{ status: string; count: number }>;
+}
+
+export interface DepartmentCostReport {
+  month: number;
+  year: number;
+  departments: Array<{
+    department: string;
+    employeeCount: number;
+    totalGross: number;
+    totalNet: number;
+    avgSalary: number;
+  }>;
+}
+
+export interface YearEndReport {
+  year: number;
+  monthlySummaries: MonthlySummary[];
+  taxSummary: TaxSummary;
+  loanPortfolio: LoanPortfolioReport;
+  totals: {
+    totalGrossSalary: number;
+    totalNetSalary: number;
+    totalTax: number;
+    totalDeductions: number;
+  };
 }

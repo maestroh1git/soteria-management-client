@@ -12,6 +12,9 @@ export interface CreateSalaryComponentDto {
   showOnPayslip?: boolean;
   roleId?: string;
   countryId?: string;
+  applicability?: string;
+  conditionField?: string;
+  conditionValue?: string;
 }
 
 export type UpdateSalaryComponentDto = Partial<CreateSalaryComponentDto>;

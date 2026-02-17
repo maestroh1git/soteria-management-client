@@ -151,7 +151,7 @@ export default function EmployeeDetailPage({
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <Badge variant="outline">
-                                                            {sc.salaryComponent?.componentType}
+                                                            {sc.salaryComponent?.type}
                                                         </Badge>
                                                     </td>
                                                     <td className="px-4 py-3 text-right">

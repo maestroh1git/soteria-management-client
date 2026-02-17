@@ -60,7 +60,7 @@ export const createSalaryComponentSchema = z.object({
   calculationType: z.nativeEnum(CalculationType, {
     message: 'Select calculation type',
   }),
-  value: z.coerce.number().min(0, 'Value must be positive'),
+  value: z.number().min(0, 'Value must be positive'),
   formula: z.string().optional(),
   taxable: z.boolean().optional(),
   showOnPayslip: z.boolean().optional(),
@@ -90,3 +90,61 @@ export const assignSalaryComponentSchema = z.object({
 });
 
 export type AssignSalaryComponentValues = z.infer<typeof assignSalaryComponentSchema>;
+
+// ── Pay Period schemas ──────────────────────────────────────
+export const createPayPeriodSchema = z.object({
+  name: z.string().min(1, 'Period name is required'),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().min(1, 'End date is required'),
+  paymentDate: z.string().min(1, 'Payment date is required'),
+});
+
+export type CreatePayPeriodValues = z.infer<typeof createPayPeriodSchema>;
+
+// ── Payroll schemas ─────────────────────────────────────────
+export const processPayrollSchema = z.object({
+  payPeriodId: z.string().uuid('Select a pay period'),
+  dryRun: z.boolean().optional(),
+});
+
+export type ProcessPayrollValues = z.infer<typeof processPayrollSchema>;
+
+export const salaryApprovalSchema = z.object({
+  approverId: z.string().uuid('Approver is required'),
+  notes: z.string().optional(),
+});
+
+export type SalaryApprovalValues = z.infer<typeof salaryApprovalSchema>;
+
+export const salaryPaymentSchema = z.object({
+  paymentReference: z.string().min(1, 'Payment reference is required'),
+  notes: z.string().optional(),
+});
+
+export type SalaryPaymentValues = z.infer<typeof salaryPaymentSchema>;
+
+// ── Loan schemas ────────────────────────────────────────────
+export const createLoanSchema = z.object({
+  employeeId: z.string().uuid('Select an employee'),
+  amount: z.number().min(1, 'Amount must be at least 1'),
+  interestRate: z.number().min(0, 'Interest rate cannot be negative'),
+  termMonths: z.number().min(1, 'Term must be at least 1 month'),
+  reason: z.string().optional(),
+});
+
+export type CreateLoanValues = z.infer<typeof createLoanSchema>;
+
+export const createAdvanceSchema = z.object({
+  employeeId: z.string().uuid('Select an employee'),
+  amount: z.number().min(1, 'Amount must be at least 1'),
+  reason: z.string().optional(),
+});
+
+export type CreateAdvanceValues = z.infer<typeof createAdvanceSchema>;
+
+export const loanApprovalSchema = z.object({
+  approverId: z.string().uuid('Approver is required'),
+  notes: z.string().optional(),
+});
+
+export type LoanApprovalValues = z.infer<typeof loanApprovalSchema>;

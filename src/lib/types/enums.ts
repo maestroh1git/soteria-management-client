@@ -65,6 +65,17 @@ export enum PayslipStatus {
 export enum CalculationType {
   FIXED = 'FIXED',
   PERCENTAGE_OF_BASE = 'PERCENTAGE_OF_BASE',
+  PERCENTAGE_OF_GROSS = 'PERCENTAGE_OF_GROSS',
+  CUSTOM = 'CUSTOM',
+}
+
+// From: modules/employees/entities/salary-component.entity.ts
+export enum ComponentApplicability {
+  ALL_STAFF = 'ALL_STAFF',
+  TEACHING_STAFF = 'TEACHING_STAFF',
+  ADMIN_STAFF = 'ADMIN_STAFF',
+  SUPERVISORS = 'SUPERVISORS',
+  SUPPORT_STAFF = 'SUPPORT_STAFF',
 }
 
 // From: modules/tax/entities/tax-rule.entity.ts

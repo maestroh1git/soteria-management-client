@@ -15,6 +15,8 @@ import {
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useUIStore } from '@/stores/ui-store';
 
+import { ModeToggle } from '@/components/common/mode-toggle';
+
 export function Topbar() {
     const router = useRouter();
     const { fullName, initials, user, logout } = useAuth();
@@ -43,6 +45,7 @@ export function Topbar() {
 
             {/* Right: notifications + user menu */}
             <div className="flex items-center gap-2">
+                <ModeToggle />
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                 </Button>
