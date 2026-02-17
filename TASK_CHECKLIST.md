@@ -42,39 +42,39 @@
 - [x] Verify: full employee CRUD works, filters/search functional
 
 ## Phase 3 — Payroll Processing
-- [ ] Create `lib/api/payroll.ts` — payroll API calls
-- [ ] Create `lib/hooks/use-payroll.ts` — TanStack Query hooks
-- [ ] Create `payroll/page.tsx` — pay period list
-- [ ] Create `payroll/[payPeriodId]/page.tsx` — payroll workspace
-- [ ] Create `components/payroll/process-payroll-dialog.tsx` — process wizard
-- [ ] Create `components/payroll/salary-detail-sheet.tsx` — salary slide-over
+- [x] Create `lib/api/payroll.ts` — payroll API calls
+- [x] Create `lib/hooks/use-payroll.ts` — TanStack Query hooks
+- [x] Create `payroll/page.tsx` — pay period list
+- [x] Create `payroll/[payPeriodId]/page.tsx` — payroll workspace
+- [x] Create `components/payroll/process-payroll-dialog.tsx` — process wizard
+- [x] Create `components/payroll/salary-detail-sheet.tsx` — salary slide-over
 - [ ] Verify: full payroll cycle (create → process → approve → pay)
 
 ## Phase 4 — Loans & Tax
-- [ ] Create `lib/api/loans.ts` — loan API calls
-- [ ] Create `lib/api/tax.ts` — tax rule API calls
-- [ ] Create `lib/hooks/use-loans.ts` — TanStack Query hooks
-- [ ] Create `loans/page.tsx` — loan list
-- [ ] Create `loans/[id]/page.tsx` — loan detail + repayment history
-- [ ] Create `loans/apply/page.tsx` — loan application with live math
-- [ ] Create `tax/page.tsx` — tax rule management with bracket editor
+- [x] Create `lib/api/loans.ts` — loan API calls
+- [x] Create `lib/api/tax.ts` — tax rule API calls
+- [x] Create `lib/hooks/use-loans.ts` — TanStack Query hooks
+- [x] Create `loans/page.tsx` — loan list
+- [x] Create `loans/[id]/page.tsx` — loan detail + repayment history
+- [x] Create `loans/apply/page.tsx` — loan application with live math
+- [x] Create `tax/page.tsx` — tax rule management with bracket editor
 - [ ] Verify: loan lifecycle works, tax rules with progressive brackets
 
 ## Phase 5 — Payslips & Reports
-- [ ] Create `lib/api/payslips.ts` — payslip API calls
-- [ ] Create `lib/api/reports.ts` — report API calls
-- [ ] Create `lib/hooks/use-reports.ts` — TanStack Query hooks
-- [ ] Create `payslips/page.tsx` — payslip management
-- [ ] Create `reports/page.tsx` — reports dashboard with charts
+- [x] Create `lib/api/payslips.ts` — payslip API calls
+- [x] Create `lib/api/reports.ts` — report API calls
+- [x] Create `lib/hooks/use-reports.ts` — TanStack Query hooks
+- [x] Create `payslips/page.tsx` — payslip management
+- [x] Create `reports/page.tsx` — reports dashboard with charts
 - [ ] Verify: payslip generation/download works, reports render with charts
 
 ## Phase 6 — Settings, Polish & Error Handling
-- [ ] Create `settings/page.tsx` — settings + countries management
-- [ ] Create `lib/api/settings.ts` + `lib/api/countries.ts`
-- [ ] Add `error.tsx` boundaries to all route segments
-- [ ] Add `loading.tsx` skeletons to all route groups
-- [ ] Responsive pass (mobile tables, sidebar collapse)
-- [ ] Dark mode toggle
-- [ ] Keyboard shortcuts (Cmd+K, Esc)
-- [ ] Performance optimization (lazy loading, code splitting)
+- [x] Create `settings/page.tsx` — settings + countries management
+- [x] Create `lib/api/settings.ts` + `lib/api/countries.ts`
+- [x] Add `error.tsx` boundaries to all route segments
+- [x] Add `loading.tsx` skeletons to all route groups
+- [x] Responsive pass (mobile tables, sidebar collapse)
+- [x] Dark mode toggle
+- [x] Keyboard shortcuts (Cmd+K, Esc)
+- [x] Performance optimization (lazy loading, code splitting)
 - [ ] Final build verification: `npm run build` passes clean
