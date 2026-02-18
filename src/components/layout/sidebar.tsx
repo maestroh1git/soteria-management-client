@@ -28,6 +28,7 @@ interface NavItem {
     href: string;
     icon: LucideIcon;
     badge?: string;
+    roles?: string[];
 }
 
 interface NavGroup {
@@ -45,39 +46,49 @@ const navigation: NavGroup[] = [
     {
         label: 'People',
         items: [
-            { title: 'Employees', href: '/employees', icon: Users },
-            { title: 'Roles', href: '/roles', icon: Briefcase },
-            { title: 'Departments', href: '/departments', icon: Building2 },
+            { title: 'Employees', href: '/employees', icon: Users, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'] },
+            { title: 'Roles', href: '/roles', icon: Briefcase, roles: ['tenant_owner', 'ADMIN'] },
+            { title: 'Departments', href: '/departments', icon: Building2, roles: ['tenant_owner', 'ADMIN'] },
         ],
     },
     {
         label: 'Finance',
         items: [
-            { title: 'Payroll', href: '/payroll', icon: Calculator },
-            { title: 'Salary Components', href: '/salary-components', icon: CreditCard },
-            { title: 'Loans', href: '/loans', icon: Receipt },
-            { title: 'Tax Rules', href: '/tax-rules', icon: FileText },
+            { title: 'Payroll', href: '/payroll', icon: Calculator, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
+            { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
+            { title: 'Loans', href: '/loans', icon: Receipt, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
+            { title: 'Tax Rules', href: '/tax-rules', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
         ],
     },
     {
         label: 'Reporting',
         items: [
-            { title: 'Payslips', href: '/payslips', icon: FileText },
-            { title: 'Reports', href: '/reports', icon: BarChart3 },
+            { title: 'Payslips', href: '/payslips', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
+            { title: 'Reports', href: '/reports', icon: BarChart3, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'VIEWER'] },
         ],
     },
     {
         label: 'System',
         items: [
-            { title: 'Settings', href: '/settings', icon: Settings },
+            { title: 'Settings', href: '/settings', icon: Settings, roles: ['tenant_owner', 'ADMIN'] },
         ],
     },
 ];
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { tenantName } = useAuth();
+    const { tenantName, hasRole } = useAuth();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
+
+    // Filter navigation items based on user roles
+    const filteredNavigation = navigation
+        .map((group) => ({
+            ...group,
+            items: group.items.filter(
+                (item) => !item.roles || hasRole(item.roles),
+            ),
+        }))
+        .filter((group) => group.items.length > 0);
 
     return (
         <aside
@@ -107,7 +118,7 @@ export function Sidebar() {
             {/* Navigation */}
             <ScrollArea className="flex-1 px-3 py-4">
                 <nav className="space-y-6">
-                    {navigation.map((group) => (
+                    {filteredNavigation.map((group) => (
                         <div key={group.label}>
                             {!sidebarCollapsed && (
                                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">

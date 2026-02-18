@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# School Payroll System — Frontend
+
+Next.js 15 dashboard for the school payroll management system. Provides role-based access to employee management, payroll processing, loans, tax rules, payslips, reports, and system settings.
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Framework | Next.js 15 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| UI Components | shadcn/ui (Radix primitives) |
+| State Management | Zustand (persisted auth store) |
+| Data Fetching | TanStack React Query |
+| Forms | React Hook Form + Zod validation |
+| HTTP Client | Axios |
+| Notifications | Sonner (toast) |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Set environment variables
+cp .env.example .env.local
+# Edit .env.local → set NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── (auth)/              # Auth route group (no dashboard layout)
+│   │   ├── login/           # Login page
+│   │   ├── register/        # Registration page
+│   │   └── change-password/ # Force password change page
+│   ├── (dashboard)/         # Dashboard route group (sidebar layout)
+│   │   ├── employees/       # Employee list, detail, create
+│   │   ├── departments/     # Department management
+│   │   ├── roles/           # Role management
+│   │   ├── payroll/         # Payroll processing, salaries
+│   │   ├── salary-components/
+│   │   ├── loans/           # Loan management
+│   │   ├── tax-rules/       # Tax rule configuration
+│   │   ├── payslips/        # Payslip management
+│   │   ├── reports/         # Financial reports
+│   │   └── settings/        # Team management, countries, payroll settings
+│   └── layout.tsx           # Root layout (providers)
+├── components/
+│   ├── layout/              # Sidebar, MobileSidebar, Header
+│   ├── ui/                  # shadcn/ui primitives
+│   └── common/              # LoadingSkeleton, EmptyState
+├── lib/
+│   ├── api/                 # API call functions (one per module)
+│   ├── hooks/               # React Query hooks (one per module)
+│   └── types/               # TypeScript interfaces and enums
+├── stores/
+│   ├── auth-store.ts        # Authentication state (Zustand + persist)
+│   └── ui-store.ts          # UI state (sidebar collapsed, etc.)
+└── middleware.ts             # Auth + role-based route guards
+```
 
-## Learn More
+## Role-Based Access Control
 
-To learn more about Next.js, take a look at the following resources:
+The sidebar and route access are filtered by user roles. The middleware reads a `user-roles` cookie (set at login) and blocks unauthorized route access.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Route | Allowed Roles |
+|-------|---------------|
+| `/` (Dashboard) | All authenticated users |
+| `/employees` | tenant_owner, ADMIN, PAYROLL_OFFICER, VIEWER |
+| `/roles`, `/departments` | tenant_owner, ADMIN |
+| `/payroll`, `/loans` | tenant_owner, ADMIN, PAYROLL_OFFICER, FINANCE_ADMIN, APPROVER |
+| `/salary-components` | tenant_owner, ADMIN, PAYROLL_OFFICER |
+| `/tax-rules` | tenant_owner, ADMIN, FINANCE_ADMIN |
+| `/payslips` | tenant_owner, ADMIN, PAYROLL_OFFICER |
+| `/reports` | tenant_owner, ADMIN, FINANCE_ADMIN, VIEWER |
+| `/settings` | tenant_owner, ADMIN |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Force Password Change
 
-## Deploy on Vercel
+When an admin creates a user account with a temporary password, the user is flagged with `mustChangePassword: true`. On login:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. A `must-change-password` cookie is set
+2. Middleware redirects all dashboard routes to `/change-password`
+3. After successful password change, the cookie is cleared and the user proceeds to the dashboard
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Team Management
+
+Available under **Settings > Team** tab (visible to tenant_owner and ADMIN roles):
+
+- View all user accounts for the tenant
+- Create new user accounts linked to employee records
+- Assign and edit system roles
+- Activate/deactivate user accounts

@@ -46,10 +46,12 @@ export interface User {
   firstName: string;
   lastName: string;
   isActive: boolean;
+  mustChangePassword: boolean;
   employeeId: string | null;
   systemRoles: string[];
   tenantId: string | null;
   tenant: Tenant | null;
+  employee?: Employee | null;
   createdAt: string;
   updatedAt: string;
 }

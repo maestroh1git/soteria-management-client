@@ -20,6 +20,7 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useAuthStore } from '@/stores/auth-store';
 
 const loginSchema = z.object({
     email: z.string().email('Enter a valid email address'),
@@ -48,7 +49,26 @@ function LoginForm() {
         setServerError(null);
         try {
             await login(values);
-            document.cookie = `auth-token=true; path=/; max-age=${60 * 60 * 24 * 7}`;
+
+            // Read user from store after login
+            const user = useAuthStore.getState().user;
+            const maxAge = 60 * 60 * 24 * 7;
+
+            // Set auth cookie
+            document.cookie = `auth-token=true; path=/; max-age=${maxAge}`;
+
+            // Set user roles cookie for middleware
+            if (user?.systemRoles) {
+                document.cookie = `user-roles=${encodeURIComponent(JSON.stringify(user.systemRoles))}; path=/; max-age=${maxAge}`;
+            }
+
+            // Check if user must change password
+            if (user?.mustChangePassword) {
+                document.cookie = `must-change-password=true; path=/; max-age=${maxAge}`;
+                router.push('/change-password');
+                return;
+            }
+
             const from = searchParams.get('from') || '/';
             router.push(from);
         } catch (err: unknown) {

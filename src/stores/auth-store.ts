@@ -16,6 +16,8 @@ interface AuthState {
   logout: () => void;
   setError: (error: string | null) => void;
   hasRole: (roles: string[]) => boolean;
+  setUser: (user: User) => void;
+  setToken: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -71,6 +73,9 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         localStorage.removeItem('auth-token');
+        document.cookie = 'auth-token=; path=/; max-age=0';
+        document.cookie = 'must-change-password=; path=/; max-age=0';
+        document.cookie = 'user-roles=; path=/; max-age=0';
         set({
           user: null,
           token: null,
@@ -80,6 +85,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setError: (error) => set({ error }),
+
+      setUser: (user) => set({ user }),
+
+      setToken: (token) => {
+        localStorage.setItem('auth-token', token);
+        set({ token });
+      },
 
       hasRole: (roles: string[]) => {
         const user = get().user;
