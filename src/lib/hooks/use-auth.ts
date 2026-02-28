@@ -33,6 +33,7 @@ export function useAuth() {
     initials: user
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
       : '',
-    tenantName: user?.tenant?.name ?? 'School',
+    tenantName: user?.tenant?.name ?? 'Organization',
+    tenantOrgType: user?.tenant?.organizationType ?? null,
   };
 }

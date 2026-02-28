@@ -13,6 +13,7 @@ import {
   addEmployeeSalaryComponent,
   updateEmployeeSalaryComponent,
   deactivateEmployeeSalaryComponent,
+  getBirthdaysThisMonth,
   type CreateEmployeeDto,
   type UpdateEmployeeDto,
   type CreateBankDetailsDto,
@@ -205,5 +206,14 @@ export function useDeactivateEmployeeSalaryComponent() {
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to deactivate salary component');
     },
+  });
+}
+
+// ── Birthday queries ────────────────────────────────────────
+export function useBirthdaysThisMonth() {
+  return useQuery({
+    queryKey: ['employees', 'birthdays', 'this-month'],
+    queryFn: getBirthdaysThisMonth,
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
 }

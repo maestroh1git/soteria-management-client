@@ -1,9 +1,9 @@
-const DEFAULT_CURRENCY = 'KES';
-const DEFAULT_LOCALE = 'en-KE';
+const DEFAULT_CURRENCY = 'NGN';
+const DEFAULT_LOCALE = 'en-NG';
 
 /**
  * Format a number as currency.
- * @example formatCurrency(50000) → "KES 50,000.00"
+ * @example formatCurrency(50000) → "NGN 50,000.00"
  * @example formatCurrency(50000, 'USD') → "USD 50,000.00"
  */
 export function formatCurrency(
@@ -36,7 +36,7 @@ export function isNegativeAmount(amount: number | string): boolean {
 
 /**
  * Format a number as a compact currency display.
- * @example formatCompactCurrency(1500000) → "KES 1.5M"
+ * @example formatCompactCurrency(1500000) → "NGN 1.5M"
  */
 export function formatCompactCurrency(
   amount: number | string,

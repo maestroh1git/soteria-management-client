@@ -49,9 +49,22 @@ import {
 } from '@/lib/utils/validation';
 import { ComponentType, CalculationType } from '@/lib/types/enums';
 import type { SalaryComponent } from '@/lib/types/api';
+import { useAuth } from '@/lib/hooks/use-auth';
+
+const APPLICABILITY_BY_ORG_TYPE: Record<string, string[]> = {
+    SCHOOL: ['ALL_STAFF', 'TEACHING_STAFF', 'ADMIN_STAFF', 'SUPERVISORS', 'SUPPORT_STAFF'],
+    HOSPITAL: ['ALL_STAFF', 'CLINICAL_STAFF', 'NURSING_STAFF', 'ADMIN_STAFF', 'SUPPORT_STAFF'],
+    CORPORATE: ['ALL_STAFF', 'MANAGEMENT', 'FULL_TIME', 'PART_TIME', 'CONTRACT'],
+    NGO: ['ALL_STAFF', 'MANAGEMENT', 'FULL_TIME', 'PART_TIME', 'VOLUNTEER'],
+    GOVERNMENT: ['ALL_STAFF', 'MANAGEMENT', 'SUPERVISORS', 'FULL_TIME', 'CONTRACT'],
+    NONPROFIT: ['ALL_STAFF', 'MANAGEMENT', 'FULL_TIME', 'PART_TIME', 'VOLUNTEER'],
+    HOSPITALITY: ['ALL_STAFF', 'MANAGEMENT', 'FULL_TIME', 'PART_TIME', 'SEASONAL'],
+    OTHER: ['ALL_STAFF', 'MANAGEMENT', 'FULL_TIME', 'PART_TIME', 'CONTRACT', 'SUPPORT_STAFF'],
+};
 
 export default function SalaryComponentsPage() {
     const qc = useQueryClient();
+    const { tenantOrgType } = useAuth();
     const { data: components = [], isLoading } = useQuery({
         queryKey: ['salary-components'],
         queryFn: () => getSalaryComponents(),
@@ -211,6 +224,7 @@ export default function SalaryComponentsPage() {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 component={editTarget}
+                tenantOrgType={tenantOrgType}
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onSubmit={(values) => {
                     const dto: CreateSalaryComponentDto = {
@@ -222,6 +236,7 @@ export default function SalaryComponentsPage() {
                         formula: values.formula || undefined,
                         taxable: values.taxable,
                         showOnPayslip: values.showOnPayslip,
+                        applicability: values.applicability || 'ALL_STAFF',
                         roleId: values.roleId || undefined,
                         countryId: values.countryId || undefined,
                     };
@@ -253,15 +268,21 @@ function SalaryComponentFormDialog({
     open,
     onOpenChange,
     component,
+    tenantOrgType,
     isLoading,
     onSubmit,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     component: SalaryComponent | null;
+    tenantOrgType: string | null;
     isLoading: boolean;
     onSubmit: (values: CreateSalaryComponentValues) => void;
 }) {
+    const applicabilityOptions =
+        APPLICABILITY_BY_ORG_TYPE[tenantOrgType ?? 'OTHER'] ??
+        APPLICABILITY_BY_ORG_TYPE['OTHER'];
+
     const form = useForm<CreateSalaryComponentValues>({
         resolver: zodResolver(createSalaryComponentSchema),
         values: component
@@ -274,6 +295,7 @@ function SalaryComponentFormDialog({
                 formula: component.formula ?? '',
                 taxable: component.taxable,
                 showOnPayslip: component.showOnPayslip,
+                applicability: (component as any).applicability ?? 'ALL_STAFF',
                 roleId: component.roleId ?? '',
                 countryId: component.countryId ?? '',
             }
@@ -286,6 +308,7 @@ function SalaryComponentFormDialog({
                 formula: '',
                 taxable: false,
                 showOnPayslip: true,
+                applicability: 'ALL_STAFF',
                 roleId: '',
                 countryId: '',
             },
@@ -371,6 +394,31 @@ function SalaryComponentFormDialog({
                                 )}
                             />
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="applicability"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Applicability</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value ?? 'ALL_STAFF'}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select applicability" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {applicabilityOptions.map((opt) => (
+                                                <SelectItem key={opt} value={opt}>
+                                                    {opt.replace(/_/g, ' ')}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField

@@ -11,7 +11,9 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
-  schoolName?: string;
+  organizationName?: string;
+  organizationType?: string;
+  industry?: string;
 }
 
 export interface AuthResponse {

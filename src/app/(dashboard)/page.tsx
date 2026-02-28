@@ -21,6 +21,7 @@ import {
     useYearEndReport,
     useRecentSalaries,
 } from '@/lib/hooks/use-reports';
+import { BirthdaysWidget } from '@/components/dashboard/birthdays-widget';
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils/currency';
 import {
     Users,
@@ -166,6 +167,13 @@ export default function DashboardPage() {
                 />
             </div>
 
+            {/* Birthday Widget */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1">
+                    <BirthdaysWidget />
+                </div>
+            </div>
+
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Payroll Trend Chart */}
@@ -181,7 +189,7 @@ export default function DashboardPage() {
                                     <XAxis dataKey="month" className="text-xs" />
                                     <YAxis
                                         className="text-xs"
-                                        tickFormatter={(v: number) => formatCompactCurrency(v).replace('KES ', '')}
+                                        tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
                                     />
                                     <Tooltip
                                         formatter={(value) => formatCurrency(value as number)}
@@ -213,7 +221,7 @@ export default function DashboardPage() {
                                     <XAxis
                                         type="number"
                                         className="text-xs"
-                                        tickFormatter={(v: number) => formatCompactCurrency(v).replace('KES ', '')}
+                                        tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
                                     />
                                     <YAxis
                                         dataKey="department"

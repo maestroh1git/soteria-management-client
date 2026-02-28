@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Mail, Lock, User, School } from 'lucide-react';
+import { Loader2, Mail, Lock, User, Building2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,29 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useAuth } from '@/lib/hooks/use-auth';
 
+const ORGANIZATION_TYPES = [
+  { value: 'OTHER', label: 'Other' },
+  { value: 'SCHOOL', label: 'School' },
+  { value: 'HOSPITAL', label: 'Hospital' },
+  { value: 'CORPORATE', label: 'Corporate' },
+  { value: 'NGO', label: 'NGO' },
+  { value: 'GOVERNMENT', label: 'Government' },
+  { value: 'NONPROFIT', label: 'Non-Profit' },
+  { value: 'HOSPITALITY', label: 'Hospitality' },
+] as const;
+
 const registerSchema = z.object({
-    schoolName: z.string().min(2, 'School name must be at least 2 characters'),
+    organizationName: z.string().min(2, 'Organization name must be at least 2 characters'),
+    organizationType: z.string().optional(),
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email('Enter a valid email address'),
@@ -39,7 +58,8 @@ export default function RegisterPage() {
     const form = useForm<RegisterValues>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
-            schoolName: '',
+            organizationName: '',
+            organizationType: 'OTHER',
             firstName: '',
             lastName: '',
             email: '',
@@ -52,7 +72,14 @@ export default function RegisterPage() {
     async function onSubmit(values: RegisterValues) {
         setServerError(null);
         try {
-            await registerUser(values);
+            await registerUser({
+                email: values.email,
+                password: values.password,
+                firstName: values.firstName,
+                lastName: values.lastName,
+                organizationName: values.organizationName,
+                organizationType: values.organizationType as any,
+            });
             document.cookie = `auth-token=true; path=/; max-age=${60 * 60 * 24 * 7}`;
             router.push('/');
         } catch (err: unknown) {
@@ -79,20 +106,45 @@ export default function RegisterPage() {
 
                         <FormField
                             control={form.control}
-                            name="schoolName"
+                            name="organizationName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>School Name</FormLabel>
+                                    <FormLabel>Organization Name</FormLabel>
                                     <FormControl>
                                         <div className="relative">
-                                            <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="Sunrise Academy"
+                                                placeholder="Acme Corp"
                                                 className="pl-9"
                                                 {...field}
                                             />
                                         </div>
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="organizationType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Organization Type</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {ORGANIZATION_TYPES.map((t) => (
+                                                <SelectItem key={t.value} value={t.value}>
+                                                    {t.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -140,7 +192,7 @@ export default function RegisterPage() {
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="admin@school.com"
+                                                placeholder="admin@acmecorp.com"
                                                 type="email"
                                                 className="pl-9"
                                                 {...field}
@@ -182,10 +234,10 @@ export default function RegisterPage() {
                             {isSubmitting ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Creating your school...
+                                    Creating your account...
                                 </>
                             ) : (
-                                'Create School Account'
+                                'Create Account'
                             )}
                         </Button>
                     </form>

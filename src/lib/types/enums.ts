@@ -72,10 +72,15 @@ export enum CalculationType {
 // From: modules/employees/entities/salary-component.entity.ts
 export enum ComponentApplicability {
   ALL_STAFF = 'ALL_STAFF',
+  MANAGEMENT = 'MANAGEMENT',
+  SUPERVISORS = 'SUPERVISORS',
+  FULL_TIME = 'FULL_TIME',
+  PART_TIME = 'PART_TIME',
+  CONTRACT = 'CONTRACT',
+  SUPPORT_STAFF = 'SUPPORT_STAFF',
+  // Legacy school values
   TEACHING_STAFF = 'TEACHING_STAFF',
   ADMIN_STAFF = 'ADMIN_STAFF',
-  SUPERVISORS = 'SUPERVISORS',
-  SUPPORT_STAFF = 'SUPPORT_STAFF',
 }
 
 // From: modules/tax/entities/tax-rule.entity.ts
@@ -89,6 +94,18 @@ export enum RoleType {
   FULL_TIME = 'FULL_TIME',
   PART_TIME = 'PART_TIME',
   CONTRACTOR = 'CONTRACTOR',
+}
+
+// From: core/tenancy/entities/tenant.entity.ts
+export enum OrganizationType {
+  SCHOOL = 'SCHOOL',
+  HOSPITAL = 'HOSPITAL',
+  CORPORATE = 'CORPORATE',
+  NGO = 'NGO',
+  GOVERNMENT = 'GOVERNMENT',
+  NONPROFIT = 'NONPROFIT',
+  HOSPITALITY = 'HOSPITALITY',
+  OTHER = 'OTHER',
 }
 
 // System roles from user entity
