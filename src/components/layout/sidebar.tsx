@@ -75,10 +75,23 @@ const navigation: NavGroup[] = [
     },
 ];
 
+const ORG_TYPE_LABEL: Record<string, string> = {
+    SCHOOL: 'School Payroll',
+    HOSPITAL: 'Hospital Payroll',
+    CORPORATE: 'Corporate Payroll',
+    NGO: 'NGO Payroll',
+    GOVERNMENT: 'Government Payroll',
+    NONPROFIT: 'Nonprofit Payroll',
+    HOSPITALITY: 'Hospitality Payroll',
+    OTHER: 'Payroll System',
+};
+
 export function Sidebar() {
     const pathname = usePathname();
-    const { tenantName, hasRole } = useAuth();
+    const { tenantName, tenantOrgType, hasRole } = useAuth();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
+
+    const orgSubtitle = tenantOrgType ? (ORG_TYPE_LABEL[tenantOrgType] ?? 'Payroll System') : 'Payroll System';
 
     // Filter navigation items based on user roles
     const filteredNavigation = navigation
@@ -110,7 +123,7 @@ export function Sidebar() {
                 {!sidebarCollapsed && (
                     <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{tenantName}</p>
-                        <p className="text-xs text-muted-foreground">Payroll System</p>
+                        <p className="text-xs text-muted-foreground">{orgSubtitle}</p>
                     </div>
                 )}
             </div>

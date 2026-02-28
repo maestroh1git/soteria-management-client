@@ -61,6 +61,8 @@ export interface Tenant {
   name: string;
   slug: string;
   schemaName: string;
+  organizationType: string | null;
+  industry: string | null;
   settings: Record<string, unknown> | null;
   isActive: boolean;
   createdAt: string;

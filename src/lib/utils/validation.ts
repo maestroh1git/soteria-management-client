@@ -64,6 +64,7 @@ export const createSalaryComponentSchema = z.object({
   formula: z.string().optional(),
   taxable: z.boolean().optional(),
   showOnPayslip: z.boolean().optional(),
+  applicability: z.string().optional(),
   roleId: z.string().uuid().optional().or(z.literal('')),
   countryId: z.string().uuid().optional().or(z.literal('')),
 });

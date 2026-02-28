@@ -121,3 +121,19 @@ export async function deactivateEmployeeSalaryComponent(
     { effectiveDate },
   ) as unknown as EmployeeSalaryComponent;
 }
+
+// ── Birthday queries ─────────────────────────────────────────
+export interface BirthdayEmployee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  employeeNumber: string;
+  dateOfBirth: string;
+  dayOfBirth: number;
+  roleName: string | null;
+  isToday: boolean;
+}
+
+export async function getBirthdaysThisMonth(): Promise<BirthdayEmployee[]> {
+  return await api.get('/employees/birthdays/this-month') as unknown as BirthdayEmployee[];
+}
