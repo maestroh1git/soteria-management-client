@@ -115,7 +115,7 @@ export default function DepartmentsPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Departments</h1>
                     <p className="text-muted-foreground">
-                        Organizational units for your school
+                        Organizational units for your company
                     </p>
                 </div>
                 <Button

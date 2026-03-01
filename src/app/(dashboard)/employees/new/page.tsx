@@ -153,7 +153,7 @@ export default function NewEmployeePage() {
                                             <FormControl>
                                                 <Input
                                                     type="email"
-                                                    placeholder="john@school.com"
+                                                    placeholder="john@company.com"
                                                     {...field}
                                                 />
                                             </FormControl>

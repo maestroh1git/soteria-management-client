@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'School Payroll System',
-    description: 'Manage your school payroll, employees, and finances',
+    title: 'Soteria Payroll',
+    description: 'Manage your payroll, employees, and finances',
 };
 
 export default function AuthLayout({
@@ -19,10 +19,10 @@ export default function AuthLayout({
                         <span className="text-2xl text-white font-bold">S</span>
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        School Payroll
+                        Soteria Payroll
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Manage your school&apos;s payroll with ease
+                        Manage your payroll with ease
                     </p>
                 </div>
                 {children}

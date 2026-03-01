@@ -122,7 +122,7 @@ export default function EmployeesPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
                     <p className="text-muted-foreground">
-                        Manage your school&apos;s staff directory
+                        Manage your staff directory
                     </p>
                 </div>
                 <Link href="/employees/new">

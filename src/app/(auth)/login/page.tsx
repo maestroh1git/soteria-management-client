@@ -103,7 +103,7 @@ function LoginForm() {
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="admin@school.com"
+                                                placeholder="admin@company.com"
                                                 type="email"
                                                 className="pl-9"
                                                 {...field}
@@ -161,7 +161,7 @@ function LoginForm() {
                         href="/register"
                         className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
                     >
-                        Register your school
+                        Create an account
                     </Link>
                 </p>
             </CardFooter>

@@ -91,7 +91,7 @@ export function MobileSidebar() {
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
                             <span className="text-white font-bold text-sm">S</span>
                         </div>
-                        <span>School Payroll</span>
+                        <span>Soteria Payroll</span>
                     </SheetTitle>
                 </SheetHeader>
                 <ScrollArea className="flex-1 px-3 py-4">

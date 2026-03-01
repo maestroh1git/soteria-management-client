@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "School Payroll System",
-  description: "Manage your school payroll, employees, loans, and finances with ease",
+  title: "Soteria Payroll",
+  description: "Manage your payroll, employees, loans, and finances with ease",
 };
 
 export default function RootLayout({
