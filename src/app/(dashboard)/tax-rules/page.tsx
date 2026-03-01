@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -200,7 +200,7 @@ export default function TaxRulesPage() {
     const [deleteTarget, setDeleteTarget] = useState<TaxRule | null>(null);
 
     const form = useForm<TaxRuleFormValues>({
-        resolver: zodResolver(taxRuleSchema),
+        resolver: zodResolver(taxRuleSchema) as Resolver<TaxRuleFormValues>,
         defaultValues: {
             name: '',
             type: TaxRuleType.FLAT_RATE,
