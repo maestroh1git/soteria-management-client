@@ -18,6 +18,7 @@ import {
     FileText,
     BarChart3,
     Settings,
+    Shield,
     ChevronLeft,
     ChevronRight,
     type LucideIcon,
@@ -71,6 +72,7 @@ const navigation: NavGroup[] = [
         label: 'System',
         items: [
             { title: 'Settings', href: '/settings', icon: Settings, roles: ['tenant_owner', 'ADMIN'] },
+            { title: 'Audit Logs', href: '/audit-logs', icon: Shield, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
         ],
     },
 ];

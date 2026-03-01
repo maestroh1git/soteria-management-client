@@ -19,6 +19,8 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { CurrencyDisplay } from '@/components/common/currency-display';
 import { useEmployee, useBankDetails, useEmployeeSalaryComponents } from '@/lib/hooks/use-employees';
+import { useEntityHistory } from '@/lib/hooks/use-audit';
+import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { formatDate } from '@/lib/utils/dates';
 import type { EmployeeBankDetails, EmployeeSalaryComponent } from '@/lib/types/api';
 
@@ -31,6 +33,7 @@ export default function EmployeeDetailPage({
     const { data: employee, isLoading } = useEmployee(id);
     const { data: bankDetails = [] } = useBankDetails(id);
     const { data: salaryComponents = [] } = useEmployeeSalaryComponents(id);
+    const { data: history = [], isLoading: historyLoading } = useEntityHistory('Employee', id);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
     if (!employee) return <EmptyState title="Employee not found" />;
@@ -62,6 +65,7 @@ export default function EmployeeDetailPage({
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="salary">Salary Components</TabsTrigger>
                     <TabsTrigger value="bank">Bank Details</TabsTrigger>
+                    <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
 
                 {/* ── Overview Tab ── */}
@@ -216,6 +220,64 @@ export default function EmployeeDetailPage({
                                         </div>
                                     ))}
                                 </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ── History Tab ── */}
+                <TabsContent value="history" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Change History</CardTitle>
+                            <CardDescription>All recorded actions on this employee record</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {historyLoading ? (
+                                <LoadingSkeleton rows={5} />
+                            ) : history.length === 0 ? (
+                                <EmptyState title="No history" description="No audit events recorded for this employee yet." />
+                            ) : (
+                                <ol className="relative border-l border-border ml-3 space-y-6">
+                                    {history.map((log) => (
+                                        <li key={log.id} className="ml-6">
+                                            <span className="absolute -left-2 flex h-4 w-4 items-center justify-center rounded-full bg-muted border border-border" />
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <ActionBadge action={log.action} />
+                                                <span className="text-xs text-muted-foreground">
+                                                    {new Date(log.createdAt).toLocaleString('en-US', {
+                                                        month: 'short', day: 'numeric', year: 'numeric',
+                                                        hour: '2-digit', minute: '2-digit',
+                                                    })}
+                                                </span>
+                                                {log.userName && (
+                                                    <span className="text-xs text-muted-foreground">· by {log.userName}</span>
+                                                )}
+                                            </div>
+                                            {(log.oldValues || log.newValues) && (
+                                                <div className="mt-1.5 rounded-md border bg-muted/40 px-3 py-2 text-xs space-y-1">
+                                                    {Object.keys({ ...log.oldValues, ...log.newValues }).map((key) => {
+                                                        const oldVal = log.oldValues?.[key];
+                                                        const newVal = log.newValues?.[key];
+                                                        if (oldVal === newVal) return null;
+                                                        return (
+                                                            <div key={key} className="flex items-center gap-2">
+                                                                <span className="font-mono text-muted-foreground w-28 truncate">{key}</span>
+                                                                {oldVal !== undefined && (
+                                                                    <span className="line-through text-muted-foreground">{String(oldVal)}</span>
+                                                                )}
+                                                                {oldVal !== undefined && newVal !== undefined && <span className="text-muted-foreground">→</span>}
+                                                                {newVal !== undefined && (
+                                                                    <span className="font-medium">{String(newVal)}</span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ol>
                             )}
                         </CardContent>
                     </Card>
