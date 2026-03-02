@@ -403,8 +403,8 @@ export default function SettingsPage() {
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-base">{country.name}</CardTitle>
-                                            <Badge variant={country.isActive ? 'default' : 'secondary'}>
-                                                {country.isActive ? 'Active' : 'Inactive'}
+                                            <Badge variant={country.active ? 'default' : 'secondary'}>
+                                                {country.active ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </div>
                                     </CardHeader>

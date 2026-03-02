@@ -61,6 +61,12 @@ export enum PayslipStatus {
   FAILED = 'FAILED',
 }
 
+// From: modules/employees/entities/employee-salary-component.entity.ts
+export enum ComponentStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
 // From: modules/employees/entities/salary-component.entity.ts
 export enum CalculationType {
   FIXED = 'FIXED',

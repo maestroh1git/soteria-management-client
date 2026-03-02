@@ -6,6 +6,7 @@ import {
   LoanType,
   LoanStatus,
   ComponentType,
+  ComponentStatus,
   PayslipStatus,
   CalculationType,
   ComponentApplicability,
@@ -158,7 +159,7 @@ export interface EmployeeSalaryComponent {
   value: number;
   effectiveFrom: string;
   effectiveTo: string | null;
-  isActive: boolean;
+  status: ComponentStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -323,7 +324,6 @@ export interface Payslip {
   salary?: Salary;
   employeeId: string;
   employee?: Employee;
-  filePath: string | null;
   fileName: string | null;
   accessToken: string;
   status: PayslipStatus;
@@ -344,7 +344,7 @@ export interface Country {
   code: string;
   currencyCode: string;
   currencySymbol: string;
-  isActive: boolean;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }

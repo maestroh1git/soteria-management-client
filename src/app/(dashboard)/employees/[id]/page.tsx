@@ -165,8 +165,8 @@ export default function EmployeeDetailPage({
                                                         {formatDate(sc.effectiveFrom)}
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <Badge variant={sc.isActive ? 'default' : 'secondary'}>
-                                                            {sc.isActive ? 'Active' : 'Inactive'}
+                                                        <Badge variant={sc.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                                                            {sc.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                                                         </Badge>
                                                     </td>
                                                 </tr>
