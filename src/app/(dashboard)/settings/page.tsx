@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import {
     Users,
     Shield,
     UserPlus,
+    Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,9 +57,11 @@ import {
 } from '@/lib/hooks/use-users';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { SystemRole } from '@/lib/types/enums';
+import { useMyTenant, useUpdateTenant } from '@/lib/hooks/use-tenant';
+import { KybStatus, SystemRole } from '@/lib/types/enums';
 import type { Country, User } from '@/lib/types/api';
 import type { PayrollSetting } from '@/lib/api/settings';
+import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
 
 // ── Schemas ─────────────────────────────────────────────────
 
@@ -85,6 +88,33 @@ const createUserSchema = z.object({
     systemRoles: z.array(z.string()).min(1, 'At least one role is required'),
 });
 type CreateUserValues = z.infer<typeof createUserSchema>;
+
+const orgProfileSchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    address: z.string().optional(),
+    phone: z.string().optional(),
+    website: z.string().url('Must be a valid URL').or(z.literal('')).optional(),
+    logoUrl: z.string().url('Must be a valid URL').or(z.literal('')).optional(),
+    primaryColor: z
+        .string()
+        .regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a hex color e.g. #2563EB')
+        .or(z.literal(''))
+        .optional(),
+    cacNumber: z.string().optional(),
+    tinNumber: z.string().optional(),
+    vatNumber: z.string().optional(),
+    nsitfNumber: z.string().optional(),
+    itfNumber: z.string().optional(),
+    nhfNumber: z.string().optional(),
+});
+type OrgProfileValues = z.infer<typeof orgProfileSchema>;
+
+const KYB_STATUS_CONFIG: Record<KybStatus, { label: string; className: string }> = {
+    [KybStatus.PENDING]: { label: 'Pending', className: 'bg-gray-100 text-gray-700' },
+    [KybStatus.SUBMITTED]: { label: 'Submitted', className: 'bg-yellow-100 text-yellow-800' },
+    [KybStatus.VERIFIED]: { label: 'Verified', className: 'bg-green-100 text-green-800' },
+    [KybStatus.REJECTED]: { label: 'Rejected', className: 'bg-red-100 text-red-800' },
+};
 
 // Role display labels
 const ROLE_LABELS: Record<string, string> = {
@@ -123,6 +153,8 @@ export default function SettingsPage() {
     const { data: settings, isLoading: settingsLoading } = useSettings();
     const { data: users, isLoading: usersLoading } = useUsers();
     const { data: employees } = useEmployees();
+    const { data: myTenant, isLoading: tenantLoading } = useMyTenant();
+    const updateTenantMutation = useUpdateTenant();
 
     const createCountryMutation = useCreateCountry();
     const updateCountryMutation = useUpdateCountry();
@@ -140,6 +172,45 @@ export default function SettingsPage() {
     const [selectedEmployee, setSelectedEmployee] = useState<string>('');
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [editRoles, setEditRoles] = useState<string[]>([]);
+
+    const orgProfileForm = useForm<OrgProfileValues>({
+        resolver: zodResolver(orgProfileSchema),
+        defaultValues: {
+            name: myTenant?.name ?? '',
+            address: myTenant?.address ?? '',
+            phone: myTenant?.phone ?? '',
+            website: myTenant?.website ?? '',
+            logoUrl: myTenant?.logoUrl ?? '',
+            primaryColor: myTenant?.primaryColor ?? '',
+            cacNumber: myTenant?.cacNumber ?? '',
+            tinNumber: myTenant?.tinNumber ?? '',
+            vatNumber: myTenant?.vatNumber ?? '',
+            nsitfNumber: myTenant?.nsitfNumber ?? '',
+            itfNumber: myTenant?.itfNumber ?? '',
+            nhfNumber: myTenant?.nhfNumber ?? '',
+        },
+    });
+
+    // Sync form when tenant data loads
+    useEffect(() => {
+        if (myTenant) {
+            orgProfileForm.reset({
+                name: myTenant.name ?? '',
+                address: myTenant.address ?? '',
+                phone: myTenant.phone ?? '',
+                website: myTenant.website ?? '',
+                logoUrl: myTenant.logoUrl ?? '',
+                primaryColor: myTenant.primaryColor ?? '',
+                cacNumber: myTenant.cacNumber ?? '',
+                tinNumber: myTenant.tinNumber ?? '',
+                vatNumber: myTenant.vatNumber ?? '',
+                nsitfNumber: myTenant.nsitfNumber ?? '',
+                itfNumber: myTenant.itfNumber ?? '',
+                nhfNumber: myTenant.nhfNumber ?? '',
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [myTenant]);
 
     const countryForm = useForm<CountryValues>({
         resolver: zodResolver(countrySchema),
@@ -263,6 +334,23 @@ export default function SettingsPage() {
         });
     };
 
+    const handleOrgProfileSubmit = orgProfileForm.handleSubmit((data) => {
+        const payload: UpdateTenantProfileDto = {};
+        if (data.name) payload.name = data.name;
+        if (data.address !== undefined) payload.address = data.address || undefined;
+        if (data.phone !== undefined) payload.phone = data.phone || undefined;
+        if (data.website !== undefined) payload.website = data.website || undefined;
+        if (data.logoUrl !== undefined) payload.logoUrl = data.logoUrl || undefined;
+        if (data.primaryColor !== undefined) payload.primaryColor = data.primaryColor || undefined;
+        if (data.cacNumber !== undefined) payload.cacNumber = data.cacNumber || undefined;
+        if (data.tinNumber !== undefined) payload.tinNumber = data.tinNumber || undefined;
+        if (data.vatNumber !== undefined) payload.vatNumber = data.vatNumber || undefined;
+        if (data.nsitfNumber !== undefined) payload.nsitfNumber = data.nsitfNumber || undefined;
+        if (data.itfNumber !== undefined) payload.itfNumber = data.itfNumber || undefined;
+        if (data.nhfNumber !== undefined) payload.nhfNumber = data.nhfNumber || undefined;
+        updateTenantMutation.mutate(payload);
+    });
+
     const allRolesForAssignment = isTenantOwner
         ? [SystemRole.TENANT_OWNER, ...ASSIGNABLE_ROLES]
         : ASSIGNABLE_ROLES;
@@ -291,6 +379,12 @@ export default function SettingsPage() {
                         <SettingsIcon className="mr-2 h-4 w-4" />
                         Payroll Settings
                     </TabsTrigger>
+                    {canManageTeam && (
+                        <TabsTrigger value="organization">
+                            <Building2 className="mr-2 h-4 w-4" />
+                            Organization
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 {/* ─── Team ─────────────────────────────────────────── */}
@@ -498,6 +592,126 @@ export default function SettingsPage() {
                         </div>
                     )}
                 </TabsContent>
+                {/* ─── Organization ─────────────────────────────────── */}
+                {canManageTeam && (
+                    <TabsContent value="organization" className="space-y-6">
+                        {tenantLoading ? (
+                            <LoadingSkeleton rows={6} />
+                        ) : (
+                            <form onSubmit={handleOrgProfileSubmit} className="space-y-6">
+                                {/* Profile sub-section */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Profile</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <Label htmlFor="org-name">Organization Name</Label>
+                                            <Input id="org-name" {...orgProfileForm.register('name')} />
+                                            {orgProfileForm.formState.errors.name && (
+                                                <p className="text-xs text-destructive">{orgProfileForm.formState.errors.name.message}</p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <Label htmlFor="org-address">Address</Label>
+                                            <Textarea id="org-address" {...orgProfileForm.register('address')} rows={2} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-phone">Phone</Label>
+                                            <Input id="org-phone" {...orgProfileForm.register('phone')} placeholder="+234 800 000 0000" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-website">Website</Label>
+                                            <Input id="org-website" {...orgProfileForm.register('website')} placeholder="https://example.com" />
+                                            {orgProfileForm.formState.errors.website && (
+                                                <p className="text-xs text-destructive">{orgProfileForm.formState.errors.website.message}</p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <Label htmlFor="org-logo">Logo URL</Label>
+                                            <Input id="org-logo" {...orgProfileForm.register('logoUrl')} placeholder="https://example.com/logo.png" />
+                                            {orgProfileForm.formState.errors.logoUrl && (
+                                                <p className="text-xs text-destructive">{orgProfileForm.formState.errors.logoUrl.message}</p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-color">Primary Color</Label>
+                                            <div className="flex gap-2 items-center">
+                                                <Input
+                                                    id="org-color"
+                                                    {...orgProfileForm.register('primaryColor')}
+                                                    placeholder="#2563EB"
+                                                    className="font-mono"
+                                                />
+                                                {orgProfileForm.watch('primaryColor') && (
+                                                    <div
+                                                        className="h-9 w-9 rounded border flex-shrink-0"
+                                                        style={{ backgroundColor: orgProfileForm.watch('primaryColor') || undefined }}
+                                                    />
+                                                )}
+                                            </div>
+                                            {orgProfileForm.formState.errors.primaryColor && (
+                                                <p className="text-xs text-destructive">{orgProfileForm.formState.errors.primaryColor.message}</p>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* KYB / Compliance sub-section */}
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-base">KYB / Compliance</CardTitle>
+                                            {myTenant && (
+                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${KYB_STATUS_CONFIG[myTenant.kybStatus]?.className ?? ''}`}>
+                                                    {KYB_STATUS_CONFIG[myTenant.kybStatus]?.label ?? myTenant.kybStatus}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-cac">CAC RC Number</Label>
+                                            <Input id="org-cac" {...orgProfileForm.register('cacNumber')} placeholder="RC123456" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-tin">TIN</Label>
+                                            <Input id="org-tin" {...orgProfileForm.register('tinNumber')} placeholder="12345678-0001" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-vat">VAT Number</Label>
+                                            <Input id="org-vat" {...orgProfileForm.register('vatNumber')} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-nsitf">NSITF Number</Label>
+                                            <Input id="org-nsitf" {...orgProfileForm.register('nsitfNumber')} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-itf">ITF Number</Label>
+                                            <Input id="org-itf" {...orgProfileForm.register('itfNumber')} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="org-nhf">NHF Number</Label>
+                                            <Input id="org-nhf" {...orgProfileForm.register('nhfNumber')} />
+                                        </div>
+                                        {myTenant?.kybStatus === KybStatus.PENDING && (
+                                            <p className="sm:col-span-2 text-xs text-muted-foreground">
+                                                Saving a CAC, TIN, or VAT number will automatically advance your KYB status to <strong>Submitted</strong>.
+                                            </p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+
+                                <div className="flex justify-end">
+                                    <Button type="submit" disabled={updateTenantMutation.isPending}>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Save Organization Profile
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+                    </TabsContent>
+                )}
             </Tabs>
 
             {/* ── Country Dialog ──────────────────────────────────── */}

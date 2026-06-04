@@ -103,6 +103,13 @@ export enum RoleType {
 }
 
 // From: core/tenancy/entities/tenant.entity.ts
+export enum KybStatus {
+  PENDING = 'PENDING',
+  SUBMITTED = 'SUBMITTED',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+}
+
 export enum OrganizationType {
   SCHOOL = 'SCHOOL',
   HOSPITAL = 'HOSPITAL',

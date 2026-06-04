@@ -12,6 +12,7 @@ import {
   ComponentApplicability,
   TaxRuleType,
   RoleType,
+  KybStatus,
 } from './enums';
 
 // ============================================================
@@ -66,6 +67,22 @@ export interface Tenant {
   industry: string | null;
   settings: Record<string, unknown> | null;
   isActive: boolean;
+  // Organization profile
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  primaryColor: string | null;
+  // KYB / Compliance
+  cacNumber: string | null;
+  tinNumber: string | null;
+  vatNumber: string | null;
+  nsitfNumber: string | null;
+  itfNumber: string | null;
+  nhfNumber: string | null;
+  kybStatus: KybStatus;
+  kybSubmittedAt: string | null;
+  kybVerifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
