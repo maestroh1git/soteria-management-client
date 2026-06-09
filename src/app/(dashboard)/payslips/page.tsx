@@ -39,7 +39,9 @@ import {
     useSendPayslipEmail,
     useSendBulkEmails,
 } from '@/lib/hooks/use-reports';
-import { getPayslipDownloadUrl } from '@/lib/api/payslips';
+import { toast } from 'sonner';
+import { downloadPayslip } from '@/lib/api/payslips';
+import { isApiError, getApiErrorMessage } from '@/lib/utils/api-error';
 import type { Payslip } from '@/lib/types/api';
 import { PayslipStatus, PayPeriodStatus } from '@/lib/types/enums';
 
@@ -257,7 +259,22 @@ export default function PayslipsPage() {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => window.open(getPayslipDownloadUrl(payslip.accessToken), '_blank')}
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await downloadPayslip(
+                                                                        payslip.accessToken,
+                                                                        payslip.fileName ?? undefined,
+                                                                    );
+                                                                } catch (err) {
+                                                                    if (isApiError(err) && err.statusCode === 410) {
+                                                                        toast.error(
+                                                                            'This download link has expired. Re-send the payslip to generate a fresh one.',
+                                                                        );
+                                                                    } else {
+                                                                        toast.error(getApiErrorMessage(err, 'Failed to download payslip.'));
+                                                                    }
+                                                                }
+                                                            }}
                                                         >
                                                             <FileDown className="h-4 w-4" />
                                                         </Button>

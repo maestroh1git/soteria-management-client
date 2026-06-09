@@ -86,11 +86,13 @@ export function useDeleteEmployee() {
 }
 
 // ── Bank details ────────────────────────────────────────────
-export function useBankDetails(employeeId: string) {
+// `enabled` lets callers skip the request for roles the backend forbids
+// (VIEWER is 403 on bank-details, S13) to avoid a guaranteed error.
+export function useBankDetails(employeeId: string, enabled = true) {
   return useQuery({
     queryKey: ['employees', employeeId, 'bank-details'],
     queryFn: () => getBankDetails(employeeId),
-    enabled: !!employeeId,
+    enabled: !!employeeId && enabled,
   });
 }
 
@@ -145,11 +147,17 @@ export function useDeleteBankDetails() {
 }
 
 // ── Employee salary components ──────────────────────────────
-export function useEmployeeSalaryComponents(employeeId: string, includeInactive?: boolean) {
+// `enabled` lets callers skip the request for roles the backend forbids
+// (VIEWER is 403 on salary-components, S13).
+export function useEmployeeSalaryComponents(
+  employeeId: string,
+  includeInactive?: boolean,
+  enabled = true,
+) {
   return useQuery({
     queryKey: ['employees', employeeId, 'salary-components', { includeInactive }],
     queryFn: () => getEmployeeSalaryComponents(employeeId, includeInactive),
-    enabled: !!employeeId,
+    enabled: !!employeeId && enabled,
   });
 }
 

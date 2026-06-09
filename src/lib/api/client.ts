@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import type { ApiError } from '@/lib/types/api';
+import type { ApiError, BackendErrorBody } from '@/lib/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -32,7 +32,7 @@ api.interceptors.request.use(
 // ============================================================
 api.interceptors.response.use(
   (response) => response.data,
-  (error: AxiosError<ApiError>) => {
+  (error: AxiosError<BackendErrorBody>) => {
     const status = error.response?.status;
 
     // 401 Unauthorized — redirect to login
@@ -43,11 +43,27 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Format error for consumption
+    // Parse the backend's standard error envelope:
+    //   { success, error: { code, message, details }, timestamp, path }
+    // Fall back to a top-level `message` (legacy/non-wrapped) or the axios
+    // network error message.
+    const body = error.response?.data;
+    const wrapped = body?.error;
+    const rawMessage = wrapped?.message ?? body?.message;
+    const message = Array.isArray(rawMessage)
+      ? rawMessage.join('; ')
+      : rawMessage || error.message || 'An unexpected error occurred';
+
+    // Validation errors duplicate the messages array into both `message` and
+    // `details`; surface whichever is present as the field-level details.
+    const details =
+      wrapped?.details ?? (Array.isArray(rawMessage) ? rawMessage : null);
+
     const apiError: ApiError = {
       statusCode: status || 500,
-      message: error.response?.data?.message || error.message || 'An unexpected error occurred',
-      error: error.response?.data?.error,
+      code: wrapped?.code,
+      message,
+      details,
     };
 
     return Promise.reject(apiError);
