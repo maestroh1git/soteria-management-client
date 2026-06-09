@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/form';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth-store';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 
 const loginSchema = z.object({
     email: z.string().email('Enter a valid email address'),
@@ -72,11 +73,7 @@ function LoginForm() {
             const from = searchParams.get('from') || '/';
             router.push(from);
         } catch (err: unknown) {
-            const message =
-                err && typeof err === 'object' && 'message' in err
-                    ? String((err as { message: string | string[] }).message)
-                    : 'Invalid credentials. Please try again.';
-            setServerError(message);
+            setServerError(getApiErrorMessage(err, 'Invalid credentials. Please try again.'));
         }
     }
 

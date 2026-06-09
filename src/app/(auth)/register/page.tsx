@@ -27,6 +27,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
+import { passwordSchema, PASSWORD_POLICY_HINT } from '@/lib/utils/validation';
 
 const ORGANIZATION_TYPES = [
   { value: 'OTHER', label: 'Other' },
@@ -45,7 +47,7 @@ const registerSchema = z.object({
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email('Enter a valid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: passwordSchema,
 });
 
 type RegisterValues = z.infer<typeof registerSchema>;
@@ -83,11 +85,7 @@ export default function RegisterPage() {
             document.cookie = `auth-token=true; path=/; max-age=${60 * 60 * 24 * 7}`;
             router.push('/');
         } catch (err: unknown) {
-            const message =
-                err && typeof err === 'object' && 'message' in err
-                    ? String((err as { message: string | string[] }).message)
-                    : 'Registration failed. Please try again.';
-            setServerError(message);
+            setServerError(getApiErrorMessage(err, 'Registration failed. Please try again.'));
         }
     }
 
@@ -214,13 +212,14 @@ export default function RegisterPage() {
                                         <div className="relative">
                                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="Min. 6 characters"
+                                                placeholder="Create a password"
                                                 type="password"
                                                 className="pl-9"
                                                 {...field}
                                             />
                                         </div>
                                     </FormControl>
+                                    <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
                                     <FormMessage />
                                 </FormItem>
                             )}

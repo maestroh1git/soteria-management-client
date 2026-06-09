@@ -2,11 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getMyTenant, updateMyTenant } from '@/lib/api/tenants';
 import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function useMyTenant() {
+  // The logged-in user no longer carries the tenant object (trimmed JWT/login
+  // payload), so the tenant is fetched here. Gate on auth to avoid firing an
+  // unauthenticated request on the login/register screens.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return useQuery({
     queryKey: ['tenant', 'me'],
     queryFn: getMyTenant,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

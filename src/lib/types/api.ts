@@ -27,10 +27,33 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+/**
+ * Normalized error surfaced to the UI by the axios response interceptor.
+ * The backend wraps errors as:
+ *   { success: false, error: { code, message, details }, timestamp, path }
+ * (see global-exception.filter on the server). `message` is normalized to a
+ * single string here; `details` holds the per-field validation messages when
+ * `code === 'VALIDATION_ERROR'`.
+ */
 export interface ApiError {
   statusCode: number;
   message: string | string[];
+  code?: string;
+  details?: string[] | null;
+  /** @deprecated legacy field; use `code`. Kept for older call sites. */
   error?: string;
+}
+
+/** Raw error body shape returned by the backend global exception filter. */
+export interface BackendErrorBody {
+  success?: boolean;
+  error?: {
+    code?: string;
+    message?: string | string[];
+    details?: string[] | null;
+  };
+  /** Legacy/non-wrapped responses may put the message at the top level. */
+  message?: string | string[];
 }
 
 export interface AuthResponse {
@@ -42,20 +65,29 @@ export interface AuthResponse {
 // Core entities
 // ============================================================
 
+/**
+ * Note: the auth endpoints (login/register/change-password) return only a
+ * TRIMMED subset of this shape — `id, email, firstName, lastName, systemRoles,
+ * mustChangePassword, tenantId`. The remaining fields are only populated by the
+ * `/users` directory endpoints, so they are optional. Don't read `tenant` /
+ * `employee` / `isActive` off the logged-in user from the auth store; fetch the
+ * tenant via `/tenants/me` (see useMyTenant) instead.
+ */
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
   mustChangePassword: boolean;
-  employeeId: string | null;
   systemRoles: string[];
   tenantId: string | null;
-  tenant: Tenant | null;
+  // Only present on `/users` directory responses, not the trimmed auth payload:
+  isActive?: boolean;
+  employeeId?: string | null;
+  tenant?: Tenant | null;
   employee?: Employee | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Tenant {
@@ -185,9 +217,12 @@ export interface EmployeeBankDetails {
   id: string;
   employeeId: string;
   bankName: string;
-  accountNumber: string;
-  accountName: string;
-  branchCode: string | null;
+  // accountNumber/accountName/branchCode are AES-256-GCM encrypted at rest and
+  // @Exclude'd from every API response — they are never returned, only sent on
+  // create/update. Optional here so read responses type-check.
+  accountNumber?: string;
+  accountName?: string;
+  branchCode?: string | null;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;

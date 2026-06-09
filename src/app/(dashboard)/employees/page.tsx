@@ -22,6 +22,7 @@ import {
 import { DataTable } from '@/components/common/data-table';
 import { StatusBadge } from '@/components/common/status-badge';
 import { useEmployees, useDeleteEmployee } from '@/lib/hooks/use-employees';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { EmployeeStatus } from '@/lib/types/enums';
 import { formatDate } from '@/lib/utils/dates';
@@ -29,6 +30,9 @@ import type { Employee } from '@/lib/types/api';
 
 export default function EmployeesPage() {
     const router = useRouter();
+    const { hasRole } = useAuth();
+    // VIEWER has read-only directory access (S13) — no create/edit/delete.
+    const canManage = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [search, setSearch] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
@@ -99,17 +103,21 @@ export default function EmployeesPage() {
                         >
                             <Eye className="mr-2 h-4 w-4" /> View
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => router.push(`/employees/${row.original.id}?edit=true`)}
-                        >
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => setDeleteTarget(row.original)}
-                        >
-                            <UserX className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
+                        {canManage && (
+                            <DropdownMenuItem
+                                onClick={() => router.push(`/employees/${row.original.id}?edit=true`)}
+                            >
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                        )}
+                        {canManage && (
+                            <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => setDeleteTarget(row.original)}
+                            >
+                                <UserX className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             ),
@@ -125,11 +133,13 @@ export default function EmployeesPage() {
                         Manage your staff directory
                     </p>
                 </div>
-                <Link href="/employees/new">
-                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                        <Plus className="mr-2 h-4 w-4" /> Add Employee
-                    </Button>
-                </Link>
+                {canManage && (
+                    <Link href="/employees/new">
+                        <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                            <Plus className="mr-2 h-4 w-4" /> Add Employee
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <div className="flex items-center gap-3">

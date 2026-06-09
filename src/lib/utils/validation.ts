@@ -1,6 +1,19 @@
 import { z } from 'zod';
 import { EmployeeGender, EmployeeStatus, ComponentType, CalculationType, RoleType } from '@/lib/types/enums';
 
+// ── Password policy (mirrors backend S11) ───────────────────
+// register + change-password require ≥8 chars incl. lowercase, uppercase,
+// and a digit. Keep this in sync with the server-side rule.
+export const PASSWORD_POLICY_HINT =
+  'At least 8 characters, including an uppercase letter, a lowercase letter, and a number.';
+
+export const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[a-z]/, 'Include at least one lowercase letter')
+  .regex(/[A-Z]/, 'Include at least one uppercase letter')
+  .regex(/[0-9]/, 'Include at least one number');
+
 // ── Employee schemas ────────────────────────────────────────
 export const createEmployeeSchema = z.object({
   employeeNumber: z.string().min(1, 'Employee number is required'),

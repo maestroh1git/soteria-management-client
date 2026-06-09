@@ -20,11 +20,13 @@ import {
 } from '@/components/ui/form';
 import { useChangePassword } from '@/lib/hooks/use-users';
 import { useAuthStore } from '@/stores/auth-store';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
+import { passwordSchema, PASSWORD_POLICY_HINT } from '@/lib/utils/validation';
 
 const changePasswordSchema = z
     .object({
         currentPassword: z.string().min(1, 'Current password is required'),
-        newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+        newPassword: passwordSchema,
         confirmPassword: z.string().min(1, 'Please confirm your new password'),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
@@ -76,11 +78,7 @@ export default function ChangePasswordPage() {
 
             router.push('/');
         } catch (err: unknown) {
-            const message =
-                err && typeof err === 'object' && 'message' in err
-                    ? String((err as { message: string | string[] }).message)
-                    : 'Failed to change password. Please try again.';
-            setServerError(message);
+            setServerError(getApiErrorMessage(err, 'Failed to change password. Please try again.'));
         }
     }
 
@@ -145,6 +143,7 @@ export default function ChangePasswordPage() {
                                             />
                                         </div>
                                     </FormControl>
+                                    <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
                                     <FormMessage />
                                 </FormItem>
                             )}

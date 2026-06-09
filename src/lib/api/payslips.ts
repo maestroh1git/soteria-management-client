@@ -39,3 +39,27 @@ export function getPayslipDownloadUrl(accessToken: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
   return `${baseUrl}/payslips/download/${accessToken}`;
 }
+
+/**
+ * Download a payslip through the axios client (rather than opening the URL in a
+ * new tab) so an expired link surfaces as a catchable error. Download tokens
+ * expire after ~7 days (PAYSLIP_TOKEN_TTL_DAYS) and then return 410 Gone (S8);
+ * the caller should catch that and prompt the user to re-send the payslip.
+ */
+export async function downloadPayslip(
+  accessToken: string,
+  fileName?: string,
+): Promise<void> {
+  const blob = (await api.get(`/payslips/download/${accessToken}`, {
+    responseType: 'blob',
+  })) as unknown as Blob;
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName || 'payslip.pdf';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}

@@ -19,6 +19,7 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { CurrencyDisplay } from '@/components/common/currency-display';
 import { useEmployee, useBankDetails, useEmployeeSalaryComponents } from '@/lib/hooks/use-employees';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { formatDate } from '@/lib/utils/dates';
@@ -30,9 +31,13 @@ export default function EmployeeDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
+    const { hasRole } = useAuth();
+    // Bank details & salary components are forbidden for VIEWER (S13) — skip the
+    // requests and hide the tabs entirely for roles that can't manage them.
+    const canViewSensitive = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
     const { data: employee, isLoading } = useEmployee(id);
-    const { data: bankDetails = [] } = useBankDetails(id);
-    const { data: salaryComponents = [] } = useEmployeeSalaryComponents(id);
+    const { data: bankDetails = [] } = useBankDetails(id, canViewSensitive);
+    const { data: salaryComponents = [] } = useEmployeeSalaryComponents(id, false, canViewSensitive);
     const { data: history = [], isLoading: historyLoading } = useEntityHistory('Employee', id);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
@@ -63,8 +68,12 @@ export default function EmployeeDetailPage({
             <Tabs defaultValue="overview">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="salary">Salary Components</TabsTrigger>
-                    <TabsTrigger value="bank">Bank Details</TabsTrigger>
+                    {canViewSensitive && (
+                        <TabsTrigger value="salary">Salary Components</TabsTrigger>
+                    )}
+                    {canViewSensitive && (
+                        <TabsTrigger value="bank">Bank Details</TabsTrigger>
+                    )}
                     <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
 
@@ -121,6 +130,7 @@ export default function EmployeeDetailPage({
                 </TabsContent>
 
                 {/* ── Salary Components Tab ── */}
+                {canViewSensitive && (
                 <TabsContent value="salary" className="space-y-4">
                     <Card>
                         <CardHeader>
@@ -178,8 +188,10 @@ export default function EmployeeDetailPage({
                         </CardContent>
                     </Card>
                 </TabsContent>
+                )}
 
                 {/* ── Bank Details Tab ── */}
+                {canViewSensitive && (
                 <TabsContent value="bank" className="space-y-4">
                     <Card>
                         <CardHeader>
@@ -203,8 +215,11 @@ export default function EmployeeDetailPage({
                                         >
                                             <div>
                                                 <p className="font-medium">{bd.bankName}</p>
+                                                {/* Account number/name are encrypted at rest and never
+                                                    returned by the API (@Exclude) — show a masked placeholder. */}
                                                 <p className="text-sm text-muted-foreground">
-                                                    {bd.accountNumber} · {bd.accountName}
+                                                    {bd.accountName ? `${bd.accountName} · ` : ''}
+                                                    •••• •••• (hidden)
                                                 </p>
                                                 {bd.branchCode && (
                                                     <p className="text-xs text-muted-foreground">
@@ -224,6 +239,7 @@ export default function EmployeeDetailPage({
                         </CardContent>
                     </Card>
                 </TabsContent>
+                )}
 
                 {/* ── History Tab ── */}
                 <TabsContent value="history" className="space-y-4">
