@@ -32,8 +32,8 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useCreateEmployee } from '@/lib/hooks/use-employees';
-import { useQuery } from '@tanstack/react-query';
-import { getRoles } from '@/lib/api/roles';
+import { useRolesList } from '@/lib/hooks/use-onboarding';
+import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import {
     createEmployeeSchema,
     type CreateEmployeeValues,
@@ -43,10 +43,11 @@ import { EmployeeGender } from '@/lib/types/enums';
 export default function NewEmployeePage() {
     const router = useRouter();
     const createMutation = useCreateEmployee();
-    const { data: roles = [] } = useQuery({
-        queryKey: ['roles'],
-        queryFn: getRoles,
-    });
+    const rolesQuery = useRolesList();
+    const roles = rolesQuery.data ?? [];
+    // An employee can't be created without a role (required, FK-checked on the
+    // server). If none exist, guard the form rather than leaving a dead-end.
+    const noRoles = rolesQuery.data !== undefined && roles.length === 0;
 
     const form = useForm<CreateEmployeeValues>({
         resolver: zodResolver(createEmployeeSchema),
@@ -90,6 +91,13 @@ export default function NewEmployeePage() {
                 </div>
             </div>
 
+            {noRoles ? (
+                <PrerequisiteNotice
+                    message="You need at least one role before adding employees — every employee must be assigned one."
+                    href="/roles"
+                    actionLabel="Create a role"
+                />
+            ) : (
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {/* Personal Information */}
@@ -329,6 +337,7 @@ export default function NewEmployeePage() {
                     </div>
                 </form>
             </Form>
+            )}
         </div>
     );
 }
