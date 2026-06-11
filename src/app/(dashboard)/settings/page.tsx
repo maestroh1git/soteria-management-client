@@ -529,7 +529,10 @@ export default function SettingsPage() {
                     )}
                 </TabsContent>
 
-                {/* ─── Advanced key/value settings ───────────────────── */}
+                {/* ─── Advanced key/value settings ─────────────────────
+                    TODO(payroll-settings): this store is not consumed by any
+                    payroll calculation yet (see SettingsService in the backend).
+                    Either wire it in or remove this tab + the backend module. */}
                 <TabsContent value="settings" className="space-y-4">
                     <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
                         These are advanced key/value settings and are{' '}
