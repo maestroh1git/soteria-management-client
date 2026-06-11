@@ -22,6 +22,7 @@ import {
     useRecentSalaries,
 } from '@/lib/hooks/use-reports';
 import { BirthdaysWidget } from '@/components/dashboard/birthdays-widget';
+import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils/currency';
 import {
     Users,
@@ -116,6 +117,7 @@ export default function DashboardPage() {
                         Here&apos;s an overview of {tenantName}&apos;s payroll status
                     </p>
                 </div>
+                <GettingStartedCard />
                 <EmptyState
                     icon={BarChart3}
                     title="No payroll data yet"
@@ -138,6 +140,9 @@ export default function DashboardPage() {
                     Here&apos;s an overview of {tenantName}&apos;s payroll status
                 </p>
             </div>
+
+            {/* Onboarding checklist (self-hides once complete/dismissed) */}
+            <GettingStartedCard />
 
             {/* KPI Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
