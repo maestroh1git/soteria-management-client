@@ -34,6 +34,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { usePayPeriods, useCreatePayPeriod, useCurrentPayPeriod } from '@/lib/hooks/use-payroll';
+import { useEmployeesList, useSalaryComponentsList } from '@/lib/hooks/use-onboarding';
+import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { createPayPeriodSchema, type CreatePayPeriodValues } from '@/lib/utils/validation';
 import type { PayPeriodFilters } from '@/lib/types/api';
 import { PayPeriodStatus } from '@/lib/types/enums';
@@ -55,6 +57,14 @@ export default function PayrollPage() {
     const { data: periods, isLoading } = usePayPeriods(filters);
     const { data: currentPeriod } = useCurrentPayPeriod();
     const createMutation = useCreatePayPeriod();
+
+    // Processing payroll yields nothing without active employees that have
+    // salary components — surface the missing prerequisite up front.
+    const { data: employees } = useEmployeesList();
+    const { data: components } = useSalaryComponentsList();
+    const missingEmployees = employees !== undefined && employees.length === 0;
+    const missingComponents =
+        !missingEmployees && components !== undefined && components.length === 0;
 
     const form = useForm<CreatePayPeriodValues>({
         resolver: zodResolver(createPayPeriodSchema),
@@ -86,6 +96,21 @@ export default function PayrollPage() {
                     Create Pay Period
                 </Button>
             </div>
+
+            {missingEmployees && (
+                <PrerequisiteNotice
+                    message="Add employees before running payroll — there's no one to pay yet."
+                    href="/employees"
+                    actionLabel="Add employees"
+                />
+            )}
+            {missingComponents && (
+                <PrerequisiteNotice
+                    message="Add salary components so payroll can calculate gross and net pay."
+                    href="/salary-components"
+                    actionLabel="Add components"
+                />
+            )}
 
             {/* Current Period Card */}
             {currentPeriod && (

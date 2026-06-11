@@ -41,6 +41,7 @@ import {
 } from '@/lib/hooks/use-reports';
 import { toast } from 'sonner';
 import { downloadPayslip } from '@/lib/api/payslips';
+import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { isApiError, getApiErrorMessage } from '@/lib/utils/api-error';
 import type { Payslip } from '@/lib/types/api';
 import { PayslipStatus, PayPeriodStatus } from '@/lib/types/enums';
@@ -61,6 +62,16 @@ export default function PayslipsPage() {
 
     const { data: periods } = usePayPeriods();
     const { data: payslips, isLoading } = usePayslipsByPayPeriod(selectedPeriod);
+
+    // Payslips are generated from processed payroll — if nothing has been
+    // processed yet, point the user back to payroll.
+    const noProcessedPayroll =
+        periods !== undefined &&
+        !periods.some(
+            (p) =>
+                p.status === PayPeriodStatus.PROCESSING ||
+                p.status === PayPeriodStatus.CLOSED,
+        );
 
     const generateBulkMutation = useGenerateBulkPayslips();
     const sendEmailMutation = useSendPayslipEmail();
@@ -130,6 +141,14 @@ export default function PayslipsPage() {
                     </Button>
                 </div>
             </div>
+
+            {noProcessedPayroll && (
+                <PrerequisiteNotice
+                    message="No payroll has been processed yet. Run payroll for a pay period to generate payslips."
+                    href="/payroll"
+                    actionLabel="Go to payroll"
+                />
+            )}
 
             {/* Period selector */}
             <div className="flex gap-3">

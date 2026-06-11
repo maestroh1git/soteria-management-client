@@ -14,6 +14,8 @@ export interface UpdateTenantProfileDto {
   nsitfNumber?: string;
   itfNumber?: string;
   nhfNumber?: string;
+  /** Free-form preferences (jsonb); shallow-merged server-side. */
+  settings?: Record<string, unknown>;
 }
 
 export async function getMyTenant(): Promise<Tenant> {

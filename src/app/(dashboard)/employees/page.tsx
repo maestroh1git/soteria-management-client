@@ -23,6 +23,8 @@ import { DataTable } from '@/components/common/data-table';
 import { StatusBadge } from '@/components/common/status-badge';
 import { useEmployees, useDeleteEmployee } from '@/lib/hooks/use-employees';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useRolesList } from '@/lib/hooks/use-onboarding';
+import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { EmployeeStatus } from '@/lib/types/enums';
 import { formatDate } from '@/lib/utils/dates';
@@ -33,6 +35,12 @@ export default function EmployeesPage() {
     const { hasRole } = useAuth();
     // VIEWER has read-only directory access (S13) — no create/edit/delete.
     const canManage = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    // Only nudge on a *confirmed* empty roles list (data defined ⇒ the request
+    // succeeded); a 403 leaves data undefined and shows nothing rather than a
+    // false "create a role" prompt.
+    const rolesQuery = useRolesList(canManage);
+    const needsRole =
+        canManage && rolesQuery.data !== undefined && rolesQuery.data.length === 0;
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [search, setSearch] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
@@ -141,6 +149,14 @@ export default function EmployeesPage() {
                     </Link>
                 )}
             </div>
+
+            {needsRole && (
+                <PrerequisiteNotice
+                    message="Employees must be assigned a role. Create at least one role before adding employees."
+                    href="/roles"
+                    actionLabel="Create a role"
+                />
+            )}
 
             <div className="flex items-center gap-3">
                 <Select
