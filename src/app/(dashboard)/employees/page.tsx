@@ -141,13 +141,22 @@ export default function EmployeesPage() {
                         Manage your staff directory
                     </p>
                 </div>
-                {canManage && (
-                    <Link href="/employees/new">
-                        <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                {canManage &&
+                    (needsRole ? (
+                        <Button
+                            disabled
+                            title="Create a role first"
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                        >
                             <Plus className="mr-2 h-4 w-4" /> Add Employee
                         </Button>
-                    </Link>
-                )}
+                    ) : (
+                        <Link href="/employees/new">
+                            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                                <Plus className="mr-2 h-4 w-4" /> Add Employee
+                            </Button>
+                        </Link>
+                    ))}
             </div>
 
             {needsRole && (

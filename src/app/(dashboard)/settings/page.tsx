@@ -360,7 +360,7 @@ export default function SettingsPage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground">Manage team, countries and payroll configuration</p>
+                <p className="text-muted-foreground">Manage team, countries and organization profile</p>
             </div>
 
             <Tabs defaultValue={canManageTeam ? 'team' : 'countries'} className="space-y-6">
@@ -377,7 +377,7 @@ export default function SettingsPage() {
                     </TabsTrigger>
                     <TabsTrigger value="settings">
                         <SettingsIcon className="mr-2 h-4 w-4" />
-                        Payroll Settings
+                        Advanced
                     </TabsTrigger>
                     {canManageTeam && (
                         <TabsTrigger value="organization">
@@ -529,8 +529,14 @@ export default function SettingsPage() {
                     )}
                 </TabsContent>
 
-                {/* ─── Payroll Settings ──────────────────────────────── */}
+                {/* ─── Advanced key/value settings ───────────────────── */}
                 <TabsContent value="settings" className="space-y-4">
+                    <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
+                        These are advanced key/value settings and are{' '}
+                        <span className="font-medium">not yet used</span> by payroll
+                        calculation. Pay is driven by salary components and tax rules — you
+                        don&apos;t need to configure anything here to run payroll.
+                    </div>
                     <div className="flex justify-end">
                         <Button onClick={() => openSettingDialog()}>
                             <Plus className="mr-2 h-4 w-4" />
