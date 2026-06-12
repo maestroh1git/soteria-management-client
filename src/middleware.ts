@@ -8,6 +8,7 @@ const publicRoutes = ['/login', '/register'];
 // undefined means accessible to all authenticated users
 const routeRoleMap: Record<string, string[] | undefined> = {
   '/': undefined,
+  '/admin': ['super_admin'],
   '/employees': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'],
   '/roles': ['tenant_owner', 'ADMIN'],
   '/departments': ['tenant_owner', 'ADMIN'],
@@ -19,6 +20,16 @@ const routeRoleMap: Record<string, string[] | undefined> = {
   '/reports': ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'VIEWER'],
   '/settings': ['tenant_owner', 'ADMIN'],
 };
+
+function getUserRoles(request: NextRequest): string[] | null {
+  const cookie = request.cookies.get('user-roles')?.value;
+  if (!cookie) return null;
+  try {
+    return JSON.parse(decodeURIComponent(cookie)) as string[];
+  } catch {
+    return null;
+  }
+}
 
 function getRouteKey(pathname: string): string | null {
   // Exact match first
@@ -52,6 +63,9 @@ export function middleware(request: NextRequest) {
   const isChangePasswordRoute = pathname === '/change-password';
   const mustChangePassword =
     request.cookies.get('must-change-password')?.value === 'true';
+  const userRoles = getUserRoles(request);
+  const isSuperAdmin = userRoles?.includes('super_admin') ?? false;
+  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
 
   // Unauthenticated user trying to access protected route
   if (!token && !isPublicRoute && !isChangePasswordRoute) {
@@ -65,12 +79,26 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/change-password', request.url));
   }
 
-  // Authenticated user trying to access auth pages (except change-password) → redirect to dashboard
+  // Authenticated user trying to access auth pages (except change-password) →
+  // send platform operators to the console, tenant users to the dashboard.
   if (token && isPublicRoute) {
     if (mustChangePassword) {
       return NextResponse.redirect(new URL('/change-password', request.url));
     }
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(
+      new URL(isSuperAdmin ? '/admin' : '/', request.url),
+    );
+  }
+
+  // Platform operators have no tenant context — keep them inside /admin so they
+  // never hit the (broken-for-them) tenant dashboard.
+  if (
+    token &&
+    isSuperAdmin &&
+    !isAdminRoute &&
+    !isChangePasswordRoute
+  ) {
+    return NextResponse.redirect(new URL('/admin', request.url));
   }
 
   // Route-level role guard
@@ -78,24 +106,14 @@ export function middleware(request: NextRequest) {
     const routeKey = getRouteKey(pathname);
     if (routeKey !== null) {
       const allowedRoles = routeRoleMap[routeKey];
-      if (allowedRoles) {
-        const userRolesCookie = request.cookies.get('user-roles')?.value;
-        if (userRolesCookie) {
-          try {
-            const userRoles: string[] = JSON.parse(
-              decodeURIComponent(userRolesCookie),
-            );
-            const hasAccess = allowedRoles.some((role) =>
-              userRoles.includes(role),
-            );
-            if (!hasAccess) {
-              const url = new URL('/', request.url);
-              url.searchParams.set('unauthorized', 'true');
-              return NextResponse.redirect(url);
-            }
-          } catch {
-            // If cookie is malformed, allow through (backend will catch it)
-          }
+      if (allowedRoles && userRoles) {
+        const hasAccess = allowedRoles.some((role) =>
+          userRoles.includes(role),
+        );
+        if (!hasAccess) {
+          const url = new URL('/', request.url);
+          url.searchParams.set('unauthorized', 'true');
+          return NextResponse.redirect(url);
         }
       }
     }
