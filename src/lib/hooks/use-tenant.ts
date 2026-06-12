@@ -7,12 +7,15 @@ import { useAuthStore } from '@/stores/auth-store';
 export function useMyTenant() {
   // The logged-in user no longer carries the tenant object (trimmed JWT/login
   // payload), so the tenant is fetched here. Gate on auth to avoid firing an
-  // unauthenticated request on the login/register screens.
+  // unauthenticated request on the login/register screens. Also gate on a
+  // tenantId: platform operators (super_admin) have none, and /tenants/me
+  // would 404 for them.
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const tenantId = useAuthStore((s) => s.user?.tenantId);
   return useQuery({
     queryKey: ['tenant', 'me'],
     queryFn: getMyTenant,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!tenantId,
     staleTime: 5 * 60 * 1000,
   });
 }

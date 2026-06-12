@@ -70,8 +70,13 @@ function LoginForm() {
                 return;
             }
 
+            // Platform operators (super_admin) land in the admin console; they
+            // have no tenant, so the tenant dashboard isn't meaningful for them.
+            const isSuperAdmin = !!user?.systemRoles?.some(
+                (r) => r.toLowerCase() === 'super_admin',
+            );
             const from = searchParams.get('from') || '/';
-            router.push(from);
+            router.push(isSuperAdmin ? '/admin' : from);
         } catch (err: unknown) {
             setServerError(getApiErrorMessage(err, 'Invalid credentials. Please try again.'));
         }

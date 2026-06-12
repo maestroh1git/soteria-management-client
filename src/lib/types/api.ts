@@ -115,6 +115,7 @@ export interface Tenant {
   kybStatus: KybStatus;
   kybSubmittedAt: string | null;
   kybVerifiedAt: string | null;
+  kybRejectionReason: string | null;
   createdAt: string;
   updatedAt: string;
 }
