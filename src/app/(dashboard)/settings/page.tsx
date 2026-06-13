@@ -679,6 +679,19 @@ export default function SettingsPage() {
                                         </div>
                                     </CardHeader>
                                     <CardContent className="grid gap-4 sm:grid-cols-2">
+                                        {myTenant?.kybStatus === KybStatus.REJECTED && myTenant.kybRejectionReason && (
+                                            <div className="sm:col-span-2 rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/20">
+                                                <p className="text-xs font-semibold text-red-700 dark:text-red-400">
+                                                    Your KYB verification was rejected
+                                                </p>
+                                                <p className="mt-1 text-sm text-red-900 dark:text-red-200">
+                                                    {myTenant.kybRejectionReason}
+                                                </p>
+                                                <p className="mt-1 text-xs text-red-700/80 dark:text-red-400/80">
+                                                    Correct the details below and save to resubmit for review.
+                                                </p>
+                                            </div>
+                                        )}
                                         <div className="space-y-2">
                                             <Label htmlFor="org-cac">CAC RC Number</Label>
                                             <Input id="org-cac" {...orgProfileForm.register('cacNumber')} placeholder="RC123456" />
