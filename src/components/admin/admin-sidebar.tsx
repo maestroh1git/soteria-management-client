@@ -60,7 +60,7 @@ export function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className="flex-1 min-h-0 overflow-hidden px-3 py-4">
         <nav className="space-y-1">
           {NAV.map((item) => {
             const isActive = item.exact

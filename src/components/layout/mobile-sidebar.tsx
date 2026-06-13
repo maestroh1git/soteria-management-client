@@ -94,7 +94,7 @@ export function MobileSidebar() {
                         <span>Soteria Payroll</span>
                     </SheetTitle>
                 </SheetHeader>
-                <ScrollArea className="flex-1 px-3 py-4">
+                <ScrollArea className="flex-1 min-h-0 overflow-hidden px-3 py-4">
                     <nav className="space-y-6">
                         {filteredNavigation.map((group) => (
                             <div key={group.label}>
