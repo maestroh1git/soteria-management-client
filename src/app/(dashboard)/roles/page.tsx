@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import {
     getRoles,
     createRole,
@@ -56,6 +57,14 @@ export default function RolesPage() {
         queryKey: ['roles'],
         queryFn: getRoles,
     });
+    // Roles should be grouped under a department (powers the department-scoped
+    // role picker on the employee form) — nudge users to create one first.
+    const departmentsQuery = useQuery({
+        queryKey: ['departments'],
+        queryFn: getDepartments,
+    });
+    const noDepartments =
+        departmentsQuery.data !== undefined && departmentsQuery.data.length === 0;
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Role | null>(null);
@@ -114,6 +123,14 @@ export default function RolesPage() {
                     <Plus className="mr-2 h-4 w-4" /> Add Role
                 </Button>
             </div>
+
+            {noDepartments && (
+                <PrerequisiteNotice
+                    message="Create a department first, then add roles to it. Departments group your roles and power the department-scoped role picker when adding employees."
+                    href="/departments"
+                    actionLabel="Create a department"
+                />
+            )}
 
             <div className="rounded-md border bg-white dark:bg-slate-950">
                 <table className="w-full text-sm">
