@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,6 +32,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 import { useCreateEmployee } from '@/lib/hooks/use-employees';
 import { useRolesList } from '@/lib/hooks/use-onboarding';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
@@ -44,10 +46,40 @@ export default function NewEmployeePage() {
     const router = useRouter();
     const createMutation = useCreateEmployee();
     const rolesQuery = useRolesList();
-    const roles = rolesQuery.data ?? [];
+    const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
     // An employee can't be created without a role (required, FK-checked on the
     // server). If none exist, guard the form rather than leaving a dead-end.
     const noRoles = rolesQuery.data !== undefined && roles.length === 0;
+
+    // Department is a UI-only filter to scope the (potentially long) role list —
+    // the employee stores only roleId (department is reached via role → dept).
+    const UNASSIGNED = '__unassigned__';
+    const [departmentFilter, setDepartmentFilter] = useState('');
+
+    const departmentOptions = useMemo(() => {
+        const byId = new Map<string, string>();
+        let hasUnassigned = false;
+        for (const role of roles) {
+            if (role.departmentId) {
+                byId.set(role.departmentId, role.department?.name ?? 'Department');
+            } else {
+                hasUnassigned = true;
+            }
+        }
+        const list = Array.from(byId, ([id, name]) => ({ id, name })).sort(
+            (a, b) => a.name.localeCompare(b.name),
+        );
+        return { list, hasUnassigned };
+    }, [roles]);
+
+    const filteredRoles = useMemo(() => {
+        if (!departmentFilter) return [];
+        return roles.filter((role) =>
+            departmentFilter === UNASSIGNED
+                ? !role.departmentId
+                : role.departmentId === departmentFilter,
+        );
+    }, [roles, departmentFilter]);
 
     const form = useForm<CreateEmployeeValues>({
         resolver: zodResolver(createEmployeeSchema),
@@ -283,33 +315,77 @@ export default function NewEmployeePage() {
                                 />
                             </div>
 
-                            <FormField
-                                control={form.control}
-                                name="roleId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Role *</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select a role" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {roles.map((role) => (
-                                                    <SelectItem key={role.id} value={role.id}>
-                                                        {role.name}
-                                                        {role.department
-                                                            ? ` — ${role.department.name}`
-                                                            : ''}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Department *</Label>
+                                    <Select
+                                        value={departmentFilter}
+                                        onValueChange={(value) => {
+                                            setDepartmentFilter(value);
+                                            // The current role may not belong to the
+                                            // new department — clear it.
+                                            form.setValue('roleId', '');
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {departmentOptions.list.map((dept) => (
+                                                <SelectItem key={dept.id} value={dept.id}>
+                                                    {dept.name}
+                                                </SelectItem>
+                                            ))}
+                                            {departmentOptions.hasUnassigned && (
+                                                <SelectItem value={UNASSIGNED}>
+                                                    Unassigned
+                                                </SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        Narrows the roles to choose from.
+                                    </p>
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="roleId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Role *</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                                disabled={!departmentFilter}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={
+                                                                departmentFilter
+                                                                    ? 'Select a role'
+                                                                    : 'Select a department first'
+                                                            }
+                                                        />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {filteredRoles.map((role) => (
+                                                        <SelectItem
+                                                            key={role.id}
+                                                            value={role.id}
+                                                        >
+                                                            {role.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </CardContent>
                     </Card>
 
