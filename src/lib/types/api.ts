@@ -124,6 +124,19 @@ export interface Tenant {
 // Employee module
 // ============================================================
 
+export interface Grade {
+  id: string;
+  tenantId: string;
+  /** Short identifier shown on payroll advices, e.g. 'GL1'. */
+  code: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: string;
   employeeNumber: string;
@@ -138,9 +151,11 @@ export interface Employee {
   joinDate: string;
   terminationDate: string | null;
   roleId: string;
+  gradeId: string | null;
   countryId: string | null;
   status: EmployeeStatus;
   role?: Role;
+  grade?: Grade | null;
   bankDetails?: EmployeeBankDetails[];
   salaryComponents?: EmployeeSalaryComponent[];
   createdAt: string;

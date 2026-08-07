@@ -114,6 +114,15 @@ export default function EmployeeDetailPage({
                                     <InfoRow label="Department" value={employee.role.department.name} />
                                 )}
                                 <InfoRow
+                                    label="Grade"
+                                    value={
+                                        employee.grade
+                                            ? `${employee.grade.code} — ${employee.grade.name}`
+                                            : '—'
+                                    }
+                                />
+
+                                <InfoRow
                                     icon={<Calendar className="h-4 w-4" />}
                                     label="Join Date"
                                     value={formatDate(employee.joinDate)}

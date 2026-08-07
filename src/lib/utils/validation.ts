@@ -16,7 +16,9 @@ export const passwordSchema = z
 
 // ── Employee schemas ────────────────────────────────────────
 export const createEmployeeSchema = z.object({
-  employeeNumber: z.string().min(1, 'Employee number is required'),
+  // Optional: left blank, the server allocates the next number in the tenant's
+  // sequence. Only supply one when importing a record that already has it.
+  employeeNumber: z.string().optional(),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   middleName: z.string().optional(),
@@ -27,11 +29,22 @@ export const createEmployeeSchema = z.object({
   address: z.string().optional(),
   joinDate: z.string().min(1, 'Join date is required'),
   roleId: z.string().uuid('Select a valid role'),
+  gradeId: z.string().uuid().optional(),
   countryId: z.string().uuid().optional(),
   status: z.nativeEnum(EmployeeStatus).optional(),
 });
 
 export const updateEmployeeSchema = createEmployeeSchema.partial();
+
+// ── Grade schemas ───────────────────────────────────────────
+export const createGradeSchema = z.object({
+  code: z.string().min(1, 'Code is required').max(20, 'Code is too long'),
+  name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
+  description: z.string().optional(),
+  sortOrder: z.number().int().min(0).optional(),
+});
+
+export type CreateGradeValues = z.infer<typeof createGradeSchema>;
 
 export type CreateEmployeeValues = z.infer<typeof createEmployeeSchema>;
 export type UpdateEmployeeValues = z.infer<typeof updateEmployeeSchema>;

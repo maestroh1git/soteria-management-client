@@ -19,6 +19,7 @@ import {
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -35,6 +36,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { useCreateEmployee } from '@/lib/hooks/use-employees';
 import { useRolesList } from '@/lib/hooks/use-onboarding';
+import { useGrades } from '@/lib/hooks/use-grades';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import {
     createEmployeeSchema,
@@ -47,6 +49,9 @@ export default function NewEmployeePage() {
     const createMutation = useCreateEmployee();
     const rolesQuery = useRolesList();
     const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
+    // Grade is optional — unlike roles, an employee without one is valid and
+    // simply falls outside any grade-specific payroll rule.
+    const { data: grades = [] } = useGrades();
     // An employee can't be created without a role (required, FK-checked on the
     // server). If none exist, guard the form rather than leaving a dead-end.
     const noRoles = rolesQuery.data !== undefined && roles.length === 0;
@@ -98,12 +103,16 @@ export default function NewEmployeePage() {
     });
 
     async function onSubmit(values: CreateEmployeeValues) {
-        // Clean optional empty strings
+        // Clean optional empty strings. employeeNumber in particular must be
+        // omitted rather than sent as '' — the server treats absence as "assign
+        // the next number from the tenant sequence".
         const dto = {
             ...values,
+            employeeNumber: values.employeeNumber?.trim() || undefined,
             middleName: values.middleName || undefined,
             address: values.address || undefined,
             countryId: values.countryId || undefined,
+            gradeId: values.gradeId || undefined,
         };
         await createMutation.mutateAsync(dto);
         router.push('/employees');
@@ -292,10 +301,18 @@ export default function NewEmployeePage() {
                                     name="employeeNumber"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Employee Number *</FormLabel>
+                                            <FormLabel>Employee Number</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="EMP001" {...field} />
+                                                <Input
+                                                    placeholder="Auto-generated"
+                                                    {...field}
+                                                />
                                             </FormControl>
+                                            <FormDescription>
+                                                Leave blank to generate the next number
+                                                automatically. Only set one when importing
+                                                a record that already has it.
+                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -386,6 +403,41 @@ export default function NewEmployeePage() {
                                     )}
                                 />
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="gradeId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Grade</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value ?? ''}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a grade" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {grades.map((grade) => (
+                                                    <SelectItem
+                                                        key={grade.id}
+                                                        value={grade.id}
+                                                    >
+                                                        {grade.code} — {grade.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>
+                                            Determines which payroll rules and exemptions
+                                            apply.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
 
