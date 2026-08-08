@@ -7,7 +7,8 @@ import type {
 
 // ── Employee CRUD ───────────────────────────────────────────
 export interface CreateEmployeeDto {
-  employeeNumber: string;
+  /** Omit to have the server allocate the next number in the tenant sequence. */
+  employeeNumber?: string;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -18,6 +19,7 @@ export interface CreateEmployeeDto {
   address?: string;
   joinDate: string;
   roleId: string;
+  gradeId?: string;
   countryId?: string;
   status?: string;
 }
