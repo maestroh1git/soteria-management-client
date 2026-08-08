@@ -56,6 +56,7 @@ import {
     useBulkPayment,
 } from '@/lib/hooks/use-payroll';
 import { useAuthStore } from '@/stores/auth-store';
+import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
 import type { Salary, SalaryFilters, PayrollProcessResult } from '@/lib/types/api';
 
@@ -71,6 +72,10 @@ export default function PayrollWorkspacePage() {
     const router = useRouter();
     const payPeriodId = params.payPeriodId as string;
     const user = useAuthStore((s) => s.user);
+    // Raising an adjustment and authorising it are deliberately separate rights.
+    const canApproveAdjustments = (user?.systemRoles ?? []).some((r) =>
+        ['tenant_owner', 'ADMIN', 'APPROVER'].includes(r),
+    );
 
     // Filters & pagination
     const [statusFilter, setStatusFilter] = useState<SalaryStatus | undefined>();
@@ -278,6 +283,14 @@ export default function PayrollWorkspacePage() {
                     </Button>
                 )}
             </div>
+
+            {/* Adjustments — raised before the run, applied only once approved,
+                so they belong above the resulting figures. */}
+            <AdjustmentsPanel
+                payPeriodId={payPeriodId}
+                canApprove={canApproveAdjustments}
+                readOnly={period.status === PayPeriodStatus.CLOSED}
+            />
 
             {/* Salaries Table */}
             {salariesLoading ? (

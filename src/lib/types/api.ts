@@ -124,6 +124,31 @@ export interface Tenant {
 // Employee module
 // ============================================================
 
+export type AdjustmentType = 'EARNING' | 'DEDUCTION' | 'WAIVER';
+export type AdjustmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+/** A one-period change to an employee's pay, requiring management approval. */
+export interface PayrollAdjustment {
+  id: string;
+  tenantId: string;
+  employeeId: string;
+  payPeriodId: string;
+  type: AdjustmentType;
+  /** Set for WAIVER — the standing component being suppressed. */
+  componentId: string | null;
+  label: string;
+  /** Null for WAIVER, which removes an amount rather than adding one. */
+  amount: string | number | null;
+  reason: string | null;
+  status: AdjustmentStatus;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  employee?: Employee;
+  component?: SalaryComponent | null;
+}
+
 export interface Grade {
   id: string;
   tenantId: string;
