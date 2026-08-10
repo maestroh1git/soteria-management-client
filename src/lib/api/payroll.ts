@@ -51,3 +51,51 @@ export async function markSalaryAsPaid(id: string, dto: SalaryPaymentDto): Promi
 export async function bulkPayment(dto: BulkPaymentDto): Promise<BulkPaymentResult> {
   return await api.post('/payroll/bulk-payment', dto) as unknown as BulkPaymentResult;
 }
+
+// ── Bank payment file ───────────────────────────────────────
+
+export interface UnpayableEmployee {
+  salaryId: string;
+  employeeNumber: string;
+  employeeName: string;
+  amount: number;
+  reason: string;
+}
+
+export interface PaymentFilePreview {
+  payPeriodName: string;
+  payableCount: number;
+  totalAmount: number;
+  excludedCount: number;
+  excludedAmount: number;
+  excluded: UnpayableEmployee[];
+}
+
+export async function getPaymentFilePreview(
+  payPeriodId: string,
+): Promise<PaymentFilePreview> {
+  return (await api.get(
+    `/payroll/payment-file/${payPeriodId}/preview`,
+  )) as unknown as PaymentFilePreview;
+}
+
+/**
+ * Downloaded as a blob rather than linked: the endpoint needs the bearer
+ * token, so a plain href would be unauthenticated and 401.
+ */
+export async function downloadPaymentFile(
+  payPeriodId: string,
+  payPeriodName: string,
+): Promise<void> {
+  const response = await api.get(`/payroll/payment-file/${payPeriodId}`, {
+    responseType: 'blob',
+  });
+
+  const blob = new Blob([response as unknown as BlobPart], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `payment_${payPeriodName.replace(/[^\w-]+/g, '_')}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
