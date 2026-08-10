@@ -124,6 +124,20 @@ export interface Tenant {
 // Employee module
 // ============================================================
 
+/** Year-to-date totals, computed on demand from salaries + salary_details. */
+export interface YtdTotals {
+  year: number;
+  contractualSalary: number;
+  additionalEarnings: number;
+  grossSalary: number;
+  totalDeductions: number;
+  netSalary: number;
+  /** Per named deduction, e.g. { 'Interim Tax Provision': 12600 }. */
+  deductionsByComponent: Record<string, number>;
+  /** Periods counted, so a part-year figure is not mistaken for a full one. */
+  periodsIncluded: number;
+}
+
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface LeaveType {
