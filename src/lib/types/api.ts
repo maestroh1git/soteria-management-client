@@ -325,6 +325,12 @@ export interface EmployeeBankDetails {
   accountNumber?: string;
   accountName?: string;
   branchCode?: string | null;
+  /**
+   * Last four digits, e.g. `••••6789`. The only part of the number the server
+   * returns — enough to tell two accounts at the same bank apart when choosing
+   * which to correct, and not enough to pay into one.
+   */
+  accountNumberMasked?: string;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;

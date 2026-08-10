@@ -18,7 +18,8 @@ import { StatusBadge } from '@/components/common/status-badge';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { CurrencyDisplay } from '@/components/common/currency-display';
-import { useEmployee, useBankDetails, useEmployeeSalaryComponents } from '@/lib/hooks/use-employees';
+import { useEmployee, useEmployeeSalaryComponents } from '@/lib/hooks/use-employees';
+import { BankAccountsPanel } from '@/components/employees/bank-accounts-panel';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
@@ -35,8 +36,10 @@ export default function EmployeeDetailPage({
     // Bank details & salary components are forbidden for VIEWER (S13) — skip the
     // requests and hide the tabs entirely for roles that can't manage them.
     const canViewSensitive = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    // Changing where salary lands is the classic payroll fraud, so it is held to
+    // the roles that own payroll rather than everyone who may view an employee.
+    const canManageBank = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
     const { data: employee, isLoading } = useEmployee(id);
-    const { data: bankDetails = [] } = useBankDetails(id, canViewSensitive);
     const { data: salaryComponents = [] } = useEmployeeSalaryComponents(id, false, canViewSensitive);
     const { data: history = [], isLoading: historyLoading } = useEntityHistory('Employee', id);
 
@@ -202,51 +205,11 @@ export default function EmployeeDetailPage({
                 {/* ── Bank Details Tab ── */}
                 {canViewSensitive && (
                 <TabsContent value="bank" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Bank Accounts</CardTitle>
-                            <CardDescription>
-                                Payment destinations for this employee
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {bankDetails.length === 0 ? (
-                                <EmptyState
-                                    title="No bank details"
-                                    description="No bank accounts have been added yet."
-                                />
-                            ) : (
-                                <div className="grid gap-4">
-                                    {bankDetails.map((bd: EmployeeBankDetails) => (
-                                        <div
-                                            key={bd.id}
-                                            className="flex items-center justify-between p-4 rounded-lg border"
-                                        >
-                                            <div>
-                                                <p className="font-medium">{bd.bankName}</p>
-                                                {/* Account number/name are encrypted at rest and never
-                                                    returned by the API (@Exclude) — show a masked placeholder. */}
-                                                <p className="text-sm text-muted-foreground">
-                                                    {bd.accountName ? `${bd.accountName} · ` : ''}
-                                                    •••• •••• (hidden)
-                                                </p>
-                                                {bd.branchCode && (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Branch: {bd.branchCode}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            {bd.isDefault && (
-                                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                    Default
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <BankAccountsPanel
+                        employeeId={id}
+                        employeeName={`${employee.firstName} ${employee.lastName}`}
+                        canEdit={canManageBank}
+                    />
                 </TabsContent>
                 )}
 

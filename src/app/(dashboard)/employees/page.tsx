@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Eye, Pencil, UserX } from 'lucide-react';
+import { MoreHorizontal, Plus, Eye, Pencil, UserX, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -141,22 +141,32 @@ export default function EmployeesPage() {
                         Manage your staff directory
                     </p>
                 </div>
-                {canManage &&
-                    (needsRole ? (
-                        <Button
-                            disabled
-                            title="Create a role first"
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600"
-                        >
-                            <Plus className="mr-2 h-4 w-4" /> Add Employee
-                        </Button>
-                    ) : (
-                        <Link href="/employees/new">
-                            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                                <Plus className="mr-2 h-4 w-4" /> Add Employee
+                {canManage && (
+                    <div className="flex gap-2">
+                        {/* Import stays available even with no roles yet: it can
+                            create them from the file. */}
+                        <Link href="/employees/import">
+                            <Button variant="outline">
+                                <Upload className="mr-2 h-4 w-4" /> Import
                             </Button>
                         </Link>
-                    ))}
+                        {needsRole ? (
+                            <Button
+                                disabled
+                                title="Create a role first"
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                            >
+                                <Plus className="mr-2 h-4 w-4" /> Add Employee
+                            </Button>
+                        ) : (
+                            <Link href="/employees/new">
+                                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                                    <Plus className="mr-2 h-4 w-4" /> Add Employee
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+                )}
             </div>
 
             {needsRole && (
