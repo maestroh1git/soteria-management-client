@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import {
     LayoutDashboard,
     Users,
+    GraduationCap,
     Briefcase,
     Building2,
     Layers,
@@ -55,6 +56,12 @@ const navigation: NavGroup[] = [
         label: 'Overview',
         items: [
             { title: 'Dashboard', href: '/', icon: LayoutDashboard },
+        ],
+    },
+    {
+        label: 'School',
+        items: [
+            { title: 'Students', href: '/students', icon: GraduationCap, roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer', 'academic.teacher'] },
         ],
     },
     {
