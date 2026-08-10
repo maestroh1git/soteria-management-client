@@ -89,6 +89,12 @@ export async function requestOwnLeave(
   return (await api.post('/me/leave/requests', dto)) as unknown as LeaveRequest;
 }
 
+export async function cancelOwnLeave(id: string): Promise<LeaveRequest> {
+  return (await api.post(
+    `/me/leave/requests/${id}/cancel`,
+  )) as unknown as LeaveRequest;
+}
+
 export async function getMyLoans(): Promise<Loan[]> {
   return (await api.get('/me/loans')) as unknown as Loan[];
 }

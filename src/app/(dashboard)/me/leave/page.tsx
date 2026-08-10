@@ -28,6 +28,7 @@ import {
     useMyLeaveBalances,
     useMyLeaveRequests,
     useRequestOwnLeave,
+    useCancelOwnLeave,
 } from '@/lib/hooks/use-self-service';
 import { useLeaveTypes } from '@/lib/hooks/use-leave';
 import type { ApiError, LeaveStatus } from '@/lib/types/api';
@@ -56,6 +57,7 @@ export default function MyLeavePage() {
     const balancesQuery = useMyLeaveBalances();
     const { data: requests = [] } = useMyLeaveRequests();
     const [dialogOpen, setDialogOpen] = useState(false);
+    const cancel = useCancelOwnLeave();
 
     if (balancesQuery.isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -149,6 +151,9 @@ export default function MyLeavePage() {
                                         <th className="px-3 py-2 text-left font-medium">
                                             Status
                                         </th>
+                                        <th className="px-3 py-2 text-right font-medium">
+                                            {' '}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -187,6 +192,30 @@ export default function MyLeavePage() {
                                                     <span className="block text-xs text-muted-foreground">
                                                         {request.decisionNote}
                                                     </span>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2 text-right">
+                                                {/* Withdrawable while still
+                                                    pending, or after approval if
+                                                    plans change — but not once
+                                                    rejected or already
+                                                    withdrawn. */}
+                                                {(request.status === 'PENDING' ||
+                                                    request.status === 'APPROVED') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        disabled={cancel.isPending}
+                                                        onClick={() =>
+                                                            cancel.mutate(request.id)
+                                                        }
+                                                    >
+                                                        {cancel.isPending ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            'Withdraw'
+                                                        )}
+                                                    </Button>
                                                 )}
                                             </td>
                                         </tr>
