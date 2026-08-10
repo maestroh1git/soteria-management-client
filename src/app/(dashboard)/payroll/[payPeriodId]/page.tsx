@@ -57,6 +57,7 @@ import {
 } from '@/lib/hooks/use-payroll';
 import { useAuthStore } from '@/stores/auth-store';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
+import { PaymentFileCard } from '@/components/payroll/payment-file-card';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
 import type { Salary, SalaryFilters, PayrollProcessResult } from '@/lib/types/api';
 
@@ -283,6 +284,13 @@ export default function PayrollWorkspacePage() {
                     </Button>
                 )}
             </div>
+
+            {/* Payment file — the last step of the cycle, so it sits above the
+                salary table where someone lands after approving. */}
+            <PaymentFileCard
+                payPeriodId={payPeriodId}
+                payPeriodName={period.name}
+            />
 
             {/* Adjustments — raised before the run, applied only once approved,
                 so they belong above the resulting figures. */}
