@@ -124,6 +124,53 @@ export interface Tenant {
 // Employee module
 // ============================================================
 
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+export interface LeaveType {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  /** Days granted per leave year. 0 means uncapped. */
+  daysPerYear: string | number;
+  /** Whether the employee is paid. The only field payroll consults. */
+  paid: boolean;
+  carriesOver: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeaveRequest {
+  id: string;
+  tenantId: string;
+  employeeId: string;
+  leaveTypeId: string;
+  startDate: string;
+  /** Inclusive. */
+  endDate: string;
+  days: string | number;
+  reason: string | null;
+  status: LeaveStatus;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  decisionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  employee?: Employee;
+  leaveType?: LeaveType;
+}
+
+export interface LeaveBalance {
+  leaveTypeId: string;
+  leaveTypeName: string;
+  entitlementDays: number;
+  takenDays: number;
+  pendingDays: number;
+  /** Null when the type is uncapped. */
+  remainingDays: number | null;
+}
+
 export type AdjustmentType = 'EARNING' | 'DEDUCTION' | 'WAIVER';
 export type AdjustmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
