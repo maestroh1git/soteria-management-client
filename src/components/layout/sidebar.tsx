@@ -13,6 +13,7 @@ import {
     Briefcase,
     Building2,
     Layers,
+    CalendarDays,
     Calculator,
     CreditCard,
     Receipt,
@@ -52,6 +53,7 @@ const navigation: NavGroup[] = [
             { title: 'Roles', href: '/roles', icon: Briefcase, roles: ['tenant_owner', 'ADMIN'] },
             { title: 'Departments', href: '/departments', icon: Building2, roles: ['tenant_owner', 'ADMIN'] },
             { title: 'Grades', href: '/grades', icon: Layers, roles: ['tenant_owner', 'ADMIN'] },
+            { title: 'Leave', href: '/leave', icon: CalendarDays, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'APPROVER'] },
         ],
     },
     {
