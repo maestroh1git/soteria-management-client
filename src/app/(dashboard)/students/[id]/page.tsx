@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Star, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Star, Loader2, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,7 @@ import {
 import { useAuth } from '@/lib/hooks/use-auth';
 import { formatDate } from '@/lib/utils/dates';
 import type { StudentGuardianLink } from '@/lib/api/students';
+import { AddGuardianDialog } from '@/components/students/add-guardian-dialog';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENOTYPES = ['AA', 'AS', 'SS', 'AC', 'SC'];
@@ -59,6 +60,7 @@ export default function StudentDetailPage({
 
     const [form, setForm] = useState<Record<string, string>>({});
     const [editing, setEditing] = useState(false);
+    const [addingGuardian, setAddingGuardian] = useState(false);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
     if (!student) return <EmptyState title="Student not found" />;
@@ -174,11 +176,22 @@ export default function StudentDetailPage({
 
                 <TabsContent value="guardians" className="space-y-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Guardians</CardTitle>
-                            <CardDescription>
-                                The primary contact is who the school rings first.
-                            </CardDescription>
+                        <CardHeader className="flex flex-row items-start justify-between">
+                            <div>
+                                <CardTitle className="text-lg">Guardians</CardTitle>
+                                <CardDescription>
+                                    The primary contact is who the school rings first.
+                                </CardDescription>
+                            </div>
+                            {canEdit && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAddingGuardian(true)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" /> Add guardian
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             {guardians.length === 0 ? (
@@ -398,6 +411,14 @@ export default function StudentDetailPage({
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <AddGuardianDialog
+                open={addingGuardian}
+                onOpenChange={setAddingGuardian}
+                studentId={id}
+                studentName={`${student.firstName} ${student.lastName}`}
+                isFirst={guardians.length === 0}
+            />
         </div>
     );
 }

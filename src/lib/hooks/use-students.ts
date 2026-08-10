@@ -124,6 +124,7 @@ export function useLinkGuardian(studentId: string) {
             guardianId: string;
             relationship: GuardianRelationship;
             isPrimary?: boolean;
+            canCollect?: boolean;
         }) => linkGuardian(studentId, dto),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['students', studentId, 'guardians'] });

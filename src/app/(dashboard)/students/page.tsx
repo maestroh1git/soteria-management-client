@@ -123,9 +123,9 @@ export default function StudentsPage() {
                                 <Upload className="mr-2 h-4 w-4" /> Import
                             </Button>
                         </Link>
-                        <Link href="/students/import">
+                        <Link href="/students/new">
                             <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                                <Plus className="mr-2 h-4 w-4" /> Add students
+                                <Plus className="mr-2 h-4 w-4" /> Admit student
                             </Button>
                         </Link>
                     </div>
