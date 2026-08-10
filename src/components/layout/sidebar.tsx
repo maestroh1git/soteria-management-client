@@ -14,6 +14,7 @@ import {
     Building2,
     Layers,
     CalendarDays,
+    Wallet,
     Calculator,
     CreditCard,
     Receipt,
@@ -40,6 +41,16 @@ interface NavGroup {
 }
 
 const navigation: NavGroup[] = [
+    {
+        // Deliberately unrestricted. Everyone with an account is also an
+        // employee, including administrators, and the API resolves the subject
+        // from the token — there is nothing here to gate.
+        label: 'My Account',
+        items: [
+            { title: 'My Pay', href: '/me', icon: Wallet },
+            { title: 'My Leave', href: '/me/leave', icon: CalendarDays },
+        ],
+    },
     {
         label: 'Overview',
         items: [
