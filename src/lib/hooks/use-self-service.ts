@@ -8,6 +8,7 @@ import {
   getMyLeaveBalances,
   getMyLeaveRequests,
   requestOwnLeave,
+  cancelOwnLeave,
   getMyLoans,
   type RequestOwnLeaveDto,
 } from '@/lib/api/self-service';
@@ -71,6 +72,21 @@ export function useDownloadMyPayslip() {
   return useMutation({
     mutationFn: ({ id, fileName }: { id: string; fileName: string }) =>
       downloadMyPayslip(id, fileName),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useCancelOwnLeave() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => cancelOwnLeave(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['me', 'leave-requests'] });
+      qc.invalidateQueries({ queryKey: ['me', 'leave-balances'] });
+      // Removes it from the approver's queue too.
+      qc.invalidateQueries({ queryKey: ['leave-requests'] });
+      toast.success('Leave request withdrawn');
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 }
