@@ -41,5 +41,7 @@ export function useAuth() {
     tenantName: tenant?.name ?? user?.tenant?.name ?? 'Organization',
     tenantOrgType:
       tenant?.organizationType ?? user?.tenant?.organizationType ?? null,
+    /** The school's public address — what /apply/[slug] is keyed by. */
+    tenantSlug: tenant?.slug ?? user?.tenant?.slug ?? null,
   };
 }
