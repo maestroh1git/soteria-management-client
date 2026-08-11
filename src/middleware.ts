@@ -1,8 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes that don't require authentication
+// Auth pages. Unauthenticated users may reach them, and authenticated users
+// are redirected AWAY from them — you do not log in twice.
 const publicRoutes = ['/login', '/register'];
+
+/**
+ * Routes open to anyone, matched by prefix.
+ *
+ * Distinct from `publicRoutes` in the direction that matters: nobody is
+ * redirected away from these. A parent with no account must reach them, and a
+ * registrar who is logged in must still be able to open their own application
+ * form to see what parents see.
+ *
+ * Prefix-matched because both carry a parameter — the school's slug and the
+ * application's token. Exact matching, which is what `publicRoutes` uses, would
+ * send every parent to a login page they can never pass.
+ */
+const openRoutes = ['/apply', '/application'];
+
+const isOpenRoute = (pathname: string) =>
+  openRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/'),
+  );
 
 // Route-to-roles map for authorization
 // undefined means accessible to all authenticated users
@@ -66,6 +86,11 @@ export function middleware(request: NextRequest) {
   const userRoles = getUserRoles(request);
   const isSuperAdmin = userRoles?.includes('super_admin') ?? false;
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+
+  // Open to everyone, logged in or not, and never redirected either way.
+  if (isOpenRoute(pathname)) {
+    return NextResponse.next();
+  }
 
   // Unauthenticated user trying to access protected route
   if (!token && !isPublicRoute && !isChangePasswordRoute) {
