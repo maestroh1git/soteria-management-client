@@ -11,6 +11,8 @@ import {
     LayoutDashboard,
     Users,
     GraduationCap,
+    ClipboardList,
+    School,
     Briefcase,
     Building2,
     Layers,
@@ -34,6 +36,15 @@ interface NavItem {
     icon: LucideIcon;
     badge?: string;
     roles?: string[];
+    /**
+     * Organisation types this belongs to. Absent means every tenant.
+     *
+     * Until Phase 3 every feature applied to every tenant, so nothing needed
+     * this. Students and Admissions do not apply to a hospital, and showing
+     * them there would tell a hospital administrator the product was not built
+     * for them.
+     */
+    orgTypes?: string[];
 }
 
 interface NavGroup {
@@ -61,11 +72,16 @@ const navigation: NavGroup[] = [
     {
         label: 'School',
         items: [
-            { title: 'Students', href: '/students', icon: GraduationCap, roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer', 'academic.teacher'] },
+            { title: 'Students', href: '/students', icon: GraduationCap, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer', 'academic.teacher'] },
+            { title: 'Admissions', href: '/admissions', icon: ClipboardList, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer'] },
+            { title: 'Classes', href: '/classes', icon: School, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'academic.teacher'] },
         ],
     },
     {
-        label: 'People',
+        // Renamed from 'People'. Students are people too, and a group called
+        // People that excludes children is a small lie that gets more
+        // confusing as the school side grows.
+        label: 'Staff',
         items: [
             { title: 'Employees', href: '/employees', icon: Users, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'] },
             { title: 'Roles', href: '/roles', icon: Briefcase, roles: ['tenant_owner', 'ADMIN'] },
@@ -122,7 +138,14 @@ export function Sidebar() {
         .map((group) => ({
             ...group,
             items: group.items.filter(
-                (item) => !item.roles || hasRole(item.roles),
+                (item) =>
+                    (!item.roles || hasRole(item.roles)) &&
+                    // An unknown org type shows the unrestricted items only —
+                    // failing closed, so a misconfigured tenant sees less
+                    // rather than something meant for someone else.
+                    (!item.orgTypes ||
+                        (tenantOrgType !== null &&
+                            item.orgTypes.includes(tenantOrgType))),
             ),
         }))
         .filter((group) => group.items.length > 0);
