@@ -9,11 +9,14 @@ import api from './client';
  * that shows nothing.
  */
 
+// REVENUE, not INCOME. This said 'INCOME' until fees arrived and nothing
+// caught it, because the backend had never once produced a revenue account —
+// the string was wrong from the day it was written and unreachable until now.
 export type AccountType =
     | 'ASSET'
     | 'LIABILITY'
     | 'EQUITY'
-    | 'INCOME'
+    | 'REVENUE'
     | 'EXPENSE';
 
 export interface AccountBalance {

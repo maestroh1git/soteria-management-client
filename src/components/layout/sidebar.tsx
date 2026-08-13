@@ -13,6 +13,7 @@ import {
     GraduationCap,
     ClipboardList,
     School,
+    BadgeDollarSign,
     Scale,
     PiggyBank,
     Briefcase,
@@ -77,6 +78,10 @@ const navigation: NavGroup[] = [
             { title: 'Students', href: '/students', icon: GraduationCap, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer', 'academic.teacher'] },
             { title: 'Admissions', href: '/admissions', icon: ClipboardList, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer'] },
             { title: 'Classes', href: '/classes', icon: School, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'academic.teacher'] },
+            // School-gated, unlike the rest of Finance: a price list keyed on
+            // class level only means something to a school. The registrar reads
+            // it to answer a parent on the phone.
+            { title: 'Fees', href: '/fees', icon: BadgeDollarSign, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
         ],
     },
     {
