@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PayrollLedgerCheck } from '@/components/finance/payroll-ledger-check';
 import {
     Dialog,
     DialogContent,
@@ -291,6 +292,8 @@ export default function PayrollWorkspacePage() {
                 payPeriodId={payPeriodId}
                 payPeriodName={period.name}
             />
+
+            <PayrollLedgerCheck payPeriodId={payPeriodId} />
 
             {/* Adjustments — raised before the run, applied only once approved,
                 so they belong above the resulting figures. */}

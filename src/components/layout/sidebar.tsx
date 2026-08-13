@@ -13,6 +13,8 @@ import {
     GraduationCap,
     ClipboardList,
     School,
+    Scale,
+    PiggyBank,
     Briefcase,
     Building2,
     Layers,
@@ -94,6 +96,11 @@ const navigation: NavGroup[] = [
         label: 'Finance',
         items: [
             { title: 'Payroll', href: '/payroll', icon: Calculator, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
+            // Deliberately NOT org-type gated: every tenant spends money,
+            // whatever kind of organisation it is.
+            { title: 'Ledger', href: '/ledger', icon: Scale, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
+            { title: 'Expenses', href: '/expenses', icon: Wallet, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
+            { title: 'Budgets', href: '/budgets', icon: PiggyBank, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
             { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
             { title: 'Loans', href: '/loans', icon: Receipt, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
             { title: 'Tax Rules', href: '/tax-rules', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
