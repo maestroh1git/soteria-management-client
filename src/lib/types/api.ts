@@ -554,31 +554,34 @@ export interface ReportFilters {
 // Report response types
 // ============================================================
 
+// Money arrives as strings and stays that way — `numeric` is exact in Postgres
+// and parsing it into a float on the way through is how a report loses a kobo.
+// `formatCurrency` and `CurrencyDisplay` both take `number | string`.
 export interface MonthlySummary {
   period: { month: number; year: number };
   summary: {
     totalEmployees: number;
-    totalGrossSalary: number;
-    totalNetSalary: number;
-    totalTax: number;
-    totalDeductions: number;
+    totalGrossSalary: string;
+    totalNetSalary: string;
+    totalTax: string;
+    totalDeductions: string;
   };
   employeeBreakdown: Array<{
     employeeId: string;
     employeeName: string;
     employeeNumber: string;
-    grossSalary: number;
-    totalDeductions: number;
-    netSalary: number;
+    grossSalary: string;
+    totalDeductions: string;
+    netSalary: string;
   }>;
 }
 
 export interface TaxSummary {
   year: number;
-  totalTaxCollected: number;
+  totalTaxCollected: string;
   monthlyBreakdown: Array<{
     month: number;
-    totalTax: number;
+    totalTax: string;
     employeeCount: number;
   }>;
 }
@@ -602,9 +605,10 @@ export interface DepartmentCostReport {
   departments: Array<{
     department: string;
     employeeCount: number;
-    totalGross: number;
-    totalNet: number;
-    avgSalary: number;
+    /** Read from the ledger, not from `salaries` — see PHASE2-FINANCE.md. */
+    totalGross: string;
+    totalNet: string;
+    avgSalary: string;
   }>;
 }
 
@@ -614,9 +618,9 @@ export interface YearEndReport {
   taxSummary: TaxSummary;
   loanPortfolio: LoanPortfolioReport;
   totals: {
-    totalGrossSalary: number;
-    totalNetSalary: number;
-    totalTax: number;
-    totalDeductions: number;
+    totalGrossSalary: string;
+    totalNetSalary: string;
+    totalTax: string;
+    totalDeductions: string;
   };
 }

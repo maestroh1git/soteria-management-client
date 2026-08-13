@@ -90,6 +90,12 @@ const navigation: NavGroup[] = [
             { title: 'Departments', href: '/departments', icon: Building2, roles: ['tenant_owner', 'ADMIN'] },
             { title: 'Grades', href: '/grades', icon: Layers, roles: ['tenant_owner', 'ADMIN'] },
             { title: 'Leave', href: '/leave', icon: CalendarDays, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'APPROVER'] },
+            // HR's side of payroll. The roadmap's split (§4.1) is that HR owns
+            // the INPUTS — what someone is paid and why — while Finance owns
+            // the outputs: the postings, the cost report, the payment file.
+            // This catalogue defines what a salary is made of, so it belongs
+            // here beside Grades rather than under Finance.
+            { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
         ],
     },
     {
@@ -101,7 +107,6 @@ const navigation: NavGroup[] = [
             { title: 'Ledger', href: '/ledger', icon: Scale, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
             { title: 'Expenses', href: '/expenses', icon: Wallet, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
             { title: 'Budgets', href: '/budgets', icon: PiggyBank, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
-            { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
             { title: 'Loans', href: '/loans', icon: Receipt, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
             { title: 'Tax Rules', href: '/tax-rules', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
         ],

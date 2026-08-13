@@ -65,19 +65,20 @@ export default function DashboardPage() {
 
     const isLoading = loadingSummary || loadingLoans || loadingDept || loadingYearEnd || loadingRecent;
 
-    // Build payroll trend data from year-end report (last 6 months)
+    // Charts plot numbers, so amounts are converted here and only here — this
+    // is the display boundary the string rule allows for.
     const payrollTrendData = yearEnd?.monthlySummaries
         ?.map((ms) => ({
             month: MONTH_LABELS[ms.period.month - 1],
-            gross: ms.summary.totalGrossSalary,
-            net: ms.summary.totalNetSalary,
+            gross: Number(ms.summary.totalGrossSalary),
+            net: Number(ms.summary.totalNetSalary),
         }))
         .slice(-6) ?? [];
 
     // Build department cost data
     const deptCostData = departmentCost?.departments?.map((d) => ({
         department: d.department,
-        cost: d.totalGross,
+        cost: Number(d.totalGross),
         employees: d.employeeCount,
     })) ?? [];
 

@@ -50,13 +50,15 @@ export default function ReportsPage() {
     const { data: loanPortfolio, isLoading: loanLoading } = useLoanPortfolio();
     const { data: deptCost, isLoading: deptLoading } = useDepartmentCost(month, year);
 
-    const formatCurrency = (v: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(v);
+    // Amounts arrive as strings — `numeric` stays exact all the way from
+    // Postgres and is converted here, at the point of display, and nowhere else.
+    const formatCurrency = (v: number | string) =>
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(Number(v));
 
     // Tax chart data — simple bar visualization
     const maxTax = useMemo(() => {
         if (!taxSummary) return 1;
-        return Math.max(...taxSummary.monthlyBreakdown.map((m) => m.totalTax), 1);
+        return Math.max(...taxSummary.monthlyBreakdown.map((m) => Number(m.totalTax)), 1);
     }, [taxSummary]);
 
     return (
@@ -250,7 +252,7 @@ export default function ReportsPage() {
                                                 <div className="flex-1 h-6 rounded bg-muted overflow-hidden">
                                                     <div
                                                         className="h-full rounded bg-primary transition-all"
-                                                        style={{ width: `${(m.totalTax / maxTax) * 100}%` }}
+                                                        style={{ width: `${(Number(m.totalTax) / maxTax) * 100}%` }}
                                                     />
                                                 </div>
                                                 <span className="w-32 text-sm text-right font-medium">{formatCurrency(m.totalTax)}</span>
