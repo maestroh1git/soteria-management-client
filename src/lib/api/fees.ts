@@ -152,3 +152,211 @@ export async function getFeeProjection(
         params: { sessionId },
     })) as unknown as FeeProjection;
 }
+
+// ── S2: invoicing ────────────────────────────────────────────────────────
+
+export type InvoiceStatus = 'DRAFT' | 'ISSUED' | 'CANCELLED';
+
+export interface InvoiceSummary {
+    id: string;
+    invoiceNumber: string | null;
+    status: InvoiceStatus;
+    origin: 'STRUCTURE' | 'MANUAL';
+    issueDate: string | null;
+    dueDate: string | null;
+    admissionNumber: string;
+    studentName: string;
+    classLevel: string;
+    termName: string;
+    charges: string;
+    discounts: string;
+    total: string;
+}
+
+export interface InvoiceLine {
+    id: string;
+    kind: 'CHARGE' | 'DISCOUNT';
+    description: string;
+    amount: string;
+    feeItemId: string | null;
+    concessionId: string | null;
+    sortOrder: number;
+}
+
+export interface InvoiceDetail {
+    id: string;
+    invoiceNumber: string | null;
+    status: InvoiceStatus;
+    issueDate: string | null;
+    dueDate: string | null;
+    notes: string | null;
+    cancellationReason: string | null;
+    lines: InvoiceLine[];
+    charges: string;
+    discounts: string;
+    total: string;
+    /** What the server says may happen next. The screen renders from this. */
+    allowedTransitions: InvoiceStatus[];
+    student?: { id: string; firstName: string; lastName: string; admissionNumber: string };
+    term?: { id: string; name: string };
+    classLevel?: { id: string; name: string };
+}
+
+export interface RunPreview {
+    term: { id: string; name: string; sessionId: string };
+    willBill: Array<{
+        studentId: string;
+        admissionNumber: string;
+        studentName: string;
+        classLevel: string;
+        charges: string;
+        discounts: string;
+        total: string;
+        warnings: string[];
+    }>;
+    skipped: Array<{
+        studentId: string;
+        admissionNumber: string;
+        studentName: string;
+        reason: string;
+    }>;
+    totalCharges: string;
+    totalDiscounts: string;
+    total: string;
+    pendingConcessions: Array<{ studentName: string; reason: string }>;
+}
+
+export interface Concession {
+    id: string;
+    kind: 'PERCENTAGE' | 'FIXED';
+    value: string;
+    reason: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    requestedBy: string | null;
+    approvedBy: string | null;
+    studentId: string;
+    admissionNumber: string;
+    studentName: string;
+    feeItemId: string | null;
+    feeName: string | null;
+    termId: string | null;
+    termName: string | null;
+}
+
+export async function getInvoiceRunPreview(termId: string): Promise<RunPreview> {
+    return (await api.get('/fees/invoices/preview', {
+        params: { termId },
+    })) as unknown as RunPreview;
+}
+
+export async function generateInvoices(data: {
+    termId: string;
+    dueDate?: string;
+}): Promise<{ created: number; skipped: number }> {
+    return (await api.post('/fees/invoices/generate', data)) as unknown as {
+        created: number;
+        skipped: number;
+    };
+}
+
+export async function issueTermInvoices(termId: string): Promise<{
+    issued: number;
+    failed: Array<{ studentId: string; reason: string }>;
+}> {
+    return (await api.post(`/fees/invoices/issue-term/${termId}`, {})) as unknown as {
+        issued: number;
+        failed: Array<{ studentId: string; reason: string }>;
+    };
+}
+
+export async function issueInvoice(id: string): Promise<InvoiceDetail> {
+    return (await api.post(`/fees/invoices/${id}/issue`, {})) as unknown as InvoiceDetail;
+}
+
+export async function cancelInvoice(
+    id: string,
+    reason: string,
+): Promise<{ cancelled: boolean; deleted: boolean }> {
+    return (await api.post(`/fees/invoices/${id}/cancel`, { reason })) as unknown as {
+        cancelled: boolean;
+        deleted: boolean;
+    };
+}
+
+export async function getInvoices(filters?: {
+    termId?: string;
+    studentId?: string;
+    status?: InvoiceStatus;
+}): Promise<InvoiceSummary[]> {
+    return (await api.get('/fees/invoices', {
+        params: filters ?? {},
+    })) as unknown as InvoiceSummary[];
+}
+
+export async function getInvoice(id: string): Promise<InvoiceDetail> {
+    return (await api.get(`/fees/invoices/${id}`)) as unknown as InvoiceDetail;
+}
+
+export async function getConcessions(filters?: {
+    studentId?: string;
+    sessionId?: string;
+    status?: string;
+}): Promise<Concession[]> {
+    return (await api.get('/fees/concessions', {
+        params: filters ?? {},
+    })) as unknown as Concession[];
+}
+
+export async function createConcession(data: {
+    studentId: string;
+    sessionId: string;
+    feeItemId?: string;
+    termId?: string;
+    kind: 'PERCENTAGE' | 'FIXED';
+    value: number;
+    reason: string;
+}): Promise<Concession> {
+    return (await api.post('/fees/concessions', data)) as unknown as Concession;
+}
+
+export async function approveConcession(id: string): Promise<Concession> {
+    return (await api.post(`/fees/concessions/${id}/approve`, {})) as unknown as Concession;
+}
+
+export async function rejectConcession(id: string): Promise<Concession> {
+    return (await api.post(`/fees/concessions/${id}/reject`, {})) as unknown as Concession;
+}
+
+export async function getSubscriptions(filters?: {
+    studentId?: string;
+    sessionId?: string;
+}): Promise<
+    Array<{
+        id: string;
+        studentId: string;
+        studentName: string;
+        admissionNumber: string;
+        feeItemId: string;
+        feeName: string;
+        amount: string | null;
+        active: boolean;
+        notes: string | null;
+    }>
+> {
+    return (await api.get('/fees/subscriptions', {
+        params: filters ?? {},
+    })) as unknown as any;
+}
+
+export async function subscribeStudentFee(data: {
+    studentId: string;
+    feeItemId: string;
+    sessionId: string;
+    amount?: number;
+    notes?: string;
+}): Promise<{ id: string; amount: string | null }> {
+    return (await api.post('/fees/subscriptions', data)) as unknown as {
+        id: string;
+        amount: string | null;
+    };
+}

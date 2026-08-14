@@ -14,6 +14,7 @@ import {
     ClipboardList,
     School,
     BadgeDollarSign,
+    ReceiptText,
     Scale,
     PiggyBank,
     Briefcase,
@@ -82,6 +83,7 @@ const navigation: NavGroup[] = [
             // class level only means something to a school. The registrar reads
             // it to answer a parent on the phone.
             { title: 'Fees', href: '/fees', icon: BadgeDollarSign, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
+            { title: 'Invoices', href: '/fees/invoices', icon: ReceiptText, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
         ],
     },
     {
