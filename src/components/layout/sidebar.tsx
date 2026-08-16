@@ -17,6 +17,7 @@ import {
     ReceiptText,
     HandCoins,
     TrendingDown,
+    Landmark,
     Scale,
     PiggyBank,
     Briefcase,
@@ -118,6 +119,8 @@ const navigation: NavGroup[] = [
             { title: 'Ledger', href: '/ledger', icon: Scale, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
             { title: 'Expenses', href: '/expenses', icon: Wallet, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
             { title: 'Budgets', href: '/budgets', icon: PiggyBank, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
+            // Not org-type gated: every organisation has a bank account.
+            { title: 'Bank', href: '/banking', icon: Landmark, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
             { title: 'Loans', href: '/loans', icon: Receipt, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
             { title: 'Tax Rules', href: '/tax-rules', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
         ],
