@@ -17,7 +17,7 @@ const publicRoutes = ['/login', '/register'];
  * application's token. Exact matching, which is what `publicRoutes` uses, would
  * send every parent to a login page they can never pass.
  */
-const openRoutes = ['/apply', '/application'];
+const openRoutes = ['/apply', '/application', '/invoice'];
 
 const isOpenRoute = (pathname: string) =>
   openRoutes.some(

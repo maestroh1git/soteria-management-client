@@ -360,3 +360,100 @@ export async function subscribeStudentFee(data: {
         amount: string | null;
     };
 }
+
+// ── S3: receipts and allocation ──────────────────────────────────────────
+
+export interface OutstandingInvoice {
+    invoiceId: string;
+    invoiceNumber: string | null;
+    studentId: string;
+    studentName: string;
+    admissionNumber: string;
+    termName: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    total: string;
+    paid: string;
+    outstanding: string;
+}
+
+export interface Receipt {
+    id: string;
+    receiptNumber: string;
+    amount: string;
+    method: string;
+    paidOn: string;
+    reference: string | null;
+    status: 'RECEIVED' | 'VOIDED';
+    payerName: string | null;
+    admissionNumber: string;
+    studentName: string;
+    allocated: string;
+    unallocated: string;
+}
+
+export interface Statement {
+    student: { id: string; name: string; admissionNumber: string };
+    entries: Array<{
+        date: string;
+        description: string;
+        charge: string | null;
+        payment: string | null;
+        balance: string;
+    }>;
+    balance: string;
+    unallocatedCredit: string;
+}
+
+export async function getOutstanding(filters?: {
+    studentId?: string;
+    guardianOf?: string;
+    termId?: string;
+}): Promise<OutstandingInvoice[]> {
+    return (await api.get('/fees/outstanding', {
+        params: filters ?? {},
+    })) as unknown as OutstandingInvoice[];
+}
+
+export async function recordPayment(data: {
+    studentId: string;
+    amount: number;
+    method: string;
+    paidOn: string;
+    depositAccountId: string;
+    reference?: string;
+    payerName?: string;
+    allocations?: Array<{ invoiceId: string; amount: number }>;
+    notes?: string;
+}): Promise<Receipt> {
+    return (await api.post('/fees/payments', data)) as unknown as Receipt;
+}
+
+export async function allocatePayment(
+    id: string,
+    allocations: Array<{ invoiceId: string; amount: number }>,
+): Promise<Receipt> {
+    return (await api.post(`/fees/payments/${id}/allocate`, {
+        allocations,
+    })) as unknown as Receipt;
+}
+
+export async function voidPayment(id: string, reason: string): Promise<Receipt> {
+    return (await api.post(`/fees/payments/${id}/void`, {
+        reason,
+    })) as unknown as Receipt;
+}
+
+export async function getPayments(filters?: {
+    studentId?: string;
+    from?: string;
+    to?: string;
+}): Promise<Receipt[]> {
+    return (await api.get('/fees/payments', {
+        params: filters ?? {},
+    })) as unknown as Receipt[];
+}
+
+export async function getStatement(studentId: string): Promise<Statement> {
+    return (await api.get(`/fees/statement/${studentId}`)) as unknown as Statement;
+}

@@ -23,6 +23,12 @@ import {
     setFeePrice,
     subscribeStudentFee,
     updateFeeItem,
+    getOutstanding,
+    getPayments,
+    getStatement,
+    recordPayment,
+    allocatePayment,
+    voidPayment,
     type InvoiceStatus,
 } from '../api/fees';
 
@@ -288,6 +294,82 @@ export function useSubscribeStudentFee() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['fees'] });
             toast.success('Added');
+        },
+    });
+}
+
+// ── S3: receipts and allocation ──────────────────────────────────────────
+
+export function useOutstanding(filters?: {
+    studentId?: string;
+    guardianOf?: string;
+    termId?: string;
+}) {
+    return useQuery({
+        queryKey: ['fees', 'outstanding', filters],
+        queryFn: () => getOutstanding(filters),
+    });
+}
+
+export function usePayments(filters?: {
+    studentId?: string;
+    from?: string;
+    to?: string;
+}) {
+    return useQuery({
+        queryKey: ['fees', 'payments', filters],
+        queryFn: () => getPayments(filters),
+    });
+}
+
+export function useStatement(studentId?: string) {
+    return useQuery({
+        queryKey: ['fees', 'statement', studentId],
+        queryFn: () => getStatement(studentId!),
+        enabled: !!studentId,
+    });
+}
+
+export function useRecordPayment() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: recordPayment,
+        onSuccess: (receipt) => {
+            // Everything money-shaped shifts: what is owed, the ledger, the
+            // statement. Invalidating the whole namespace is cheaper than
+            // being clever and missing one.
+            qc.invalidateQueries({ queryKey: ['fees'] });
+            qc.invalidateQueries({ queryKey: ['finance'] });
+            toast.success(`Receipt ${receipt.receiptNumber} recorded`);
+        },
+    });
+}
+
+export function useAllocatePayment() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            allocations,
+        }: {
+            id: string;
+            allocations: Array<{ invoiceId: string; amount: number }>;
+        }) => allocatePayment(id, allocations),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['fees'] });
+            toast.success('Credit applied');
+        },
+    });
+}
+
+export function useVoidPayment() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+            voidPayment(id, reason),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['fees'] });
+            toast.success('Receipt voided — what it settled is owed again');
         },
     });
 }

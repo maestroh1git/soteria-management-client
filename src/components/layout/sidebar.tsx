@@ -15,6 +15,7 @@ import {
     School,
     BadgeDollarSign,
     ReceiptText,
+    HandCoins,
     Scale,
     PiggyBank,
     Briefcase,
@@ -84,6 +85,7 @@ const navigation: NavGroup[] = [
             // it to answer a parent on the phone.
             { title: 'Fees', href: '/fees', icon: BadgeDollarSign, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
             { title: 'Invoices', href: '/fees/invoices', icon: ReceiptText, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
+            { title: 'Receipts', href: '/fees/payments', icon: HandCoins, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
         ],
     },
     {
