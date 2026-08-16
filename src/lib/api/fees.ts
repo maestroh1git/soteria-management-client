@@ -457,3 +457,70 @@ export async function getPayments(filters?: {
 export async function getStatement(studentId: string): Promise<Statement> {
     return (await api.get(`/fees/statement/${studentId}`)) as unknown as Statement;
 }
+
+// ── S4: arrears and collection ───────────────────────────────────────────
+
+export interface DebtorRow {
+    studentId: string;
+    admissionNumber: string;
+    studentName: string;
+    classLevel: string;
+    guardianName: string | null;
+    guardianPhone: string | null;
+    current: string;
+    days30: string;
+    days60: string;
+    days90: string;
+    days90Plus: string;
+    total: string;
+    credit: string;
+    netOwed: string;
+}
+
+export interface DebtorsReport {
+    asOf: string;
+    rows: DebtorRow[];
+    totals: Omit<DebtorRow, 'studentId' | 'admissionNumber' | 'studentName' | 'classLevel' | 'guardianName' | 'guardianPhone'>;
+}
+
+export interface TermCollection {
+    termId: string;
+    termName: string;
+    sessionName: string;
+    sortOrder: number;
+    billed: string;
+    collected: string;
+    outstanding: string;
+    collectionRate: number | null;
+    studentsOwing: number;
+}
+
+export interface FeeSummary {
+    term: { id: string; name: string } | null;
+    billed: string;
+    collected: string;
+    outstanding: string;
+    collectionRate: number | null;
+    studentsOwing: number;
+    unallocatedCredit: string;
+}
+
+export async function getDebtors(asOf?: string): Promise<DebtorsReport> {
+    return (await api.get('/fees/debtors', {
+        params: asOf ? { asOf } : {},
+    })) as unknown as DebtorsReport;
+}
+
+export async function getCollectionByTerm(
+    sessionId?: string,
+): Promise<TermCollection[]> {
+    return (await api.get('/fees/collection/by-term', {
+        params: sessionId ? { sessionId } : {},
+    })) as unknown as TermCollection[];
+}
+
+export async function getFeeSummary(termId?: string): Promise<FeeSummary> {
+    return (await api.get('/fees/summary', {
+        params: termId ? { termId } : {},
+    })) as unknown as FeeSummary;
+}

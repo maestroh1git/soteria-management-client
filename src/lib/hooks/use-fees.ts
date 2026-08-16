@@ -29,6 +29,9 @@ import {
     recordPayment,
     allocatePayment,
     voidPayment,
+    getDebtors,
+    getCollectionByTerm,
+    getFeeSummary,
     type InvoiceStatus,
 } from '../api/fees';
 
@@ -371,5 +374,28 @@ export function useVoidPayment() {
             qc.invalidateQueries({ queryKey: ['fees'] });
             toast.success('Receipt voided — what it settled is owed again');
         },
+    });
+}
+
+// ── S4: arrears and collection ───────────────────────────────────────────
+
+export function useDebtors(asOf?: string) {
+    return useQuery({
+        queryKey: ['fees', 'debtors', asOf],
+        queryFn: () => getDebtors(asOf),
+    });
+}
+
+export function useCollectionByTerm(sessionId?: string) {
+    return useQuery({
+        queryKey: ['fees', 'collection', 'by-term', sessionId],
+        queryFn: () => getCollectionByTerm(sessionId),
+    });
+}
+
+export function useFeeSummary(termId?: string) {
+    return useQuery({
+        queryKey: ['fees', 'summary', termId],
+        queryFn: () => getFeeSummary(termId),
     });
 }

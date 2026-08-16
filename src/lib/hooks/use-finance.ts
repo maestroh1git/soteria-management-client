@@ -16,6 +16,7 @@ import {
     getBudgetVariance,
     createBudget,
     deleteBudget,
+    getIncomeStatement,
 } from '../api/finance';
 
 // ── Ledger ──────────────────────────────────────────────────────────────────
@@ -182,5 +183,20 @@ export function useDeleteBudget() {
             toast.success('Budget removed');
         },
         onError: (e: Error) => toast.error(e.message || 'Could not remove it'),
+    });
+}
+
+/**
+ * What was earned and what it cost, over a period.
+ *
+ * The report the Phase 4 milestone is written in terms of, and the first one
+ * that could not exist before fees — until then every posting this system made
+ * was a cost or a liability.
+ */
+export function useIncomeStatement(from?: string, to?: string) {
+    return useQuery({
+        queryKey: ['finance', 'income-statement', from, to],
+        queryFn: () => getIncomeStatement(from!, to!),
+        enabled: !!from && !!to,
     });
 }

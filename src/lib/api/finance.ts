@@ -267,3 +267,24 @@ export async function createBudget(dto: {
 export async function deleteBudget(id: string): Promise<void> {
     await api.delete(`/budgets/${id}`);
 }
+
+// ── The net position ─────────────────────────────────────────────────────
+
+export interface IncomeStatement {
+    from: string;
+    to: string;
+    revenue: Array<{ code: string; name: string; amount: string }>;
+    expenses: Array<{ code: string; name: string; amount: string }>;
+    totalRevenue: string;
+    totalExpenses: string;
+    net: string;
+}
+
+export async function getIncomeStatement(
+    from: string,
+    to: string,
+): Promise<IncomeStatement> {
+    return (await api.get('/ledger/income-statement', {
+        params: { from, to },
+    })) as unknown as IncomeStatement;
+}

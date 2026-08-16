@@ -16,6 +16,7 @@ import {
     BadgeDollarSign,
     ReceiptText,
     HandCoins,
+    TrendingDown,
     Scale,
     PiggyBank,
     Briefcase,
@@ -86,6 +87,7 @@ const navigation: NavGroup[] = [
             { title: 'Fees', href: '/fees', icon: BadgeDollarSign, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
             { title: 'Invoices', href: '/fees/invoices', icon: ReceiptText, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
             { title: 'Receipts', href: '/fees/payments', icon: HandCoins, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
+            { title: 'Arrears', href: '/fees/arrears', icon: TrendingDown, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
         ],
     },
     {
