@@ -235,3 +235,79 @@ export async function downloadStudentTemplate(): Promise<Blob> {
     });
     return res as unknown as Blob;
 }
+
+// ── Documents ───────────────────────────────────────────────────────────────
+
+export type DocumentKind =
+    | 'BIRTH_CERTIFICATE'
+    | 'IMMUNISATION_RECORD'
+    | 'PREVIOUS_SCHOOL_REPORT'
+    | 'PHOTOGRAPH'
+    | 'IDENTIFICATION'
+    | 'OTHER';
+
+export interface StudentDocument {
+    id: string;
+    kind: DocumentKind;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    description: string | null;
+    retainUntil: string | null;
+    createdAt: string;
+}
+
+export async function getStudentDocuments(
+    studentId: string,
+): Promise<StudentDocument[]> {
+    return (await api.get(
+        `/students/${studentId}/documents`,
+    )) as unknown as StudentDocument[];
+}
+
+export async function attachStudentDocument(
+    studentId: string,
+    file: File,
+    kind: DocumentKind,
+    description?: string,
+): Promise<StudentDocument> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('kind', kind);
+    if (description) form.append('description', description);
+    // No explicit Content-Type: the browser must set the multipart boundary.
+    return (await api.post(
+        `/students/${studentId}/documents`,
+        form,
+    )) as unknown as StudentDocument;
+}
+
+export async function removeStudentDocument(
+    studentId: string,
+    documentId: string,
+): Promise<void> {
+    await api.delete(`/students/${studentId}/documents/${documentId}`);
+}
+
+/**
+ * As a blob, not an href: the endpoint needs the bearer token, so a plain link
+ * would be unauthenticated and 401. Same reason as every other download here.
+ */
+export async function downloadStudentDocument(
+    studentId: string,
+    documentId: string,
+    fileName: string,
+    mimeType: string,
+): Promise<void> {
+    const response = await api.get(
+        `/students/${studentId}/documents/${documentId}/download`,
+        { responseType: 'blob' },
+    );
+    const blob = new Blob([response as unknown as BlobPart], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+}

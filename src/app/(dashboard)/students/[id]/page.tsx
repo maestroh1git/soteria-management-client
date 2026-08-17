@@ -34,6 +34,7 @@ import {
     useUpsertStudentMedical,
 } from '@/lib/hooks/use-students';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { StudentDocuments } from '@/components/students/student-documents';
 import { formatDate } from '@/lib/utils/dates';
 import type { StudentGuardianLink } from '@/lib/api/students';
 import { AddGuardianDialog } from '@/components/students/add-guardian-dialog';
@@ -140,6 +141,7 @@ export default function StudentDetailPage({
                         Guardians{guardians.length ? ` (${guardians.length})` : ''}
                     </TabsTrigger>
                     <TabsTrigger value="medical">Medical</TabsTrigger>
+                    <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="bio" className="space-y-4">
@@ -410,6 +412,22 @@ export default function StudentDetailPage({
                         </CardContent>
                     </Card>
                 </TabsContent>
+            
+                <TabsContent value="documents" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Documents</CardTitle>
+                            <CardDescription>
+                                Papers that came with this child. Anything uploaded with
+                                their application moved here when they enrolled.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <StudentDocuments studentId={id} canEdit={canEdit} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
             </Tabs>
 
             <AddGuardianDialog

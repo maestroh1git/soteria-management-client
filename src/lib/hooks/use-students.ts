@@ -13,9 +13,13 @@ import {
     createGuardian,
     linkGuardian,
     getStudentImportOptions,
+    getStudentDocuments,
+    attachStudentDocument,
+    removeStudentDocument,
     type Student,
     type StudentMedical,
     type GuardianRelationship,
+    type DocumentKind,
 } from '../api/students';
 
 export function useStudents(filters?: {
@@ -138,5 +142,49 @@ export function useStudentImportOptions() {
     return useQuery({
         queryKey: ['students', 'import', 'options'],
         queryFn: getStudentImportOptions,
+    });
+}
+
+// ── Documents ───────────────────────────────────────────────────────────────
+
+export function useStudentDocuments(studentId?: string) {
+    return useQuery({
+        queryKey: ['students', studentId, 'documents'],
+        queryFn: () => getStudentDocuments(studentId!),
+        enabled: !!studentId,
+    });
+}
+
+export function useAttachStudentDocument(studentId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            file,
+            kind,
+            description,
+        }: {
+            file: File;
+            kind: DocumentKind;
+            description?: string;
+        }) => attachStudentDocument(studentId, file, kind, description),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['students', studentId, 'documents'] });
+            toast.success('Document attached');
+        },
+        // The server refuses anything that is not really a PDF or an image, by
+        // reading the file rather than believing it. Worth showing verbatim.
+        onError: (e: Error) => toast.error(e.message || 'Could not attach that'),
+    });
+}
+
+export function useRemoveStudentDocument(studentId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (documentId: string) =>
+            removeStudentDocument(studentId, documentId),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['students', studentId, 'documents'] });
+            toast.success('Document removed');
+        },
     });
 }
