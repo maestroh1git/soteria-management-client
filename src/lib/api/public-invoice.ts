@@ -35,3 +35,14 @@ export async function getPublicInvoice(
     const { data } = await publicApi.get(`/invoice/${accessToken}`);
     return data;
 }
+
+/**
+ * The parent's own copy.
+ *
+ * A plain URL, unlike every other download here: this route is public and
+ * carries no bearer token, so the browser can fetch it directly and an
+ * ordinary link is both simpler and better behaved on a phone.
+ */
+export function publicInvoicePdfUrl(accessToken: string): string {
+    return `${base}/invoice/${accessToken}/pdf`;
+}

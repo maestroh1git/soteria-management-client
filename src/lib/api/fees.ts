@@ -524,3 +524,42 @@ export async function getFeeSummary(termId?: string): Promise<FeeSummary> {
         params: termId ? { termId } : {},
     })) as unknown as FeeSummary;
 }
+
+// ── D3: the documents a parent receives ──────────────────────────────────
+
+/**
+ * Downloaded as a blob rather than linked, because the endpoint needs the
+ * bearer token — the same reason the payment file and expense receipts do it.
+ */
+async function downloadPdf(path: string, fileName: string): Promise<void> {
+    const response = await api.get(path, { responseType: 'blob' });
+    const blob = new Blob([response as unknown as BlobPart], {
+        type: 'application/pdf',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+export function downloadInvoicePdf(
+    invoiceId: string,
+    invoiceNumber: string | null,
+): Promise<void> {
+    return downloadPdf(
+        `/fees/invoices/${invoiceId}/pdf`,
+        `invoice-${invoiceNumber ?? 'draft'}.pdf`,
+    );
+}
+
+export function downloadReceiptPdf(
+    paymentId: string,
+    receiptNumber: string,
+): Promise<void> {
+    return downloadPdf(
+        `/fees/payments/${paymentId}/pdf`,
+        `receipt-${receiptNumber}.pdf`,
+    );
+}

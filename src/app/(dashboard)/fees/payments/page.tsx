@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, Info } from 'lucide-react';
+import { Loader2, Plus, Info, Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,7 @@ import {
     useRecordPayment,
     useVoidPayment,
 } from '@/lib/hooks/use-fees';
+import { downloadReceiptPdf } from '@/lib/api/fees';
 
 const money = (v: string) => {
     const [whole, fraction = '00'] = (v ?? '0').split('.');
@@ -146,16 +147,31 @@ export default function PaymentsPage() {
                                             {p.status === 'VOIDED' ? (
                                                 <Badge variant="outline">Voided</Badge>
                                             ) : (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setVoidTarget(p.id);
-                                                        setVoidReason('');
-                                                    }}
-                                                >
-                                                    Void
-                                                </Button>
+                                                <div className="flex justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Download receipt"
+                                                        onClick={() =>
+                                                            downloadReceiptPdf(
+                                                                p.id,
+                                                                p.receiptNumber,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setVoidTarget(p.id);
+                                                            setVoidReason('');
+                                                        }}
+                                                    >
+                                                        Void
+                                                    </Button>
+                                                </div>
                                             )}
                                         </td>
                                     </tr>

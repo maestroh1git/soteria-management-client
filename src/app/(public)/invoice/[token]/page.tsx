@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, Loader2 } from 'lucide-react';
 
 import {
     Card,
@@ -10,7 +10,11 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { getPublicInvoice, type PublicInvoice } from '@/lib/api/public-invoice';
+import {
+    getPublicInvoice,
+    publicInvoicePdfUrl,
+    type PublicInvoice,
+} from '@/lib/api/public-invoice';
 
 const money = (v: string) => {
     const [whole, fraction = '00'] = (v ?? '0').split('.');
@@ -186,6 +190,19 @@ export default function PublicInvoicePage({
                     </CardContent>
                 </Card>
             )}
+
+            <div className="text-center">
+                {/* A plain link: this route is public and carries no token, so
+                    there is nothing to attach and a link behaves better on a
+                    phone than a scripted download. */}
+                <a
+                    href={publicInvoicePdfUrl(token)}
+                    className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm hover:bg-muted"
+                >
+                    <Download className="h-4 w-4" />
+                    Download a copy
+                </a>
+            </div>
 
             <p className="text-center text-xs text-muted-foreground">
                 Questions about this bill? Please contact the school office.

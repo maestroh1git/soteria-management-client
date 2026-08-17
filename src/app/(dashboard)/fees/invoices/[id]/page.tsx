@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
     useInvoice,
     useIssueInvoice,
 } from '@/lib/hooks/use-fees';
+import { downloadInvoicePdf } from '@/lib/api/fees';
 
 const money = (v: string) => {
     const [whole, fraction = '00'] = (v ?? '0').split('.');
@@ -84,6 +85,20 @@ export default function InvoiceDetailPage() {
 
                 <div className="flex items-center gap-2">
                     <Badge variant="secondary">{invoice.status}</Badge>
+                    {invoice.status !== 'DRAFT' && (
+                        // Only for a real document. A draft has been sent to
+                        // nobody, and handing somebody a PDF of one invites it
+                        // being treated as a bill.
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                downloadInvoicePdf(invoice.id, invoice.invoiceNumber)
+                            }
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            PDF
+                        </Button>
+                    )}
                     {can('ISSUED') && (
                         <Button
                             onClick={() => issue.mutate(invoice.id)}
