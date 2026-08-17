@@ -37,6 +37,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/common/empty-state';
+import { ExpenseReceipts } from '@/components/finance/expense-receipts';
 import { useAuth } from '@/lib/hooks/use-auth';
 import {
     useExpenses,
@@ -205,6 +206,13 @@ function ExpenseRow({
                         {' · '}
                         {formatDate(expense.expenseDate)}
                     </p>
+                    <ExpenseReceipts
+                        expenseId={expense.id}
+                        count={expense.receiptCount ?? 0}
+                        editable={
+                            expense.status === 'DRAFT' || expense.status === 'SUBMITTED'
+                        }
+                    />
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -221,7 +229,13 @@ function ExpenseRow({
                                     </Button>
                                 );
                             }
-                            const blocked = to === 'APPROVED' && isOwn;
+                            const selfApproval = to === 'APPROVED' && isOwn;
+                            // Nothing goes for approval without evidence. The
+                            // rule lives on the server; this stops a refusal
+                            // being the first anybody hears of it.
+                            const noReceipt =
+                                to === 'SUBMITTED' && (expense.receiptCount ?? 0) === 0;
+                            const blocked = selfApproval || noReceipt;
                             const button = (
                                 <Button
                                     key={to}
@@ -243,9 +257,9 @@ function ExpenseRow({
                                             <span tabIndex={0}>{button}</span>
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
-                                            You raised this one. Somebody else has to approve it —
-                                            raising and approving your own payment is the whole
-                                            thing this separation prevents.
+                                            {noReceipt
+                                                ? 'Attach the receipt first. Every expense needs one before it goes for approval.'
+                                                : 'You raised this one. Somebody else has to approve it — raising and approving your own payment is the whole thing this separation prevents.'}
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>

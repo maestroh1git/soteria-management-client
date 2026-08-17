@@ -149,6 +149,80 @@ export interface Expense {
     notes: string | null;
     account?: { id: string; code: string; name: string };
     department?: { id: string; name: string } | null;
+    /**
+     * How many receipts are attached. Present on the LIST, so the screen can
+     * disable "send for approval" and say why — a server refusal should never
+     * be the first anybody hears of a rule.
+     */
+    receiptCount?: number;
+}
+
+export interface Receipt {
+    id: string;
+    kind: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    description: string | null;
+    uploadedBy: string | null;
+    createdAt: string;
+}
+
+export async function getExpenseReceipts(
+    expenseId: string,
+): Promise<Receipt[]> {
+    return (await api.get(
+        `/expenses/${expenseId}/receipts`,
+    )) as unknown as Receipt[];
+}
+
+export async function attachExpenseReceipt(
+    expenseId: string,
+    file: File,
+    description?: string,
+): Promise<Receipt> {
+    const form = new FormData();
+    form.append('file', file);
+    if (description) form.append('description', description);
+    // No explicit Content-Type: the browser has to set the multipart boundary.
+    return (await api.post(
+        `/expenses/${expenseId}/receipts`,
+        form,
+    )) as unknown as Receipt;
+}
+
+export async function removeExpenseReceipt(
+    expenseId: string,
+    documentId: string,
+): Promise<void> {
+    await api.delete(`/expenses/${expenseId}/receipts/${documentId}`);
+}
+
+/**
+ * Download a receipt.
+ *
+ * As a blob rather than an href, for the reason the payment file already
+ * established: the endpoint needs the bearer token, so a plain link would be
+ * unauthenticated and 401. Same pattern, same reason.
+ */
+export async function downloadExpenseReceipt(
+    expenseId: string,
+    documentId: string,
+    fileName: string,
+    mimeType: string,
+): Promise<void> {
+    const response = await api.get(
+        `/expenses/${expenseId}/receipts/${documentId}/download`,
+        { responseType: 'blob' },
+    );
+
+    const blob = new Blob([response as unknown as BlobPart], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
 }
 
 export async function getExpenses(status?: string): Promise<Expense[]> {

@@ -17,6 +17,9 @@ import {
     createBudget,
     deleteBudget,
     getIncomeStatement,
+    getExpenseReceipts,
+    attachExpenseReceipt,
+    removeExpenseReceipt,
 } from '../api/finance';
 
 // ── Ledger ──────────────────────────────────────────────────────────────────
@@ -198,5 +201,41 @@ export function useIncomeStatement(from?: string, to?: string) {
         queryKey: ['finance', 'income-statement', from, to],
         queryFn: () => getIncomeStatement(from!, to!),
         enabled: !!from && !!to,
+    });
+}
+
+// ── Receipts ────────────────────────────────────────────────────────────────
+
+export function useExpenseReceipts(expenseId?: string) {
+    return useQuery({
+        queryKey: ['expenses', expenseId, 'receipts'],
+        queryFn: () => getExpenseReceipts(expenseId!),
+        enabled: !!expenseId,
+    });
+}
+
+export function useAttachReceipt(expenseId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ file, description }: { file: File; description?: string }) =>
+            attachExpenseReceipt(expenseId, file, description),
+        onSuccess: () => {
+            // The list carries receiptCount, and it gates the submit button.
+            qc.invalidateQueries({ queryKey: ['expenses'] });
+            toast.success('Receipt attached');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not attach that'),
+    });
+}
+
+export function useRemoveReceipt(expenseId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (documentId: string) =>
+            removeExpenseReceipt(expenseId, documentId),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['expenses'] });
+            toast.success('Receipt removed');
+        },
     });
 }
