@@ -63,3 +63,28 @@ export async function downloadPayslip(
   link.remove();
   window.URL.revokeObjectURL(url);
 }
+
+/**
+ * Every payslip for a period, as one zip.
+ *
+ * The counterpart to "Send All": that reaches the employees, this reaches the
+ * bursar — for the file, the printer, or the accountant. A blob rather than a
+ * link, because the endpoint needs the bearer token.
+ */
+export async function downloadPayPeriodPayslips(
+  payPeriodId: string,
+  payPeriodName: string,
+): Promise<void> {
+  const blob = (await api.get(`/payslips/pay-period/${payPeriodId}/download`, {
+    responseType: 'blob',
+  })) as unknown as Blob;
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `payslips_${payPeriodName.replace(/[^\w-]+/g, '_')}.zip`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}

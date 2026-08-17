@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import {
     Send,
     FileDown,
+    Download,
+    Loader2,
     Mail,
     Search,
     FileText,
@@ -40,7 +42,10 @@ import {
     useSendBulkEmails,
 } from '@/lib/hooks/use-reports';
 import { toast } from 'sonner';
-import { downloadPayslip } from '@/lib/api/payslips';
+import {
+    downloadPayslip,
+    downloadPayPeriodPayslips,
+} from '@/lib/api/payslips';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { isApiError, getApiErrorMessage } from '@/lib/utils/api-error';
 import type { Payslip } from '@/lib/types/api';
@@ -57,6 +62,7 @@ export default function PayslipsPage() {
     const [selectedPeriod, setSelectedPeriod] = useState<string>('');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [downloadingAll, setDownloadingAll] = useState(false);
     const [showBulkGenerate, setShowBulkGenerate] = useState(false);
     const [showBulkSend, setShowBulkSend] = useState(false);
 
@@ -127,6 +133,36 @@ export default function PayslipsPage() {
                     <p className="text-muted-foreground">Generate, download, and email employee payslips</p>
                 </div>
                 <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        disabled={!selectedPeriod || downloadingAll}
+                        onClick={async () => {
+                            const period = periods?.find((p) => p.id === selectedPeriod);
+                            setDownloadingAll(true);
+                            try {
+                                await downloadPayPeriodPayslips(
+                                    selectedPeriod,
+                                    period?.name ?? 'period',
+                                );
+                            } catch (e) {
+                                // Most often: nothing generated yet. The server
+                                // says which, so pass it straight through.
+                                toast.error(
+                                    (e as Error).message ||
+                                        'Could not download the payslips',
+                                );
+                            } finally {
+                                setDownloadingAll(false);
+                            }
+                        }}
+                    >
+                        {downloadingAll ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Download className="mr-2 h-4 w-4" />
+                        )}
+                        Download All
+                    </Button>
                     <Button
                         variant="outline"
                         disabled={!selectedPeriod}
