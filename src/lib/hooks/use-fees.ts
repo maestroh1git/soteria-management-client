@@ -38,11 +38,12 @@ import {
 /** The catalogue changes rarely and is read by every price cell. */
 const CATALOGUE_STALE = 5 * 60 * 1000;
 
-export function useFeeItems(includeInactive = false) {
+export function useFeeItems(includeInactive = false, enabled = true) {
     return useQuery({
         queryKey: ['fees', 'items', includeInactive],
         queryFn: () => getFeeItems(includeInactive),
         staleTime: CATALOGUE_STALE,
+        enabled,
     });
 }
 

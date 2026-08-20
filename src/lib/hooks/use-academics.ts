@@ -21,11 +21,12 @@ import {
  */
 const STRUCTURE_STALE = 5 * 60 * 1000;
 
-export function useSessions() {
+export function useSessions(enabled = true) {
     return useQuery({
         queryKey: ['academics', 'sessions'],
         queryFn: getSessions,
         staleTime: STRUCTURE_STALE,
+        enabled,
     });
 }
 
@@ -103,11 +104,12 @@ export function useCreateClassLevel() {
     });
 }
 
-export function useClassArms(levelId?: string) {
+export function useClassArms(levelId?: string, enabled = true) {
     return useQuery({
         queryKey: ['academics', 'arms', levelId],
         queryFn: () => getClassArms(levelId),
         staleTime: STRUCTURE_STALE,
+        enabled,
     });
 }
 

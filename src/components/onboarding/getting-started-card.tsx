@@ -43,8 +43,8 @@ export function GettingStartedCard() {
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
                         {allRequiredDone
-                            ? 'Next: approve & pay salaries, then generate and send payslips.'
-                            : `${completedRequired} of ${totalRequired} steps done — finish setup to process payroll.`}
+                            ? 'Payroll is ready. The steps below marked optional set up classes, pupils and fees.'
+                            : `${completedRequired} of ${totalRequired} steps done — finish these to run payroll.`}
                     </p>
                 </div>
                 <Button

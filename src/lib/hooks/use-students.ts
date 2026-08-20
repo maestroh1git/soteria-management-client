@@ -22,14 +22,18 @@ import {
     type DocumentKind,
 } from '../api/students';
 
-export function useStudents(filters?: {
-    status?: string;
-    classArmId?: string;
-    search?: string;
-}) {
+export function useStudents(
+    filters?: {
+        status?: string;
+        classArmId?: string;
+        search?: string;
+    },
+    enabled = true,
+) {
     return useQuery({
         queryKey: ['students', filters],
         queryFn: () => getStudents(filters),
+        enabled,
     });
 }
 

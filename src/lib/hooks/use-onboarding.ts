@@ -10,6 +10,9 @@ import { getPayPeriods } from '@/lib/api/pay-periods';
 import { updateMyTenant } from '@/lib/api/tenants';
 import { useMyTenant } from './use-tenant';
 import { useAuth } from './use-auth';
+import { useSessions, useClassArms } from './use-academics';
+import { useStudents } from './use-students';
+import { useFeeItems } from './use-fees';
 import { PayPeriodStatus } from '@/lib/types/enums';
 import type { Tenant } from '@/lib/types/api';
 
@@ -74,8 +77,9 @@ function readDismissed(tenant?: Tenant | null): boolean {
 }
 
 export function useOnboardingProgress(): OnboardingProgress {
-  const { hasRole } = useAuth();
+  const { hasRole, tenantOrgType } = useAuth();
   const canSetup = hasRole(['tenant_owner', 'ADMIN']);
+  const isSchool = tenantOrgType === 'SCHOOL';
 
   // Only OWNER/ADMIN see the checklist, and they can read every resource below —
   // so gate the queries on canSetup to avoid 403 noise for other roles.
@@ -86,6 +90,14 @@ export function useOnboardingProgress(): OnboardingProgress {
   const taxRules = useTaxRulesList(canSetup);
   const employees = useEmployeesList(canSetup);
   const payPeriods = usePayPeriodsList(canSetup);
+
+  // The school side. Only fetched for a school — a business or clinic has no
+  // classes to set up, and the sidebar already hides those screens from them.
+  const schoolQueries = canSetup && isSchool;
+  const sessions = useSessions(schoolQueries);
+  const classArms = useClassArms(undefined, schoolQueries);
+  const students = useStudents(undefined, schoolQueries);
+  const feeItems = useFeeItems(false, schoolQueries);
 
   const periods = payPeriods.data ?? [];
   const payrollRun = periods.some(
@@ -134,7 +146,8 @@ export function useOnboardingProgress(): OnboardingProgress {
     {
       key: 'employees',
       label: 'Add employees',
-      description: 'Assign each a role, then add bank details and salary components.',
+      description:
+        'Assign each a role. Standard pay lines attach automatically; add their bank details so they can be paid.',
       href: '/employees',
       done: (employees.data?.length ?? 0) > 0,
     },
@@ -148,10 +161,59 @@ export function useOnboardingProgress(): OnboardingProgress {
     {
       key: 'payroll',
       label: 'Run your first payroll',
-      description: 'Do a dry run to preview, then process to generate salaries.',
+      description: 'Process to create drafts, review them, then approve.',
       href: '/payroll',
       done: payrollRun,
     },
+
+    // ── The school side ───────────────────────────────────────────────────
+    //
+    // Optional, deliberately: a school that only wants payroll should not be
+    // nagged about classes it will never create, and the checklist should not
+    // report itself unfinished forever. They appear so the path is visible —
+    // the first school to use this got as far as "I could not activate
+    // classes, so I was not able to add pupils" with nothing on screen telling
+    // them what had to come first.
+    ...(isSchool
+      ? ([
+          {
+            key: 'session',
+            label: 'Set the academic session and its terms',
+            description:
+              'Everything else on the school side hangs off this — mark one session and one term current.',
+            href: '/classes',
+            done: (sessions.data?.length ?? 0) > 0,
+            optional: true,
+          },
+          {
+            key: 'classes',
+            label: 'Create class levels, then the classes in them',
+            description:
+              'Fees are priced per level; a register belongs to a class. You cannot add a class until a level exists.',
+            href: '/classes',
+            done: (classArms.data?.length ?? 0) > 0,
+            optional: true,
+          },
+          {
+            key: 'students',
+            label: 'Add the pupils',
+            description:
+              'Import the roll from a spreadsheet, or add them one at a time. Each needs a class.',
+            href: '/students',
+            done: (students.data?.length ?? 0) > 0,
+            optional: true,
+          },
+          {
+            key: 'fees',
+            label: 'Set out what the school charges',
+            description:
+              'The fee list and what each costs per class, per term. Nothing is billed until you say so.',
+            href: '/fees',
+            done: (feeItems.data?.length ?? 0) > 0,
+            optional: true,
+          },
+        ] as OnboardingStep[])
+      : []),
   ];
 
   const required = steps.filter((s) => !s.optional);
