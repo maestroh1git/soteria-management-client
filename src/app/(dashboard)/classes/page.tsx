@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/common/empty-state';
+import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { useAuth } from '@/lib/hooks/use-auth';
 import {
     useClassLevels,
@@ -104,6 +105,20 @@ export default function ClassesPage() {
                 </TabsList>
 
                 <TabsContent value="classes" className="space-y-4">
+                    {/*
+                      A disabled button with a `title` says nothing on a phone
+                      and little on a laptop — the first school to use this
+                      clicked "Add class", saw nothing happen, and reported that
+                      they "could not activate classes". The banner says it
+                      where it cannot be missed, and links to the fix.
+                    */}
+                    {canManage && !isLoading && levels.length === 0 && (
+                        <PrerequisiteNotice
+                            message="Add a class level first — JSS1, Primary 3. Classes belong to a level, and fees are priced per level."
+                            actionLabel="Add level"
+                            onAction={() => setLevelOpen(true)}
+                        />
+                    )}
                     {canManage && (
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={() => setLevelOpen(true)}>

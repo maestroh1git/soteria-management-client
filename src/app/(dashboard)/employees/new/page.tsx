@@ -38,6 +38,7 @@ import { useCreateEmployee } from '@/lib/hooks/use-employees';
 import { useRolesList } from '@/lib/hooks/use-onboarding';
 import { useGrades } from '@/lib/hooks/use-grades';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
+import { EmptySelectHint } from '@/components/common/empty-select-hint';
 import {
     createEmployeeSchema,
     type CreateEmployeeValues,
@@ -388,6 +389,13 @@ export default function NewEmployeePage() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
+                                                    {filteredRoles.length === 0 && (
+                                                        <EmptySelectHint
+                                                            what="roles in that department"
+                                                            href="/roles"
+                                                            action="Add one under Staff → Roles"
+                                                        />
+                                                    )}
                                                     {filteredRoles.map((role) => (
                                                         <SelectItem
                                                             key={role.id}
@@ -420,14 +428,22 @@ export default function NewEmployeePage() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {grades.map((grade) => (
-                                                    <SelectItem
-                                                        key={grade.id}
-                                                        value={grade.id}
-                                                    >
-                                                        {grade.code} — {grade.name}
-                                                    </SelectItem>
-                                                ))}
+                                                {grades.length === 0 ? (
+                                                    <EmptySelectHint
+                                                        what="grades"
+                                                        href="/grades"
+                                                        action="Add one under Staff → Grades"
+                                                    />
+                                                ) : (
+                                                    grades.map((grade) => (
+                                                        <SelectItem
+                                                            key={grade.id}
+                                                            value={grade.id}
+                                                        >
+                                                            {grade.code} — {grade.name}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         <FormDescription>
