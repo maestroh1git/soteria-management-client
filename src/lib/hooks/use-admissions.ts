@@ -10,10 +10,14 @@ import {
     type ApplicationStatus,
 } from '../api/admissions';
 
-export function useApplications(filters?: { status?: string }) {
+export function useApplications(
+    filters?: { status?: string },
+    enabled = true,
+) {
     return useQuery({
         queryKey: ['admissions', 'applications', filters],
         queryFn: () => getApplications(filters),
+        enabled,
     });
 }
 

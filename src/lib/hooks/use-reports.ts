@@ -96,10 +96,15 @@ export function useSendBulkEmails() {
 
 // ── Report queries ──────────────────────────────────────────
 
-export function useMonthlySummary(month?: number, year?: number) {
+export function useMonthlySummary(
+  month?: number,
+  year?: number,
+  enabled = true,
+) {
   return useQuery({
     queryKey: ['reports', 'monthly-summary', month, year],
     queryFn: () => getMonthlySummary(month, year),
+    enabled,
   });
 }
 
@@ -110,32 +115,51 @@ export function useTaxSummary(year?: number) {
   });
 }
 
-export function useLoanPortfolio() {
+export function useLoanPortfolio(enabled = true) {
   return useQuery({
     queryKey: ['reports', 'loan-portfolio'],
     queryFn: () => getLoanPortfolio(),
+    enabled,
   });
 }
 
-export function useDepartmentCost(month?: number, year?: number) {
+export function useDepartmentCost(
+  month?: number,
+  year?: number,
+  enabled = true,
+) {
   return useQuery({
     queryKey: ['reports', 'department-cost', month, year],
     queryFn: () => getDepartmentCost(month, year),
+    enabled,
   });
 }
 
-export function useYearEndReport(year?: number) {
+export function useYearEndReport(year?: number, enabled = true) {
   return useQuery({
     queryKey: ['reports', 'year-end', year],
     queryFn: () => getYearEndReport(year),
+    enabled,
   });
 }
 
+/**
+ * Every dashboard query takes an `enabled` flag, defaulting on so existing
+ * callers are unaffected.
+ *
+ * The dashboard was the one screen that did not know who was looking at it: it
+ * fired all of these for everybody, and the server — correctly — refused the
+ * ones a teacher or a registrar may not see. They then landed on a wall of
+ * zeros, which reads as a broken system rather than as a screen that is not
+ * for them.
+ */
+
 // ── Payroll queries (dashboard) ────────────────────────────
 
-export function useRecentSalaries(limit = 5) {
+export function useRecentSalaries(limit = 5, enabled = true) {
   return useQuery({
     queryKey: ['payroll', 'salaries', 'recent', limit],
     queryFn: () => getSalaries({ limit }),
+    enabled,
   });
 }

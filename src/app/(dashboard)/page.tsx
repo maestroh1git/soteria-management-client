@@ -22,6 +22,7 @@ import {
     useRecentSalaries,
 } from '@/lib/hooks/use-reports';
 import { BirthdaysWidget } from '@/components/dashboard/birthdays-widget';
+import { SchoolWidget } from '@/components/dashboard/school-widget';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils/currency';
@@ -52,19 +53,46 @@ const DEPT_COLORS = [
 ];
 
 export default function DashboardPage() {
-    const { fullName, tenantName } = useAuth();
+    const { fullName, tenantName, hasRole } = useAuth();
+
+    /**
+     * Who is looking.
+     *
+     * This screen used to ask for everything regardless, and the server —
+     * correctly — refused the parts a teacher or a registrar may not see. They
+     * landed on a row of zeros, which reads as an empty or broken system rather
+     * than as a screen that is not for them. The roles below match the ones the
+     * reports endpoints actually accept, so nothing is requested that would come
+     * back 403.
+     */
+    const seesPayroll = hasRole([
+        'tenant_owner',
+        'ADMIN',
+        'PAYROLL_OFFICER',
+        'FINANCE_ADMIN',
+        'VIEWER',
+    ]);
+
+    // What the page is actually showing this person. Telling a form teacher
+    // they are looking at payroll status, above a screen with no payroll on it,
+    // is the kind of small wrongness that makes people distrust the rest.
+    const subtitle = seesPayroll
+        ? `Here's an overview of ${tenantName}'s payroll status`
+        : `Here's what's happening at ${tenantName}`;
 
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const { data: monthlySummary, isLoading: loadingSummary } = useMonthlySummary(currentMonth, currentYear);
-    const { data: loanPortfolio, isLoading: loadingLoans } = useLoanPortfolio();
-    const { data: departmentCost, isLoading: loadingDept } = useDepartmentCost(currentMonth, currentYear);
-    const { data: yearEnd, isLoading: loadingYearEnd } = useYearEndReport(currentYear);
-    const { data: recentSalaries, isLoading: loadingRecent } = useRecentSalaries(5);
+    const { data: monthlySummary, isLoading: loadingSummary } = useMonthlySummary(currentMonth, currentYear, seesPayroll);
+    const { data: loanPortfolio, isLoading: loadingLoans } = useLoanPortfolio(seesPayroll);
+    const { data: departmentCost, isLoading: loadingDept } = useDepartmentCost(currentMonth, currentYear, seesPayroll);
+    const { data: yearEnd, isLoading: loadingYearEnd } = useYearEndReport(currentYear, seesPayroll);
+    const { data: recentSalaries, isLoading: loadingRecent } = useRecentSalaries(5, seesPayroll);
 
-    const isLoading = loadingSummary || loadingLoans || loadingDept || loadingYearEnd || loadingRecent;
+    const isLoading =
+        seesPayroll &&
+        (loadingSummary || loadingLoans || loadingDept || loadingYearEnd || loadingRecent);
 
     // Charts plot numbers, so amounts are converted here and only here — this
     // is the display boundary the string rule allows for.
@@ -83,7 +111,10 @@ export default function DashboardPage() {
         employees: d.employeeCount,
     })) ?? [];
 
-    const hasNoData = !loadingSummary && monthlySummary?.summary?.totalEmployees === 0;
+    // Only meaningful to somebody who can see payroll at all. For a teacher the
+    // query never runs, so this stays false and the school section shows instead.
+    const hasNoData =
+        seesPayroll && !loadingSummary && monthlySummary?.summary?.totalEmployees === 0;
 
     if (isLoading) {
         return (
@@ -115,9 +146,7 @@ export default function DashboardPage() {
                     <h1 className="text-3xl font-bold tracking-tight">
                         Welcome back, {fullName.split(' ')[0] || 'Admin'}
                     </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Here&apos;s an overview of {tenantName}&apos;s payroll status
-                    </p>
+                    <p className="text-muted-foreground mt-1">{subtitle}</p>
                 </div>
                 <GettingStartedCard />
                 <EmptyState
@@ -138,15 +167,14 @@ export default function DashboardPage() {
                 <h1 className="text-3xl font-bold tracking-tight">
                     Welcome back, {fullName.split(' ')[0] || 'Admin'}
                 </h1>
-                <p className="text-muted-foreground mt-1">
-                    Here&apos;s an overview of {tenantName}&apos;s payroll status
-                </p>
+                <p className="text-muted-foreground mt-1">{subtitle}</p>
             </div>
 
             {/* Onboarding checklist (self-hides once complete/dismissed) */}
             <GettingStartedCard />
 
-            {/* KPI Stats */}
+            {/* Payroll and loans — only for the roles the reports allow. */}
+            {seesPayroll && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Total Employees"
@@ -174,6 +202,12 @@ export default function DashboardPage() {
                 />
             </div>
 
+            )}
+
+            {/* The school, for the people who run it. Self-gates on org type
+                and role, and stays hidden until there is a roll. */}
+            <SchoolWidget />
+
             {/* Fees in against costs out — both sides from the ledger. Hides
                 itself for a tenant that has never billed anything. */}
             <FeesWidget />
@@ -185,6 +219,8 @@ export default function DashboardPage() {
                 </div>
             </div>
 
+            {seesPayroll && (
+            <>
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Payroll Trend Chart */}
@@ -332,6 +368,8 @@ export default function DashboardPage() {
                     )}
                 </CardContent>
             </Card>
+            </>
+            )}
         </div>
     );
 }
