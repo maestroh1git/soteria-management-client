@@ -108,6 +108,11 @@ const navigation: NavGroup[] = [
             // This catalogue defines what a salary is made of, so it belongs
             // here beside Grades rather than under Finance.
             { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
+            // The institutions staff are paid at — the standard NIBSS list plus
+            // any this tenant adds. Reference data for the bank details you set
+            // per employee, so it sits with the other staff-setup lists rather
+            // than with Finance's reconciliation screen (/banking).
+            { title: 'Banks', href: '/banks', icon: Landmark, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
         ],
     },
     {
