@@ -16,8 +16,8 @@ export async function getPayPeriod(id: string): Promise<PayPeriod> {
   return await api.get(`/pay-periods/${id}`) as unknown as PayPeriod;
 }
 
-export async function getCurrentPayPeriod(): Promise<PayPeriod> {
-  return await api.get('/pay-periods/current') as unknown as PayPeriod;
+export async function getCurrentPayPeriod(): Promise<PayPeriod | null> {
+  return await api.get('/pay-periods/current') as unknown as PayPeriod | null;
 }
 
 export async function createPayPeriod(dto: CreatePayPeriodDto): Promise<PayPeriod> {
