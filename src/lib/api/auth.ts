@@ -26,6 +26,11 @@ export interface AcceptInviteRequest {
   password: string;
 }
 
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
 export const authApi = {
   login: (data: LoginRequest): Promise<AuthResponse> =>
     api.post('/auth/login', data),
@@ -37,4 +42,13 @@ export const authApi = {
   // login, so the caller applies the session the same way.
   acceptInvite: (data: AcceptInviteRequest): Promise<AuthResponse> =>
     api.post('/auth/accept-invite', data),
+
+  // Always resolves with the same generic message, whether or not the email
+  // matched an account — the API does not reveal which.
+  requestReset: (email: string): Promise<{ message: string }> =>
+    api.post('/auth/request-reset', { email }),
+
+  // Sets a new password from a reset link and signs them in.
+  resetPassword: (data: ResetPasswordRequest): Promise<AuthResponse> =>
+    api.post('/auth/reset-password', data),
 };
