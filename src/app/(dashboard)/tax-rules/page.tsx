@@ -45,7 +45,7 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { useTaxRules, useCreateTaxRule, useUpdateTaxRule, useDeleteTaxRule } from '@/lib/hooks/use-tax';
 import type { TaxRule, TaxBracket } from '@/lib/types/api';
-import { TaxRuleType } from '@/lib/types/enums';
+import { TaxRuleType, TaxBase, TAX_BASE_LABEL } from '@/lib/types/enums';
 import { formatCurrency } from '@/lib/utils/currency';
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
@@ -60,6 +60,7 @@ const bracketSchema = z.object({
 const taxRuleSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     type: z.nativeEnum(TaxRuleType),
+    taxBase: z.nativeEnum(TaxBase),
     value: z.coerce.number().min(0).max(100).optional(),
     minSalary: z.coerce.number().min(0).optional(),
     maxSalary: z.coerce.number().min(0).optional(),
@@ -145,6 +146,8 @@ function TaxRuleCard({
                         {rule.type === TaxRuleType.FLAT_RATE && rule.value != null && (
                             <span>Rate: <span className="font-medium text-slate-700">{rule.value}%</span></span>
                         )}
+                        <span>On: <span className="font-medium text-slate-700">{TAX_BASE_LABEL[(rule.taxBase as TaxBase) ?? TaxBase.GROSS]}</span></span>
+
                         <span>
                             From: <span className="font-medium text-slate-700">{fmtDate(rule.effectiveFrom)}</span>
                         </span>
@@ -204,6 +207,7 @@ export default function TaxRulesPage() {
         defaultValues: {
             name: '',
             type: TaxRuleType.FLAT_RATE,
+            taxBase: TaxBase.GROSS,
             effectiveFrom: '',
             isDefault: false,
             brackets: [],
@@ -222,6 +226,7 @@ export default function TaxRulesPage() {
         form.reset({
             name: '',
             type: TaxRuleType.FLAT_RATE,
+            taxBase: TaxBase.GROSS,
             effectiveFrom: '',
             isDefault: false,
             brackets: [],
@@ -234,6 +239,7 @@ export default function TaxRulesPage() {
         form.reset({
             name: rule.name,
             type: rule.type as TaxRuleType,
+            taxBase: (rule.taxBase as TaxBase) ?? TaxBase.GROSS,
             value: rule.value ?? undefined,
             effectiveFrom: rule.effectiveFrom ? rule.effectiveFrom.slice(0, 10) : '',
             effectiveTo: rule.effectiveTo ? rule.effectiveTo.slice(0, 10) : undefined,
@@ -350,6 +356,36 @@ export default function TaxRulesPage() {
                                                 <SelectItem value={TaxRuleType.PROGRESSIVE}>Progressive (Brackets)</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Tax base — which subtotal the rate applies to */}
+                            <FormField
+                                control={form.control}
+                                name="taxBase"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Applies to</FormLabel>
+                                        <Select value={field.value} onValueChange={field.onChange}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {Object.values(TaxBase).map((b) => (
+                                                    <SelectItem key={b} value={b}>
+                                                        {TAX_BASE_LABEL[b]}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            The portion of pay the rate is charged on. Gross taxes everything
+                                            paid this period; contractual excludes one-off earnings.
+                                        </p>
                                         <FormMessage />
                                     </FormItem>
                                 )}

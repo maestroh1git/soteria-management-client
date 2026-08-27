@@ -11,6 +11,7 @@ import {
   CalculationType,
   ComponentApplicability,
   TaxRuleType,
+  TaxBase,
   RoleType,
   KybStatus,
 } from './enums';
@@ -413,6 +414,7 @@ export interface TaxRule {
   id: string;
   name: string;
   type: TaxRuleType;
+  taxBase: TaxBase;
   value: number | null;
   effectiveFrom: string;
   effectiveTo: string | null;

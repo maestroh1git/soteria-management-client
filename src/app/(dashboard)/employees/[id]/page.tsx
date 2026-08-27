@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -11,20 +11,17 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
-import { CurrencyDisplay } from '@/components/common/currency-display';
-import { useEmployee, useEmployeeSalaryComponents } from '@/lib/hooks/use-employees';
+import { useEmployee } from '@/lib/hooks/use-employees';
 import { BankAccountsPanel } from '@/components/employees/bank-accounts-panel';
+import { SalaryComponentsPanel } from '@/components/employees/salary-components-panel';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { formatDate } from '@/lib/utils/dates';
-import type { EmployeeBankDetails, EmployeeSalaryComponent } from '@/lib/types/api';
 
 export default function EmployeeDetailPage({
     params,
@@ -39,8 +36,11 @@ export default function EmployeeDetailPage({
     // Changing where salary lands is the classic payroll fraud, so it is held to
     // the roles that own payroll rather than everyone who may view an employee.
     const canManageBank = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    // Salary lines are guarded by the same payroll-owning roles on the server.
+    const canManageSalary = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
+    const canManageEmployee = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
     const { data: employee, isLoading } = useEmployee(id);
-    const { data: salaryComponents = [] } = useEmployeeSalaryComponents(id, false, canViewSensitive);
     const { data: history = [], isLoading: historyLoading } = useEntityHistory('Employee', id);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
@@ -66,6 +66,14 @@ export default function EmployeeDetailPage({
                         {employee.employeeNumber} · {employee.role?.name ?? 'No role'}
                     </p>
                 </div>
+                {canManageEmployee && (
+                    <Link href={`/employees/${id}/edit`}>
+                        <Button variant="outline" size="sm">
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <Tabs defaultValue="overview">
@@ -144,61 +152,7 @@ export default function EmployeeDetailPage({
                 {/* ── Salary Components Tab ── */}
                 {canViewSensitive && (
                 <TabsContent value="salary" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Assigned Salary Components</CardTitle>
-                            <CardDescription>
-                                Earnings and deductions linked to this employee
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {salaryComponents.length === 0 ? (
-                                <EmptyState
-                                    title="No salary components"
-                                    description="No salary components have been assigned yet."
-                                />
-                            ) : (
-                                <div className="rounded-md border">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b bg-muted/50">
-                                                <th className="px-4 py-3 text-left font-medium">Component</th>
-                                                <th className="px-4 py-3 text-left font-medium">Type</th>
-                                                <th className="px-4 py-3 text-right font-medium">Value</th>
-                                                <th className="px-4 py-3 text-left font-medium">Effective From</th>
-                                                <th className="px-4 py-3 text-left font-medium">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {salaryComponents.map((sc: EmployeeSalaryComponent) => (
-                                                <tr key={sc.id} className="border-b">
-                                                    <td className="px-4 py-3 font-medium">
-                                                        {sc.salaryComponent?.name ?? '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <Badge variant="outline">
-                                                            {sc.salaryComponent?.type}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <CurrencyDisplay amount={sc.value} />
-                                                    </td>
-                                                    <td className="px-4 py-3 text-muted-foreground">
-                                                        {formatDate(sc.effectiveFrom)}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <Badge variant={sc.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                                                            {sc.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-                                                        </Badge>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <SalaryComponentsPanel employeeId={id} canEdit={canManageSalary} />
                 </TabsContent>
                 )}
 

@@ -113,7 +113,7 @@ export default function EmployeesPage() {
                         </DropdownMenuItem>
                         {canManage && (
                             <DropdownMenuItem
-                                onClick={() => router.push(`/employees/${row.original.id}?edit=true`)}
+                                onClick={() => router.push(`/employees/${row.original.id}/edit`)}
                             >
                                 <Pencil className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
