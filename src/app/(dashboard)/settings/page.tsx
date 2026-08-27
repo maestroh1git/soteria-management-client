@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -84,7 +85,6 @@ type SettingValues = z.infer<typeof settingSchema>;
 
 const createUserSchema = z.object({
     employeeId: z.string().min(1, 'Employee is required'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
     systemRoles: z.array(z.string()).min(1, 'At least one role is required'),
 });
 type CreateUserValues = z.infer<typeof createUserSchema>;
@@ -224,8 +224,12 @@ export default function SettingsPage() {
 
     const createUserForm = useForm<CreateUserValues>({
         resolver: zodResolver(createUserSchema),
-        defaultValues: { employeeId: '', password: '', systemRoles: [] },
+        defaultValues: { employeeId: '', systemRoles: [] },
     });
+
+    // When mail is not configured the API hands the invite link back; we show it
+    // so the admin can pass it to the new user by hand.
+    const [inviteLink, setInviteLink] = useState<{ name: string; url: string } | null>(null);
 
     const openCountryDialog = (country?: Country) => {
         if (country) {
@@ -263,7 +267,7 @@ export default function SettingsPage() {
     const openCreateUserDialog = () => {
         setSelectedEmployee('');
         setSelectedRoles([]);
-        createUserForm.reset({ employeeId: '', password: '', systemRoles: [] });
+        createUserForm.reset({ employeeId: '', systemRoles: [] });
         setShowCreateUserDialog(true);
     };
 
@@ -300,22 +304,28 @@ export default function SettingsPage() {
         const emp = availableEmployees.find((e) => e.id === selectedEmployee);
         if (!emp || selectedRoles.length === 0) return;
 
-        const password = createUserForm.getValues('password');
-        if (!password || password.length < 6) {
-            createUserForm.setError('password', { message: 'Password must be at least 6 characters' });
-            return;
-        }
-
         createUserMutation.mutate(
             {
                 email: emp.email,
-                password,
                 firstName: emp.firstName,
                 lastName: emp.lastName,
                 employeeId: emp.id,
                 systemRoles: selectedRoles,
             },
-            { onSuccess: () => setShowCreateUserDialog(false) },
+            {
+                onSuccess: (res) => {
+                    setShowCreateUserDialog(false);
+                    if (res.emailed) {
+                        toast.success(`Invitation emailed to ${emp.email}`);
+                    } else if (res.inviteUrl) {
+                        // Mail is not set up — surface the link so it is not lost.
+                        setInviteLink({
+                            name: `${emp.firstName} ${emp.lastName}`,
+                            url: res.inviteUrl,
+                        });
+                    }
+                },
+            },
         );
     };
 
@@ -439,8 +449,8 @@ export default function SettingsPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                                                        {user.isActive ? 'Active' : 'Inactive'}
+                                                    <Badge variant={user.isActive ? 'default' : user.invitePending ? 'outline' : 'secondary'}>
+                                                        {user.isActive ? 'Active' : user.invitePending ? 'Invited' : 'Inactive'}
                                                     </Badge>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
@@ -862,9 +872,10 @@ export default function SettingsPage() {
             <Dialog open={showCreateUserDialog} onOpenChange={setShowCreateUserDialog}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Add User</DialogTitle>
+                        <DialogTitle>Invite a user</DialogTitle>
                         <DialogDescription>
-                            Create a user account for an employee. They will be required to change their password on first login.
+                            The employee gets an email with a link to set their own password and
+                            activate their account. You never set a password for them.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -900,19 +911,6 @@ export default function SettingsPage() {
                         })()}
 
                         <div className="space-y-2">
-                            <Label htmlFor="temp-password">Temporary Password</Label>
-                            <Input
-                                id="temp-password"
-                                type="text"
-                                {...createUserForm.register('password')}
-                                placeholder="Enter temporary password"
-                            />
-                            {createUserForm.formState.errors.password && (
-                                <p className="text-xs text-destructive">{createUserForm.formState.errors.password.message}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
                             <Label>System Roles</Label>
                             <div className="grid grid-cols-2 gap-2">
                                 {allRolesForAssignment.map((role) => (
@@ -943,10 +941,42 @@ export default function SettingsPage() {
                                 disabled={!selectedEmployee || selectedRoles.length === 0 || createUserMutation.isPending}
                             >
                                 <UserPlus className="mr-2 h-4 w-4" />
-                                Create User
+                                {createUserMutation.isPending ? 'Sending…' : 'Send invite'}
                             </Button>
                         </DialogFooter>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Invite link fallback (mail not configured) ─────── */}
+            <Dialog open={!!inviteLink} onOpenChange={(o) => !o && setInviteLink(null)}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Share this invite link</DialogTitle>
+                        <DialogDescription>
+                            Email isn&apos;t set up, so the invitation could not be sent. Copy
+                            the link below and give it to {inviteLink?.name} — it lets them set
+                            their password and sign in. It expires in 7 days.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center gap-2">
+                        <Input readOnly value={inviteLink?.url ?? ''} className="font-mono text-xs" />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                if (inviteLink) {
+                                    navigator.clipboard?.writeText(inviteLink.url);
+                                    toast.success('Invite link copied');
+                                }
+                            }}
+                        >
+                            Copy
+                        </Button>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setInviteLink(null)}>Done</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

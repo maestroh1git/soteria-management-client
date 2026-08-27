@@ -3,11 +3,21 @@ import type { User } from '@/lib/types/api';
 
 export interface CreateUserDto {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   employeeId: string;
   systemRoles: string[];
+}
+
+/**
+ * Inviting a user creates a pending account and emails them a link to set their
+ * own password. When mail is not configured (or the send failed) the API hands
+ * the link back so the admin can pass it on by hand.
+ */
+export interface InviteResponse {
+  user: User;
+  emailed: boolean;
+  inviteUrl?: string;
 }
 
 export interface UpdateUserDto {
@@ -36,8 +46,8 @@ export async function getUser(id: string): Promise<User> {
   return (await api.get(`/users/${id}`)) as unknown as User;
 }
 
-export async function createUser(data: CreateUserDto): Promise<User> {
-  return (await api.post('/users', data)) as unknown as User;
+export async function createUser(data: CreateUserDto): Promise<InviteResponse> {
+  return (await api.post('/users', data)) as unknown as InviteResponse;
 }
 
 export async function updateUser(
