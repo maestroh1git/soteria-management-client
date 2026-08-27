@@ -84,6 +84,8 @@ export interface User {
   tenantId: string | null;
   // Only present on `/users` directory responses, not the trimmed auth payload:
   isActive?: boolean;
+  /** True while an invite is outstanding — account created, password not yet set. */
+  invitePending?: boolean;
   employeeId?: string | null;
   tenant?: Tenant | null;
   employee?: Employee | null;

@@ -21,10 +21,20 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface AcceptInviteRequest {
+  token: string;
+  password: string;
+}
+
 export const authApi = {
   login: (data: LoginRequest): Promise<AuthResponse> =>
     api.post('/auth/login', data),
 
   register: (data: RegisterRequest): Promise<AuthResponse> =>
     api.post('/auth/register', data),
+
+  // Sets an invited account's first password and signs them in — same shape as
+  // login, so the caller applies the session the same way.
+  acceptInvite: (data: AcceptInviteRequest): Promise<AuthResponse> =>
+    api.post('/auth/accept-invite', data),
 };

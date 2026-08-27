@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 // Auth pages. Unauthenticated users may reach them, and authenticated users
 // are redirected AWAY from them — you do not log in twice.
-const publicRoutes = ['/login', '/register'];
+const publicRoutes = ['/login', '/register', '/accept-invite'];
 
 /**
  * Routes open to anyone, matched by prefix.
