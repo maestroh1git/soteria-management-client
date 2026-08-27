@@ -11,6 +11,7 @@ export interface CreateTaxBracketDto {
 export interface CreateTaxRuleDto {
   name: string;
   type: string;
+  taxBase?: string;
   value?: number;
   minSalary?: number;
   maxSalary?: number;

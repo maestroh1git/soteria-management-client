@@ -95,6 +95,19 @@ export enum TaxRuleType {
   PROGRESSIVE = 'PROGRESSIVE',
 }
 
+// Which subtotal a tax rule's rate applies to. Mirrors the backend TaxBase.
+export enum TaxBase {
+  GROSS = 'GROSS',
+  CONTRACTUAL = 'CONTRACTUAL',
+  BASE = 'BASE',
+}
+
+export const TAX_BASE_LABEL: Record<TaxBase, string> = {
+  [TaxBase.GROSS]: 'Gross pay',
+  [TaxBase.CONTRACTUAL]: 'Contractual (recurring only)',
+  [TaxBase.BASE]: 'Basic salary only',
+};
+
 // From: modules/employees/entities/role.entity.ts
 export enum RoleType {
   FULL_TIME = 'FULL_TIME',
