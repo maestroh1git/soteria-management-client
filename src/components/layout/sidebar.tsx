@@ -7,144 +7,9 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { useUIStore } from '@/stores/ui-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-    LayoutDashboard,
-    Users,
-    GraduationCap,
-    ClipboardList,
-    School,
-    BadgeDollarSign,
-    ReceiptText,
-    HandCoins,
-    TrendingDown,
-    Landmark,
-    Scale,
-    PiggyBank,
-    Briefcase,
-    Building2,
-    Layers,
-    CalendarDays,
-    Wallet,
-    Calculator,
-    CreditCard,
-    Receipt,
-    FileText,
-    BarChart3,
-    Settings,
-    Shield,
-    ChevronLeft,
-    ChevronRight,
-    type LucideIcon,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { filterNavigation } from './nav-config';
 
-interface NavItem {
-    title: string;
-    href: string;
-    icon: LucideIcon;
-    badge?: string;
-    roles?: string[];
-    /**
-     * Organisation types this belongs to. Absent means every tenant.
-     *
-     * Until Phase 3 every feature applied to every tenant, so nothing needed
-     * this. Students and Admissions do not apply to a hospital, and showing
-     * them there would tell a hospital administrator the product was not built
-     * for them.
-     */
-    orgTypes?: string[];
-}
-
-interface NavGroup {
-    label: string;
-    items: NavItem[];
-}
-
-const navigation: NavGroup[] = [
-    {
-        // Deliberately unrestricted. Everyone with an account is also an
-        // employee, including administrators, and the API resolves the subject
-        // from the token — there is nothing here to gate.
-        label: 'My Account',
-        items: [
-            { title: 'My Pay', href: '/me', icon: Wallet },
-            { title: 'My Leave', href: '/me/leave', icon: CalendarDays },
-        ],
-    },
-    {
-        label: 'Overview',
-        items: [
-            { title: 'Dashboard', href: '/', icon: LayoutDashboard },
-        ],
-    },
-    {
-        label: 'School',
-        items: [
-            { title: 'Students', href: '/students', icon: GraduationCap, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer', 'academic.teacher'] },
-            { title: 'Admissions', href: '/admissions', icon: ClipboardList, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer'] },
-            { title: 'Classes', href: '/classes', icon: School, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'academic.teacher'] },
-            // School-gated, unlike the rest of Finance: a price list keyed on
-            // class level only means something to a school. The registrar reads
-            // it to answer a parent on the phone.
-            { title: 'Fees', href: '/fees', icon: BadgeDollarSign, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
-            { title: 'Invoices', href: '/fees/invoices', icon: ReceiptText, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
-            { title: 'Receipts', href: '/fees/payments', icon: HandCoins, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
-            { title: 'Arrears', href: '/fees/arrears', icon: TrendingDown, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
-        ],
-    },
-    {
-        // Renamed from 'People'. Students are people too, and a group called
-        // People that excludes children is a small lie that gets more
-        // confusing as the school side grows.
-        label: 'Staff',
-        items: [
-            { title: 'Employees', href: '/employees', icon: Users, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'] },
-            { title: 'Roles', href: '/roles', icon: Briefcase, roles: ['tenant_owner', 'ADMIN'] },
-            { title: 'Departments', href: '/departments', icon: Building2, roles: ['tenant_owner', 'ADMIN'] },
-            { title: 'Grades', href: '/grades', icon: Layers, roles: ['tenant_owner', 'ADMIN'] },
-            { title: 'Leave', href: '/leave', icon: CalendarDays, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'APPROVER'] },
-            // HR's side of payroll. The roadmap's split (§4.1) is that HR owns
-            // the INPUTS — what someone is paid and why — while Finance owns
-            // the outputs: the postings, the cost report, the payment file.
-            // This catalogue defines what a salary is made of, so it belongs
-            // here beside Grades rather than under Finance.
-            { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
-            // The institutions staff are paid at — the standard NIBSS list plus
-            // any this tenant adds. Reference data for the bank details you set
-            // per employee, so it sits with the other staff-setup lists rather
-            // than with Finance's reconciliation screen (/banking).
-            { title: 'Banks', href: '/banks', icon: Landmark, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
-        ],
-    },
-    {
-        label: 'Finance',
-        items: [
-            { title: 'Payroll', href: '/payroll', icon: Calculator, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
-            // Deliberately NOT org-type gated: every tenant spends money,
-            // whatever kind of organisation it is.
-            { title: 'Ledger', href: '/ledger', icon: Scale, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
-            { title: 'Expenses', href: '/expenses', icon: Wallet, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
-            { title: 'Budgets', href: '/budgets', icon: PiggyBank, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'APPROVER'] },
-            // Not org-type gated: every organisation has a bank account.
-            { title: 'Bank', href: '/banking', icon: Landmark, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
-            { title: 'Loans', href: '/loans', icon: Receipt, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
-            { title: 'Tax Rules', href: '/tax-rules', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
-        ],
-    },
-    {
-        label: 'Reporting',
-        items: [
-            { title: 'Payslips', href: '/payslips', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
-            { title: 'Reports', href: '/reports', icon: BarChart3, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'VIEWER'] },
-        ],
-    },
-    {
-        label: 'System',
-        items: [
-            { title: 'Settings', href: '/settings', icon: Settings, roles: ['tenant_owner', 'ADMIN'] },
-            { title: 'Audit Logs', href: '/audit-logs', icon: Shield, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
-        ],
-    },
-];
 
 const ORG_TYPE_LABEL: Record<string, string> = {
     SCHOOL: 'School Payroll',
@@ -164,22 +29,7 @@ export function Sidebar() {
 
     const orgSubtitle = tenantOrgType ? (ORG_TYPE_LABEL[tenantOrgType] ?? 'Payroll System') : 'Payroll System';
 
-    // Filter navigation items based on user roles
-    const filteredNavigation = navigation
-        .map((group) => ({
-            ...group,
-            items: group.items.filter(
-                (item) =>
-                    (!item.roles || hasRole(item.roles)) &&
-                    // An unknown org type shows the unrestricted items only —
-                    // failing closed, so a misconfigured tenant sees less
-                    // rather than something meant for someone else.
-                    (!item.orgTypes ||
-                        (tenantOrgType !== null &&
-                            item.orgTypes.includes(tenantOrgType))),
-            ),
-        }))
-        .filter((group) => group.items.length > 0);
+    const filteredNavigation = filterNavigation(hasRole, tenantOrgType);
 
     return (
         <aside

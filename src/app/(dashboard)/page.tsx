@@ -22,6 +22,7 @@ import {
     useRecentSalaries,
 } from '@/lib/hooks/use-reports';
 import { BirthdaysWidget } from '@/components/dashboard/birthdays-widget';
+import { EmployeeDashboard } from '@/components/dashboard/employee-dashboard';
 import { SchoolWidget } from '@/components/dashboard/school-widget';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
@@ -73,6 +74,19 @@ export default function DashboardPage() {
         'VIEWER',
     ]);
 
+    // A plain member of staff — the EMPLOYEE role and nothing that runs the
+    // school or the payroll. The admin dashboard below is not theirs to read;
+    // they get their own pay-first landing instead.
+    const isPlainEmployee =
+        hasRole(['EMPLOYEE']) &&
+        !seesPayroll &&
+        !hasRole([
+            'APPROVER',
+            'admissions.registrar',
+            'admissions.officer',
+            'academic.teacher',
+        ]);
+
     // What the page is actually showing this person. Telling a form teacher
     // they are looking at payroll status, above a screen with no payroll on it,
     // is the kind of small wrongness that makes people distrust the rest.
@@ -115,6 +129,13 @@ export default function DashboardPage() {
     // query never runs, so this stays false and the school section shows instead.
     const hasNoData =
         seesPayroll && !loadingSummary && monthlySummary?.summary?.totalEmployees === 0;
+
+    // Rendered after the hooks above so their order never changes; those queries
+    // are disabled for this person anyway (seesPayroll is false), so nothing is
+    // fetched that they could not see.
+    if (isPlainEmployee) {
+        return <EmployeeDashboard />;
+    }
 
     if (isLoading) {
         return (

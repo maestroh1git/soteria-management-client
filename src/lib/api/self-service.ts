@@ -8,6 +8,10 @@ export interface MyEmployee {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+  address: string | null;
   joinDate: string;
   status: string;
   role: string | null;
