@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Menu, LogOut, User, Bell } from 'lucide-react';
+import { Menu, LogOut, User, Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -19,7 +19,8 @@ import { ModeToggle } from '@/components/common/mode-toggle';
 
 export function Topbar() {
     const router = useRouter();
-    const { fullName, initials, user, logout } = useAuth();
+    const { fullName, initials, user, logout, hasRole } = useAuth();
+    const canManageSettings = hasRole(['tenant_owner', 'ADMIN']);
     const { setMobileSidebarOpen } = useUIStore();
 
     function handleLogout() {
@@ -74,10 +75,16 @@ export function Topbar() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push('/settings')}>
+                        <DropdownMenuItem onClick={() => router.push('/me/profile')}>
                             <User className="mr-2 h-4 w-4" />
-                            Profile
+                            My Profile
                         </DropdownMenuItem>
+                        {canManageSettings && (
+                            <DropdownMenuItem onClick={() => router.push('/settings')}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                Settings
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={handleLogout}

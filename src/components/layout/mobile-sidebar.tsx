@@ -8,80 +8,15 @@ import { useUIStore } from '@/stores/ui-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import {
-    LayoutDashboard,
-    Users,
-    Briefcase,
-    Building2,
-    Calculator,
-    CreditCard,
-    Receipt,
-    FileText,
-    BarChart3,
-    Settings,
-    type LucideIcon,
-} from 'lucide-react';
-
-interface NavItem {
-    title: string;
-    href: string;
-    icon: LucideIcon;
-    roles?: string[];
-}
-
-interface NavGroup {
-    label: string;
-    items: NavItem[];
-}
-
-const navigation: NavGroup[] = [
-    {
-        label: 'Overview',
-        items: [{ title: 'Dashboard', href: '/', icon: LayoutDashboard }],
-    },
-    {
-        label: 'People',
-        items: [
-            { title: 'Employees', href: '/employees', icon: Users, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'] },
-            { title: 'Roles', href: '/roles', icon: Briefcase, roles: ['tenant_owner', 'ADMIN'] },
-            { title: 'Departments', href: '/departments', icon: Building2, roles: ['tenant_owner', 'ADMIN'] },
-        ],
-    },
-    {
-        label: 'Finance',
-        items: [
-            { title: 'Payroll', href: '/payroll', icon: Calculator, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
-            { title: 'Salary Components', href: '/salary-components', icon: CreditCard, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
-            { title: 'Loans', href: '/loans', icon: Receipt, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'] },
-            { title: 'Tax Rules', href: '/tax-rules', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
-        ],
-    },
-    {
-        label: 'Reporting',
-        items: [
-            { title: 'Payslips', href: '/payslips', icon: FileText, roles: ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'] },
-            { title: 'Reports', href: '/reports', icon: BarChart3, roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'VIEWER'] },
-        ],
-    },
-    {
-        label: 'System',
-        items: [{ title: 'Settings', href: '/settings', icon: Settings, roles: ['tenant_owner', 'ADMIN'] }],
-    },
-];
+import { filterNavigation } from './nav-config';
 
 export function MobileSidebar() {
     const pathname = usePathname();
-    const { hasRole } = useAuth();
+    const { hasRole, tenantOrgType } = useAuth();
     const { mobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
 
-    const filteredNavigation = navigation
-        .map((group) => ({
-            ...group,
-            items: group.items.filter(
-                (item) => !item.roles || hasRole(item.roles),
-            ),
-        }))
-        .filter((group) => group.items.length > 0);
+    // The same list and the same filter as the desktop rail — see nav-config.
+    const filteredNavigation = filterNavigation(hasRole, tenantOrgType);
 
     return (
         <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
