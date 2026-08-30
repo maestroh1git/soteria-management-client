@@ -1,9 +1,12 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { ApiError, BackendErrorBody } from '@/lib/types/api';
 
-// Must include the backend's global prefix (`/api`). The deployed value is set
-// via NEXT_PUBLIC_API_URL (e.g. https://<backend-host>/api).
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Same-origin by default: the browser calls a relative `/api`, and the platform
+// (or the Next rewrite in next.config.ts / compose) routes `/api` to the
+// backend. This keeps the client bundle env-agnostic so one built image can be
+// promoted staging -> prod unchanged, and removes cross-origin/CORS entirely.
+// NEXT_PUBLIC_API_URL still overrides for local `next dev` against a remote API.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

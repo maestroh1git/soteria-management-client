@@ -7,7 +7,7 @@ import axios from 'axios';
  * and bounces to the login page on a 401. A parent has neither a token nor any
  * business being sent to a login screen.
  */
-const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const base = process.env.NEXT_PUBLIC_API_URL || '/api';
 const publicApi = axios.create({ baseURL: base });
 
 export interface PublicInvoice {
