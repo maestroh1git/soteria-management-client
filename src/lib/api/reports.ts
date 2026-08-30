@@ -38,7 +38,7 @@ export async function getYearEndReport(year?: number): Promise<YearEndReport> {
 // ── Export URLs ──────────────────────────────────────────────
 
 export function getExportCsvUrl(filters: ReportFilters): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   const params = new URLSearchParams();
   if (filters.month) params.set('month', String(filters.month));
   if (filters.year) params.set('year', String(filters.year));
@@ -47,7 +47,7 @@ export function getExportCsvUrl(filters: ReportFilters): string {
 }
 
 export function getExportExcelUrl(filters: ReportFilters): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   const params = new URLSearchParams();
   if (filters.month) params.set('month', String(filters.month));
   if (filters.year) params.set('year', String(filters.year));
