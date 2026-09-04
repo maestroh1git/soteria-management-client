@@ -67,8 +67,8 @@ export const createRoleSchema = z.object({
   roleType: z.nativeEnum(RoleType).optional(),
   baseSalaryRange: z
     .object({
-      min: z.number().min(0),
-      max: z.number().min(0),
+      min: z.coerce.number().min(0),
+      max: z.coerce.number().min(0),
     })
     .optional(),
   reportingTo: z.string().uuid().optional().or(z.literal('')),
@@ -86,7 +86,7 @@ export const createSalaryComponentSchema = z.object({
   calculationType: z.nativeEnum(CalculationType, {
     message: 'Select calculation type',
   }),
-  value: z.number().min(0, 'Value must be positive'),
+  value: z.coerce.number().min(0, 'Value must be positive'),
   formula: z.string().optional(),
   taxable: z.boolean().optional(),
   showOnPayslip: z.boolean().optional(),
