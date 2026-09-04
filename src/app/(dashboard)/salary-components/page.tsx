@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -284,7 +284,9 @@ function SalaryComponentFormDialog({
         APPLICABILITY_BY_ORG_TYPE['OTHER'];
 
     const form = useForm<CreateSalaryComponentValues>({
-        resolver: zodResolver(createSalaryComponentSchema),
+        resolver: zodResolver(
+            createSalaryComponentSchema,
+        ) as Resolver<CreateSalaryComponentValues>,
         values: component
             ? {
                 name: component.name,
