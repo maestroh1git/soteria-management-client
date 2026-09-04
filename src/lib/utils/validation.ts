@@ -67,8 +67,8 @@ export const createRoleSchema = z.object({
   roleType: z.nativeEnum(RoleType).optional(),
   baseSalaryRange: z
     .object({
-      min: z.coerce.number().min(0),
-      max: z.coerce.number().min(0),
+      min: z.number().min(0),
+      max: z.number().min(0),
     })
     .optional(),
   reportingTo: z.string().uuid().optional().or(z.literal('')),
