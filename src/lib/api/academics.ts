@@ -73,6 +73,16 @@ export async function setCurrentSession(id: string): Promise<AcademicSession> {
     )) as unknown as AcademicSession;
 }
 
+export async function updateSession(
+    id: string,
+    dto: { name?: string; startDate?: string; endDate?: string },
+): Promise<AcademicSession> {
+    return (await api.patch(
+        `/academics/sessions/${id}`,
+        dto,
+    )) as unknown as AcademicSession;
+}
+
 export async function getTerms(sessionId?: string): Promise<AcademicTerm[]> {
     const qs = sessionId ? `?sessionId=${sessionId}` : '';
     return (await api.get(`/academics/terms${qs}`)) as unknown as AcademicTerm[];
@@ -87,6 +97,16 @@ export async function createTerm(dto: {
     isCurrent?: boolean;
 }): Promise<AcademicTerm> {
     return (await api.post('/academics/terms', dto)) as unknown as AcademicTerm;
+}
+
+export async function updateTerm(
+    id: string,
+    dto: { name?: string; startDate?: string; endDate?: string; sortOrder?: number },
+): Promise<AcademicTerm> {
+    return (await api.patch(
+        `/academics/terms/${id}`,
+        dto,
+    )) as unknown as AcademicTerm;
 }
 
 // ── Levels and arms ─────────────────────────────────────────────────────────

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Users, CalendarRange, Loader2, ArrowRight } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Plus, Pencil, Users, CalendarRange, Loader2, ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,9 +43,12 @@ import {
     useSessions,
     useCreateSession,
     useSetCurrentSession,
+    useUpdateSession,
     useTerms,
     useCreateTerm,
+    useUpdateTerm,
 } from '@/lib/hooks/use-academics';
+import type { AcademicSession, AcademicTerm } from '@/lib/api/academics';
 
 /**
  * The school's shape: the ladder of levels, the classes on each rung, and the
@@ -54,9 +58,17 @@ import {
  * it — the roll cannot be imported, a child cannot be admitted, and an
  * application cannot name a class.
  */
-export default function ClassesPage() {
+function ClassesPageInner() {
     const { hasRole } = useAuth();
     const canManage = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+
+    // Which tab is showing lives in the URL, so a deep link (the onboarding
+    // "set the academic session" step) can land straight on "Session & terms"
+    // instead of always opening on the classes tab.
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const tab = searchParams.get('tab') === 'session' ? 'session' : 'classes';
+    const setTab = (v: string) => router.replace(`/classes?tab=${v}`);
 
     const { data: levels = [], isLoading } = useClassLevels();
     const { data: arms = [] } = useClassArms();
@@ -68,12 +80,17 @@ export default function ClassesPage() {
     const createArm = useCreateClassArm();
     const createSession = useCreateSession();
     const setCurrent = useSetCurrentSession();
+    const updateSession = useUpdateSession();
     const createTerm = useCreateTerm();
+    const updateTerm = useUpdateTerm();
 
     const [levelOpen, setLevelOpen] = useState(false);
     const [armOpen, setArmOpen] = useState(false);
     const [sessionOpen, setSessionOpen] = useState(false);
     const [termOpen, setTermOpen] = useState(false);
+    // Non-null while the matching dialog is editing rather than creating.
+    const [editingSession, setEditingSession] = useState<AcademicSession | null>(null);
+    const [editingTerm, setEditingTerm] = useState<AcademicTerm | null>(null);
 
     const [level, setLevel] = useState({ name: '', code: '', sortOrder: '' });
     const [arm, setArm] = useState({ levelId: '', name: '', capacity: '' });
@@ -85,6 +102,27 @@ export default function ClassesPage() {
     const [term, setTerm] = useState({ name: '', startDate: '', endDate: '' });
 
     const armsFor = (levelId: string) => arms.filter((a) => a.levelId === levelId);
+
+    const openAddSession = () => {
+        setEditingSession(null);
+        setSession({ name: '', startDate: '', endDate: '' });
+        setSessionOpen(true);
+    };
+    const openEditSession = (s: AcademicSession) => {
+        setEditingSession(s);
+        setSession({ name: s.name, startDate: s.startDate, endDate: s.endDate });
+        setSessionOpen(true);
+    };
+    const openAddTerm = () => {
+        setEditingTerm(null);
+        setTerm({ name: '', startDate: '', endDate: '' });
+        setTermOpen(true);
+    };
+    const openEditTerm = (t: AcademicTerm) => {
+        setEditingTerm(t);
+        setTerm({ name: t.name, startDate: t.startDate, endDate: t.endDate });
+        setTermOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -98,7 +136,7 @@ export default function ClassesPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="classes">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="classes">Levels &amp; classes</TabsTrigger>
                     <TabsTrigger value="session">Session &amp; terms</TabsTrigger>
@@ -200,7 +238,7 @@ export default function ClassesPage() {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setSessionOpen(true)}
+                                    onClick={openAddSession}
                                 >
                                     <Plus className="mr-2 h-4 w-4" /> Add session
                                 </Button>
@@ -227,15 +265,27 @@ export default function ClassesPage() {
                                                 {s.startDate} → {s.endDate}
                                             </p>
                                         </div>
-                                        {canManage && !s.isCurrent && (
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={() => setCurrent.mutate(s.id)}
-                                                disabled={setCurrent.isPending}
-                                            >
-                                                Make current
-                                            </Button>
+                                        {canManage && (
+                                            <div className="flex items-center gap-1">
+                                                {!s.isCurrent && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => setCurrent.mutate(s.id)}
+                                                        disabled={setCurrent.isPending}
+                                                    >
+                                                        Make current
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => openEditSession(s)}
+                                                    aria-label="Edit session"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 ))
@@ -257,7 +307,7 @@ export default function ClassesPage() {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setTermOpen(true)}
+                                    onClick={openAddTerm}
                                 >
                                     <Plus className="mr-2 h-4 w-4" /> Add term
                                 </Button>
@@ -284,9 +334,21 @@ export default function ClassesPage() {
                                                 <span className="font-medium">{t.name}</span>
                                                 {t.isCurrent && <Badge variant="secondary">Current</Badge>}
                                             </div>
-                                            <span className="text-sm text-muted-foreground">
-                                                {t.startDate} → {t.endDate}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-muted-foreground">
+                                                    {t.startDate} → {t.endDate}
+                                                </span>
+                                                {canManage && (
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => openEditTerm(t)}
+                                                        aria-label="Edit term"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -441,10 +503,20 @@ export default function ClassesPage() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={sessionOpen} onOpenChange={setSessionOpen}>
+            <Dialog
+                open={sessionOpen}
+                onOpenChange={(o) => {
+                    setSessionOpen(o);
+                    if (!o) setEditingSession(null);
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add an academic session</DialogTitle>
+                        <DialogTitle>
+                            {editingSession
+                                ? 'Edit academic session'
+                                : 'Add an academic session'}
+                        </DialogTitle>
                         <DialogDescription>
                             A school year, spanning two calendar years.
                         </DialogDescription>
@@ -482,13 +554,21 @@ export default function ClassesPage() {
                                 />
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            The first session created becomes current automatically if none
-                            is.
-                        </p>
+                        {!editingSession && (
+                            <p className="text-xs text-muted-foreground">
+                                The first session created becomes current automatically if
+                                none is.
+                            </p>
+                        )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setSessionOpen(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setSessionOpen(false);
+                                setEditingSession(null);
+                            }}
+                        >
                             Cancel
                         </Button>
                         <Button
@@ -496,30 +576,47 @@ export default function ClassesPage() {
                                 !session.name.trim() ||
                                 !session.startDate ||
                                 !session.endDate ||
-                                createSession.isPending
+                                createSession.isPending ||
+                                updateSession.isPending
                             }
                             onClick={async () => {
-                                await createSession.mutateAsync({
-                                    ...session,
-                                    isCurrent: sessions.length === 0,
-                                });
+                                if (editingSession) {
+                                    await updateSession.mutateAsync({
+                                        id: editingSession.id,
+                                        dto: session,
+                                    });
+                                } else {
+                                    await createSession.mutateAsync({
+                                        ...session,
+                                        isCurrent: sessions.length === 0,
+                                    });
+                                }
                                 setSession({ name: '', startDate: '', endDate: '' });
                                 setSessionOpen(false);
+                                setEditingSession(null);
                             }}
                         >
-                            {createSession.isPending && (
+                            {(createSession.isPending || updateSession.isPending) && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            Add session
+                            {editingSession ? 'Save changes' : 'Add session'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={termOpen} onOpenChange={setTermOpen}>
+            <Dialog
+                open={termOpen}
+                onOpenChange={(o) => {
+                    setTermOpen(o);
+                    if (!o) setEditingTerm(null);
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add a term</DialogTitle>
+                        <DialogTitle>
+                            {editingTerm ? 'Edit term' : 'Add a term'}
+                        </DialogTitle>
                         <DialogDescription>
                             Within {current?.name}. Dates outside the session are refused.
                         </DialogDescription>
@@ -557,36 +654,59 @@ export default function ClassesPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setTermOpen(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setTermOpen(false);
+                                setEditingTerm(null);
+                            }}
+                        >
                             Cancel
                         </Button>
                         <Button
                             disabled={
-                                !current ||
                                 !term.name.trim() ||
                                 !term.startDate ||
                                 !term.endDate ||
-                                createTerm.isPending
+                                createTerm.isPending ||
+                                updateTerm.isPending
                             }
                             onClick={async () => {
-                                await createTerm.mutateAsync({
-                                    sessionId: current!.id,
-                                    ...term,
-                                    sortOrder: terms.length + 1,
-                                    isCurrent: terms.length === 0,
-                                });
+                                if (editingTerm) {
+                                    await updateTerm.mutateAsync({
+                                        id: editingTerm.id,
+                                        dto: term,
+                                    });
+                                } else {
+                                    await createTerm.mutateAsync({
+                                        sessionId: current!.id,
+                                        ...term,
+                                        sortOrder: terms.length + 1,
+                                        isCurrent: terms.length === 0,
+                                    });
+                                }
                                 setTerm({ name: '', startDate: '', endDate: '' });
                                 setTermOpen(false);
+                                setEditingTerm(null);
                             }}
                         >
-                            {createTerm.isPending && (
+                            {(createTerm.isPending || updateTerm.isPending) && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            Add term
+                            {editingTerm ? 'Save changes' : 'Add term'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
+    );
+}
+
+// useSearchParams needs a Suspense boundary during static rendering.
+export default function ClassesPage() {
+    return (
+        <Suspense>
+            <ClassesPageInner />
+        </Suspense>
     );
 }

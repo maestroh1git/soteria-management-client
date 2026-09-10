@@ -181,7 +181,7 @@ export function useOnboardingProgress(): OnboardingProgress {
             label: 'Set the academic session and its terms',
             description:
               'Everything else on the school side hangs off this — mark one session and one term current.',
-            href: '/classes',
+            href: '/classes?tab=session',
             done: (sessions.data?.length ?? 0) > 0,
             optional: true,
           },
