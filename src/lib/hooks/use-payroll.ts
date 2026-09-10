@@ -16,6 +16,7 @@ import {
   markSalaryAsPaid,
   bulkPayment,
   bulkApprove,
+  getSalaryStatusSummary,
   type ProcessPayrollDto,
   type SalaryApprovalDto,
   type SalaryPaymentDto,
@@ -74,6 +75,16 @@ export function useSalary(id: string) {
     queryKey: ['salaries', id],
     queryFn: () => getSalary(id),
     enabled: !!id,
+  });
+}
+
+// Keyed under 'salaries' so every process/approve/pay mutation, which all
+// invalidate ['salaries'], refreshes this breakdown too.
+export function useSalaryStatusSummary(payPeriodId: string) {
+  return useQuery({
+    queryKey: ['salaries', 'status-summary', payPeriodId],
+    queryFn: () => getSalaryStatusSummary(payPeriodId),
+    enabled: !!payPeriodId,
   });
 }
 
