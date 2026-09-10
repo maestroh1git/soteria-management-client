@@ -47,8 +47,15 @@ import {
     useTerms,
     useCreateTerm,
     useUpdateTerm,
+    useUpdateClassLevel,
+    useUpdateClassArm,
 } from '@/lib/hooks/use-academics';
-import type { AcademicSession, AcademicTerm } from '@/lib/api/academics';
+import type {
+    AcademicSession,
+    AcademicTerm,
+    ClassLevel,
+    ClassArm,
+} from '@/lib/api/academics';
 
 /**
  * The school's shape: the ladder of levels, the classes on each rung, and the
@@ -77,7 +84,9 @@ function ClassesPageInner() {
     const { data: terms = [] } = useTerms(current?.id);
 
     const createLevel = useCreateClassLevel();
+    const updateLevel = useUpdateClassLevel();
     const createArm = useCreateClassArm();
+    const updateArm = useUpdateClassArm();
     const createSession = useCreateSession();
     const setCurrent = useSetCurrentSession();
     const updateSession = useUpdateSession();
@@ -91,6 +100,8 @@ function ClassesPageInner() {
     // Non-null while the matching dialog is editing rather than creating.
     const [editingSession, setEditingSession] = useState<AcademicSession | null>(null);
     const [editingTerm, setEditingTerm] = useState<AcademicTerm | null>(null);
+    const [editingLevel, setEditingLevel] = useState<ClassLevel | null>(null);
+    const [editingArm, setEditingArm] = useState<ClassArm | null>(null);
 
     const [level, setLevel] = useState({ name: '', code: '', sortOrder: '' });
     const [arm, setArm] = useState({ levelId: '', name: '', capacity: '' });
@@ -123,6 +134,34 @@ function ClassesPageInner() {
         setTerm({ name: t.name, startDate: t.startDate, endDate: t.endDate });
         setTermOpen(true);
     };
+    const openAddLevel = () => {
+        setEditingLevel(null);
+        setLevel({ name: '', code: '', sortOrder: '' });
+        setLevelOpen(true);
+    };
+    const openEditLevel = (l: ClassLevel) => {
+        setEditingLevel(l);
+        setLevel({
+            name: l.name,
+            code: l.code ?? '',
+            sortOrder: l.sortOrder != null ? String(l.sortOrder) : '',
+        });
+        setLevelOpen(true);
+    };
+    const openAddArm = () => {
+        setEditingArm(null);
+        setArm({ levelId: '', name: '', capacity: '' });
+        setArmOpen(true);
+    };
+    const openEditArm = (a: ClassArm) => {
+        setEditingArm(a);
+        setArm({
+            levelId: a.levelId,
+            name: a.name,
+            capacity: a.capacity != null ? String(a.capacity) : '',
+        });
+        setArmOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -154,16 +193,16 @@ function ClassesPageInner() {
                         <PrerequisiteNotice
                             message="Add a class level first — JSS1, Primary 3. Classes belong to a level, and fees are priced per level."
                             actionLabel="Add level"
-                            onAction={() => setLevelOpen(true)}
+                            onAction={openAddLevel}
                         />
                     )}
                     {canManage && (
                         <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setLevelOpen(true)}>
+                            <Button variant="outline" onClick={openAddLevel}>
                                 <Plus className="mr-2 h-4 w-4" /> Add level
                             </Button>
                             <Button
-                                onClick={() => setArmOpen(true)}
+                                onClick={openAddArm}
                                 disabled={levels.length === 0}
                                 title={
                                     levels.length === 0 ? 'Create a level first' : undefined
@@ -193,6 +232,17 @@ function ClassesPageInner() {
                                                     {l.code}
                                                 </Badge>
                                             )}
+                                            {canManage && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="ml-auto h-7 w-7"
+                                                    onClick={() => openEditLevel(l)}
+                                                    aria-label="Edit level"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         </div>
                                         <CardDescription>
                                             {armsFor(l.id).length === 0
@@ -203,18 +253,34 @@ function ClassesPageInner() {
                                     <CardContent>
                                         <div className="flex flex-wrap gap-2">
                                             {armsFor(l.id).map((a) => (
-                                                <Link key={a.id} href={`/classes/${a.id}`}>
-                                                    <Button variant="outline" className="gap-2">
-                                                        <Users className="h-4 w-4" />
-                                                        {l.name} {a.name}
-                                                        {a.capacity !== null && (
-                                                            <span className="text-muted-foreground">
-                                                                · {a.capacity} seats
-                                                            </span>
-                                                        )}
-                                                        <ArrowRight className="h-3 w-3" />
-                                                    </Button>
-                                                </Link>
+                                                <div key={a.id} className="flex items-center">
+                                                    <Link href={`/classes/${a.id}`}>
+                                                        <Button
+                                                            variant="outline"
+                                                            className={`gap-2 ${canManage ? 'rounded-r-none border-r-0' : ''}`}
+                                                        >
+                                                            <Users className="h-4 w-4" />
+                                                            {l.name} {a.name}
+                                                            {a.capacity !== null && (
+                                                                <span className="text-muted-foreground">
+                                                                    · {a.capacity} seats
+                                                                </span>
+                                                            )}
+                                                            <ArrowRight className="h-3 w-3" />
+                                                        </Button>
+                                                    </Link>
+                                                    {canManage && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="rounded-l-none"
+                                                            onClick={() => openEditArm(a)}
+                                                            aria-label="Edit class"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     </CardContent>
@@ -359,10 +425,18 @@ function ClassesPageInner() {
             </Tabs>
 
             {/* ── Dialogs ── */}
-            <Dialog open={levelOpen} onOpenChange={setLevelOpen}>
+            <Dialog
+                open={levelOpen}
+                onOpenChange={(o) => {
+                    setLevelOpen(o);
+                    if (!o) setEditingLevel(null);
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add a class level</DialogTitle>
+                        <DialogTitle>
+                            {editingLevel ? 'Edit class level' : 'Add a class level'}
+                        </DialogTitle>
                         <DialogDescription>
                             A rung on the ladder. Order matters — it is what promotion
                             follows at the end of a session.
@@ -402,36 +476,61 @@ function ClassesPageInner() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setLevelOpen(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setLevelOpen(false);
+                                setEditingLevel(null);
+                            }}
+                        >
                             Cancel
                         </Button>
                         <Button
-                            disabled={!level.name.trim() || createLevel.isPending}
+                            disabled={
+                                !level.name.trim() ||
+                                createLevel.isPending ||
+                                updateLevel.isPending
+                            }
                             onClick={async () => {
-                                await createLevel.mutateAsync({
+                                const dto = {
                                     name: level.name.trim(),
                                     code: level.code.trim() || undefined,
                                     sortOrder: level.sortOrder
                                         ? Number(level.sortOrder)
                                         : undefined,
-                                });
+                                };
+                                if (editingLevel) {
+                                    await updateLevel.mutateAsync({
+                                        id: editingLevel.id,
+                                        dto,
+                                    });
+                                } else {
+                                    await createLevel.mutateAsync(dto);
+                                }
                                 setLevel({ name: '', code: '', sortOrder: '' });
                                 setLevelOpen(false);
+                                setEditingLevel(null);
                             }}
                         >
-                            {createLevel.isPending && (
+                            {(createLevel.isPending || updateLevel.isPending) && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            Add level
+                            {editingLevel ? 'Save changes' : 'Add level'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={armOpen} onOpenChange={setArmOpen}>
+            <Dialog
+                open={armOpen}
+                onOpenChange={(o) => {
+                    setArmOpen(o);
+                    if (!o) setEditingArm(null);
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add a class</DialogTitle>
+                        <DialogTitle>{editingArm ? 'Edit class' : 'Add a class'}</DialogTitle>
                         <DialogDescription>
                             An actual roomful of children — JSS1 A, JSS1 B.
                         </DialogDescription>
@@ -442,6 +541,7 @@ function ClassesPageInner() {
                             <Select
                                 value={arm.levelId}
                                 onValueChange={(v) => setArm({ ...arm, levelId: v })}
+                                disabled={!!editingArm}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a level" />
@@ -477,27 +577,47 @@ function ClassesPageInner() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setArmOpen(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setArmOpen(false);
+                                setEditingArm(null);
+                            }}
+                        >
                             Cancel
                         </Button>
                         <Button
                             disabled={
-                                !arm.levelId || !arm.name.trim() || createArm.isPending
+                                !arm.levelId ||
+                                !arm.name.trim() ||
+                                createArm.isPending ||
+                                updateArm.isPending
                             }
                             onClick={async () => {
-                                await createArm.mutateAsync({
-                                    levelId: arm.levelId,
-                                    name: arm.name.trim(),
-                                    capacity: arm.capacity ? Number(arm.capacity) : undefined,
-                                });
+                                const capacity = arm.capacity
+                                    ? Number(arm.capacity)
+                                    : undefined;
+                                if (editingArm) {
+                                    await updateArm.mutateAsync({
+                                        id: editingArm.id,
+                                        dto: { name: arm.name.trim(), capacity },
+                                    });
+                                } else {
+                                    await createArm.mutateAsync({
+                                        levelId: arm.levelId,
+                                        name: arm.name.trim(),
+                                        capacity,
+                                    });
+                                }
                                 setArm({ levelId: '', name: '', capacity: '' });
                                 setArmOpen(false);
+                                setEditingArm(null);
                             }}
                         >
-                            {createArm.isPending && (
+                            {(createArm.isPending || updateArm.isPending) && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            Add class
+                            {editingArm ? 'Save changes' : 'Add class'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

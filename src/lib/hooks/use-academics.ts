@@ -11,8 +11,10 @@ import {
     updateTerm,
     getClassLevels,
     createClassLevel,
+    updateClassLevel,
     getClassArms,
     createClassArm,
+    updateClassArm,
     getArmOccupancy,
 } from '../api/academics';
 
@@ -156,6 +158,24 @@ export function useClassArms(levelId?: string, enabled = true) {
     });
 }
 
+export function useUpdateClassLevel() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            dto,
+        }: {
+            id: string;
+            dto: { name?: string; code?: string; sortOrder?: number };
+        }) => updateClassLevel(id, dto),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['academics'] });
+            toast.success('Class level updated');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not update level'),
+    });
+}
+
 export function useCreateClassArm() {
     const qc = useQueryClient();
     return useMutation({
@@ -165,6 +185,24 @@ export function useCreateClassArm() {
             toast.success('Class created');
         },
         onError: (e: Error) => toast.error(e.message || 'Could not create class'),
+    });
+}
+
+export function useUpdateClassArm() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            dto,
+        }: {
+            id: string;
+            dto: { name?: string; capacity?: number; formTeacherId?: string };
+        }) => updateClassArm(id, dto),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['academics'] });
+            toast.success('Class updated');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not update class'),
     });
 }
 

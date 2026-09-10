@@ -4,6 +4,7 @@ import {
     approveConcession,
     cancelInvoice,
     copyTermPrices,
+    copyLevelPrices,
     createConcession,
     createFeeItem,
     generateInvoices,
@@ -140,6 +141,20 @@ export function useCopyTermPrices() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: copyTermPrices,
+        onSuccess: (result) => {
+            qc.invalidateQueries({ queryKey: ['fees'] });
+            const parts = [`${result.copied} copied`];
+            if (result.overwritten) parts.push(`${result.overwritten} replaced`);
+            if (result.skipped) parts.push(`${result.skipped} left alone`);
+            toast.success(parts.join(', '));
+        },
+    });
+}
+
+export function useCopyLevelPrices() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: copyLevelPrices,
         onSuccess: (result) => {
             qc.invalidateQueries({ queryKey: ['fees'] });
             const parts = [`${result.copied} copied`];

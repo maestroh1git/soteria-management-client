@@ -145,6 +145,19 @@ export async function copyTermPrices(data: {
     };
 }
 
+export async function copyLevelPrices(data: {
+    termId: string;
+    fromClassLevelId: string;
+    toClassLevelId: string;
+    overwrite?: boolean;
+}): Promise<{ copied: number; skipped: number; overwritten: number }> {
+    return (await api.post('/fees/structure/copy-level', data)) as unknown as {
+        copied: number;
+        skipped: number;
+        overwritten: number;
+    };
+}
+
 export async function getFeeProjection(
     sessionId: string,
 ): Promise<FeeProjection> {

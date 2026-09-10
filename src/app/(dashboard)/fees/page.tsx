@@ -36,6 +36,7 @@ import { useSessions } from '@/lib/hooks/use-academics';
 import { useAccounts } from '@/lib/hooks/use-finance';
 import {
     useCopyTermPrices,
+    useCopyLevelPrices,
     useCreateFeeItem,
     useUpdateFeeItem,
     useFeeItems,
@@ -89,6 +90,7 @@ export default function FeesPage() {
     // Non-null while the fee dialog is editing an existing fee rather than adding.
     const [editingItem, setEditingItem] = useState<FeeItemRow | null>(null);
     const [copyOpen, setCopyOpen] = useState(false);
+    const [copyLevelOpen, setCopyLevelOpen] = useState(false);
 
     // Default to the current session, then to the first one there is.
     useEffect(() => {
@@ -214,15 +216,26 @@ export default function FeesPage() {
                                 </Button>
                             ))}
                         </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCopyOpen(true)}
-                            disabled={(priceList?.terms.length ?? 0) < 2}
-                        >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy from another term
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCopyOpen(true)}
+                                disabled={(priceList?.terms.length ?? 0) < 2}
+                            >
+                                <Copy className="mr-2 h-4 w-4" />
+                                Copy from another term
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCopyLevelOpen(true)}
+                                disabled={(priceList?.levels.length ?? 0) < 2 || !termId}
+                            >
+                                <Copy className="mr-2 h-4 w-4" />
+                                Copy from another class
+                            </Button>
+                        </div>
                     </div>
 
                     {isLoading ? (
@@ -384,6 +397,12 @@ export default function FeesPage() {
                 onOpenChange={setCopyOpen}
                 terms={priceList?.terms ?? []}
                 currentTermId={termId}
+            />
+            <CopyLevelDialog
+                open={copyLevelOpen}
+                onOpenChange={setCopyLevelOpen}
+                levels={priceList?.levels ?? []}
+                termId={termId}
             />
         </div>
     );
@@ -757,6 +776,126 @@ function CopyTermDialog({
                     <Button
                         onClick={submit}
                         disabled={!fromTermId || !currentTermId || copy.isPending}
+                    >
+                        {copy.isPending && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Copy
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function CopyLevelDialog({
+    open,
+    onOpenChange,
+    levels,
+    termId,
+}: {
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+    levels: Array<{ id: string; name: string }>;
+    termId?: string;
+}) {
+    const copy = useCopyLevelPrices();
+    const [fromClassLevelId, setFromClassLevelId] = useState('');
+    const [toClassLevelId, setToClassLevelId] = useState('');
+    const [overwrite, setOverwrite] = useState(false);
+
+    const submit = async () => {
+        if (!termId) return;
+        await copy.mutateAsync({
+            termId,
+            fromClassLevelId,
+            toClassLevelId,
+            overwrite,
+        });
+        setFromClassLevelId('');
+        setToClassLevelId('');
+        setOverwrite(false);
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Copy one class&apos;s prices to another</DialogTitle>
+                    <DialogDescription>
+                        Within this term. Prices already set on the target class are left
+                        alone unless you say otherwise.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                    <div className="space-y-1.5">
+                        <Label>Copy from</Label>
+                        <Select
+                            value={fromClassLevelId}
+                            onValueChange={setFromClassLevelId}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Which class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {levels
+                                    .filter((l) => l.id !== toClassLevelId)
+                                    .map((l) => (
+                                        <SelectItem key={l.id} value={l.id}>
+                                            {l.name}
+                                        </SelectItem>
+                                    ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label>Copy to</Label>
+                        <Select value={toClassLevelId} onValueChange={setToClassLevelId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Which class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {levels
+                                    .filter((l) => l.id !== fromClassLevelId)
+                                    .map((l) => (
+                                        <SelectItem key={l.id} value={l.id}>
+                                            {l.name}
+                                        </SelectItem>
+                                    ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <label className="flex items-start gap-2 text-sm">
+                        <Checkbox
+                            checked={overwrite}
+                            onCheckedChange={(v) => setOverwrite(v === true)}
+                        />
+                        <span>
+                            Replace prices already set on the target class
+                            <span className="block text-xs text-muted-foreground">
+                                Off by default, so a figure somebody has already corrected
+                                is not quietly overwritten.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={submit}
+                        disabled={
+                            !fromClassLevelId ||
+                            !toClassLevelId ||
+                            !termId ||
+                            copy.isPending
+                        }
                     >
                         {copy.isPending && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

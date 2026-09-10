@@ -123,6 +123,16 @@ export async function createClassLevel(dto: {
     return (await api.post('/academics/levels', dto)) as unknown as ClassLevel;
 }
 
+export async function updateClassLevel(
+    id: string,
+    dto: { name?: string; code?: string; sortOrder?: number },
+): Promise<ClassLevel> {
+    return (await api.patch(
+        `/academics/levels/${id}`,
+        dto,
+    )) as unknown as ClassLevel;
+}
+
 export async function getClassArms(levelId?: string): Promise<ClassArm[]> {
     const qs = levelId ? `?levelId=${levelId}` : '';
     return (await api.get(`/academics/arms${qs}`)) as unknown as ClassArm[];
@@ -135,6 +145,13 @@ export async function createClassArm(dto: {
     formTeacherId?: string;
 }): Promise<ClassArm> {
     return (await api.post('/academics/arms', dto)) as unknown as ClassArm;
+}
+
+export async function updateClassArm(
+    id: string,
+    dto: { name?: string; capacity?: number; formTeacherId?: string },
+): Promise<ClassArm> {
+    return (await api.patch(`/academics/arms/${id}`, dto)) as unknown as ClassArm;
 }
 
 export async function getArmOccupancy(id: string): Promise<ArmOccupancy> {
