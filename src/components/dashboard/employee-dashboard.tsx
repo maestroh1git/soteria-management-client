@@ -6,7 +6,7 @@ import { Wallet, CalendarDays, UserCircle, ArrowRight, Download, Loader2 } from 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CurrencyDisplay } from '@/components/common/currency-display';
-import { BirthdaysWidget } from '@/components/dashboard/birthdays-widget';
+import { EventsWidget } from '@/components/dashboard/events-widget';
 import {
     useMyEmployee,
     useMyYtd,
@@ -147,8 +147,8 @@ export function EmployeeDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Birthdays — the one shared thing */}
-                <BirthdaysWidget />
+                {/* Upcoming events + birthdays — the shared what's-coming-up */}
+                <EventsWidget />
             </div>
         </div>
     );

@@ -38,6 +38,7 @@ const routeRoleMap: Record<string, string[] | undefined> = {
   '/employees': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'],
   '/roles': ['tenant_owner', 'ADMIN'],
   '/departments': ['tenant_owner', 'ADMIN'],
+  '/events': ['tenant_owner', 'ADMIN'],
   '/payroll': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'],
   '/salary-components': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'],
   '/loans': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'],
