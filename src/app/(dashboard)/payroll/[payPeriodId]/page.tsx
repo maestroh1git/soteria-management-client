@@ -55,6 +55,7 @@ import {
     useApproveSalary,
     useMarkAsPaid,
     useBulkPayment,
+    useBulkApproval,
 } from '@/lib/hooks/use-payroll';
 import { useAuthStore } from '@/stores/auth-store';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
@@ -94,6 +95,7 @@ export default function PayrollWorkspacePage() {
     const approveMutation = useApproveSalary();
     const payMutation = useMarkAsPaid();
     const bulkPayMutation = useBulkPayment();
+    const bulkApproveMutation = useBulkApproval();
 
     // Dialogs
     const [showProcess, setShowProcess] = useState(false);
@@ -165,8 +167,27 @@ export default function PayrollWorkspacePage() {
         );
     };
 
+    // The selection can hold both draft and approved rows; each bulk action
+    // takes only the subset it applies to, so a mixed selection does the right
+    // thing rather than erroring.
+    const selectedDraftIds = salaries
+        .filter((s) => s.status === SalaryStatus.DRAFT && selected.has(s.id))
+        .map((s) => s.id);
+    const selectedApprovedIds = salaries
+        .filter((s) => s.status === SalaryStatus.APPROVED && selected.has(s.id))
+        .map((s) => s.id);
+
+    const handleBulkApprove = () => {
+        if (!user || selectedDraftIds.length === 0) return;
+        bulkApproveMutation.mutate(
+            { salaryIds: selectedDraftIds, approverId: user.id },
+            { onSuccess: () => setSelected(new Set()) },
+        );
+    };
+
     const handleBulkPay = () => {
-        const payments = Array.from(selected).map((salaryId) => ({
+        if (selectedApprovedIds.length === 0) return;
+        const payments = selectedApprovedIds.map((salaryId) => ({
             salaryId,
             paymentReference: `BULK-${Date.now()}`,
         }));
@@ -182,10 +203,21 @@ export default function PayrollWorkspacePage() {
         });
     };
 
+    // Everything actionable in bulk: drafts (to approve) and approved (to pay).
+    const selectableIds = salaries
+        .filter(
+            (s) =>
+                s.status === SalaryStatus.DRAFT ||
+                s.status === SalaryStatus.APPROVED,
+        )
+        .map((s) => s.id);
+
     const toggleAll = () => {
-        const approved = salaries.filter((s) => s.status === SalaryStatus.APPROVED);
-        if (selected.size === approved.length) setSelected(new Set());
-        else setSelected(new Set(approved.map((s) => s.id)));
+        if (selectableIds.length > 0 && selected.size === selectableIds.length) {
+            setSelected(new Set());
+        } else {
+            setSelected(new Set(selectableIds));
+        }
     };
 
     if (periodLoading) return <LoadingSkeleton rows={6} />;
@@ -281,7 +313,18 @@ export default function PayrollWorkspacePage() {
                     </SelectContent>
                 </Select>
 
-                {selected.size > 0 && (
+                {selectedDraftIds.length > 0 && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBulkApprove}
+                        disabled={bulkApproveMutation.isPending}
+                    >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Approve {selectedDraftIds.length}
+                    </Button>
+                )}
+                {selectedApprovedIds.length > 0 && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -289,7 +332,7 @@ export default function PayrollWorkspacePage() {
                         disabled={bulkPayMutation.isPending}
                     >
                         <CreditCard className="mr-2 h-4 w-4" />
-                        Mark {selected.size} as Paid
+                        Mark {selectedApprovedIds.length} as Paid
                     </Button>
                 )}
             </div>
@@ -332,8 +375,8 @@ export default function PayrollWorkspacePage() {
                                     <th className="w-10 px-4 py-3">
                                         <Checkbox
                                             checked={
-                                                salaries.filter((s) => s.status === SalaryStatus.APPROVED).length > 0 &&
-                                                selected.size === salaries.filter((s) => s.status === SalaryStatus.APPROVED).length
+                                                selectableIds.length > 0 &&
+                                                selected.size === selectableIds.length
                                             }
                                             onCheckedChange={toggleAll}
                                         />
@@ -352,7 +395,8 @@ export default function PayrollWorkspacePage() {
                                     return (
                                         <tr key={sal.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="px-4 py-3">
-                                                {sal.status === SalaryStatus.APPROVED && (
+                                                {(sal.status === SalaryStatus.DRAFT ||
+                                                    sal.status === SalaryStatus.APPROVED) && (
                                                     <Checkbox
                                                         checked={selected.has(sal.id)}
                                                         onCheckedChange={() => toggleSelect(sal.id)}

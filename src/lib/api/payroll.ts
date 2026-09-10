@@ -27,6 +27,18 @@ export interface BulkPaymentDto {
   payments: Array<{ salaryId: string; paymentReference: string }>;
 }
 
+export interface BulkApprovalDto {
+  salaryIds: string[];
+  approverId: string;
+  notes?: string;
+}
+
+export interface BulkApprovalResult {
+  totalProcessed: number;
+  successful: string[];
+  failed: Array<{ salaryId: string; reason: string }>;
+}
+
 // ── API calls ───────────────────────────────────────────────
 export async function processPayroll(dto: ProcessPayrollDto): Promise<PayrollProcessResult> {
   return await api.post('/payroll/process', dto) as unknown as PayrollProcessResult;
@@ -50,6 +62,10 @@ export async function markSalaryAsPaid(id: string, dto: SalaryPaymentDto): Promi
 
 export async function bulkPayment(dto: BulkPaymentDto): Promise<BulkPaymentResult> {
   return await api.post('/payroll/bulk-payment', dto) as unknown as BulkPaymentResult;
+}
+
+export async function bulkApprove(dto: BulkApprovalDto): Promise<BulkApprovalResult> {
+  return await api.post('/payroll/bulk-approve', dto) as unknown as BulkApprovalResult;
 }
 
 // ── Bank payment file ───────────────────────────────────────

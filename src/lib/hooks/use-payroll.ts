@@ -15,10 +15,12 @@ import {
   approveSalary,
   markSalaryAsPaid,
   bulkPayment,
+  bulkApprove,
   type ProcessPayrollDto,
   type SalaryApprovalDto,
   type SalaryPaymentDto,
   type BulkPaymentDto,
+  type BulkApprovalDto,
 } from '@/lib/api/payroll';
 
 // ── Pay Period queries ──────────────────────────────────────
@@ -136,5 +138,20 @@ export function useBulkPayment() {
       );
     },
     onError: () => toast.error('Bulk payment failed'),
+  });
+}
+
+export function useBulkApproval() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: BulkApprovalDto) => bulkApprove(dto),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['salaries'] });
+      qc.invalidateQueries({ queryKey: ['pay-periods'] });
+      const msg = `Bulk approval: ${result.successful.length} approved, ${result.failed.length} failed`;
+      if (result.failed.length) toast.error(msg);
+      else toast.success(msg);
+    },
+    onError: () => toast.error('Bulk approval failed'),
   });
 }
