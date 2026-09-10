@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useBranding } from '@/lib/hooks/use-branding';
+import { brandingImageUrl } from '@/lib/api/branding';
 import { useUIStore } from '@/stores/ui-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -26,6 +28,9 @@ export function Sidebar() {
     const pathname = usePathname();
     const { tenantName, tenantOrgType, hasRole } = useAuth();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
+    const { data: branding } = useBranding();
+    const logoUrl = brandingImageUrl(branding?.logoUrl);
+    const brandColor = branding?.primaryColor ?? null;
 
     const orgSubtitle = tenantOrgType ? (ORG_TYPE_LABEL[tenantOrgType] ?? 'Payroll System') : 'Payroll System';
 
@@ -45,9 +50,27 @@ export function Sidebar() {
                     sidebarCollapsed ? 'justify-center' : 'gap-3',
                 )}
             >
-                <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">S</span>
-                </div>
+                {logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={logoUrl}
+                        alt={tenantName ?? 'Logo'}
+                        className="flex-shrink-0 h-9 w-9 rounded-xl object-contain bg-white"
+                    />
+                ) : (
+                    <div
+                        className={cn(
+                            'flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center',
+                            !brandColor &&
+                                'bg-gradient-to-br from-blue-600 to-indigo-600',
+                        )}
+                        style={brandColor ? { backgroundColor: brandColor } : undefined}
+                    >
+                        <span className="text-white font-bold text-sm">
+                            {(tenantName?.[0] ?? 'S').toUpperCase()}
+                        </span>
+                    </div>
+                )}
                 {!sidebarCollapsed && (
                     <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{tenantName}</p>

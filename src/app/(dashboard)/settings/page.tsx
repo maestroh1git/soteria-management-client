@@ -16,7 +16,9 @@ import {
     Shield,
     UserPlus,
     Building2,
+    Palette,
 } from 'lucide-react';
+import { BrandingSettings } from '@/components/settings/branding-settings';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -395,7 +397,19 @@ export default function SettingsPage() {
                             Organization
                         </TabsTrigger>
                     )}
+                    {canManageTeam && (
+                        <TabsTrigger value="branding">
+                            <Palette className="mr-2 h-4 w-4" />
+                            Branding
+                        </TabsTrigger>
+                    )}
                 </TabsList>
+
+                {canManageTeam && (
+                    <TabsContent value="branding" className="space-y-4">
+                        <BrandingSettings />
+                    </TabsContent>
+                )}
 
                 {/* ─── Team ─────────────────────────────────────────── */}
                 {canManageTeam && (

@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { CommandMenu } from '@/components/common/command-menu';
+import { BrandingHead } from '@/components/layout/branding-head';
 
 export default function DashboardLayout({
     children,
@@ -10,6 +11,7 @@ export default function DashboardLayout({
 }) {
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+            <BrandingHead />
             <CommandMenu />
             <Sidebar />
             <MobileSidebar />
