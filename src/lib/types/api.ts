@@ -237,6 +237,8 @@ export interface Employee {
   dateOfBirth: string;
   gender: EmployeeGender;
   address: string | null;
+  nin: string | null;
+  bvn: string | null;
   joinDate: string;
   terminationDate: string | null;
   roleId: string;

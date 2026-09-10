@@ -17,6 +17,8 @@ export interface CreateEmployeeDto {
   dateOfBirth: string;
   gender: string;
   address?: string;
+  nin?: string;
+  bvn?: string;
   joinDate: string;
   roleId: string;
   gradeId?: string;

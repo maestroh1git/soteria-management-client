@@ -22,6 +22,8 @@ export default function NewEmployeePage() {
             employeeNumber: values.employeeNumber?.trim() || undefined,
             middleName: values.middleName || undefined,
             address: values.address || undefined,
+            nin: values.nin || undefined,
+            bvn: values.bvn || undefined,
             countryId: values.countryId || undefined,
             gradeId: values.gradeId || undefined,
         };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     Send,
     FileDown,
@@ -68,6 +68,20 @@ export default function PayslipsPage() {
 
     const { data: periods } = usePayPeriods();
     const { data: payslips, isLoading } = usePayslipsByPayPeriod(selectedPeriod);
+
+    // Land on a real pay period rather than an empty page: the most recent
+    // CLOSED one (where payslips actually exist), falling back to the most
+    // recent period of any status. Only sets an initial value — the user's own
+    // choice afterwards is left alone.
+    useEffect(() => {
+        if (selectedPeriod || !periods?.length) return;
+        const byRecent = [...periods].sort((a, b) =>
+            b.startDate.localeCompare(a.startDate),
+        );
+        const closed = byRecent.filter((p) => p.status === PayPeriodStatus.CLOSED);
+        const pick = (closed.length ? closed : byRecent)[0];
+        if (pick) setSelectedPeriod(pick.id);
+    }, [periods, selectedPeriod]);
 
     // Payslips are generated from processed payroll — if nothing has been
     // processed yet, point the user back to payroll.
