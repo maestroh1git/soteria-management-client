@@ -21,7 +21,7 @@ import {
     useYearEndReport,
     useRecentSalaries,
 } from '@/lib/hooks/use-reports';
-import { BirthdaysWidget } from '@/components/dashboard/birthdays-widget';
+import { EventsWidget } from '@/components/dashboard/events-widget';
 import { EmployeeDashboard } from '@/components/dashboard/employee-dashboard';
 import { SchoolWidget } from '@/components/dashboard/school-widget';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
@@ -233,10 +233,10 @@ export default function DashboardPage() {
                 itself for a tenant that has never billed anything. */}
             <FeesWidget />
 
-            {/* Birthday Widget */}
+            {/* Upcoming events + birthdays */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
-                    <BirthdaysWidget />
+                    <EventsWidget />
                 </div>
             </div>
 
