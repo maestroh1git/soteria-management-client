@@ -5,8 +5,10 @@ import {
     getCurrentSession,
     createSession,
     setCurrentSession,
+    updateSession,
     getTerms,
     createTerm,
+    updateTerm,
     getClassLevels,
     createClassLevel,
     getClassArms,
@@ -63,6 +65,24 @@ export function useSetCurrentSession() {
     });
 }
 
+export function useUpdateSession() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            dto,
+        }: {
+            id: string;
+            dto: { name?: string; startDate?: string; endDate?: string };
+        }) => updateSession(id, dto),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['academics'] });
+            toast.success('Session updated');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not update session'),
+    });
+}
+
 export function useTerms(sessionId?: string) {
     return useQuery({
         queryKey: ['academics', 'terms', sessionId],
@@ -81,6 +101,29 @@ export function useCreateTerm() {
             toast.success('Term created');
         },
         onError: (e: Error) => toast.error(e.message || 'Could not create term'),
+    });
+}
+
+export function useUpdateTerm() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            dto,
+        }: {
+            id: string;
+            dto: {
+                name?: string;
+                startDate?: string;
+                endDate?: string;
+                sortOrder?: number;
+            };
+        }) => updateTerm(id, dto),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['academics', 'terms'] });
+            toast.success('Term updated');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not update term'),
     });
 }
 
