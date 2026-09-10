@@ -135,7 +135,10 @@ export default function PayrollWorkspacePage() {
             {
                 onSuccess: (result) => {
                     setProcessResult(result);
-                    if (!dryRun) setShowProcess(false);
+                    // Close on a clean run. Keep the dialog open when employees
+                    // failed — it is the only place their errors are shown, and
+                    // auto-closing it is what left the failure invisible.
+                    if (!dryRun && result.errors.length === 0) setShowProcess(false);
                 },
             },
         );

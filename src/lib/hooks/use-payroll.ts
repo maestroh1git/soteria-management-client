@@ -82,9 +82,18 @@ export function useProcessPayroll() {
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['salaries'] });
       qc.invalidateQueries({ queryKey: ['pay-periods'] });
-      toast.success(
-        `Payroll processed: ${result.processedCount} salaries calculated`,
-      );
+      // The endpoint returns 200 even when some employees failed, so a flat
+      // "success" would hide a run that calculated nothing. Report the real
+      // outcome; the detail dialog stays open on errors with the specifics.
+      const bits = [`${result.processedCount} calculated`];
+      if (result.skippedCount) bits.push(`${result.skippedCount} skipped`);
+      if (result.errors.length) bits.push(`${result.errors.length} failed`);
+      const summary = bits.join(', ');
+      if (result.errors.length) {
+        toast.error(`Payroll finished with errors: ${summary}`);
+      } else {
+        toast.success(`Payroll processed: ${summary}`);
+      }
     },
     onError: () => toast.error('Failed to process payroll'),
   });
