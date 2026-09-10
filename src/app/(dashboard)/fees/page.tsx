@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Copy, Loader2, Info } from 'lucide-react';
+import { Plus, Copy, Loader2, Info, Pencil, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,7 @@ import { useAccounts } from '@/lib/hooks/use-finance';
 import {
     useCopyTermPrices,
     useCreateFeeItem,
+    useUpdateFeeItem,
     useFeeItems,
     useFeeProjection,
     usePriceList,
@@ -44,6 +45,8 @@ import {
     useSetFeePrice,
 } from '@/lib/hooks/use-fees';
 import type { FeeCategory } from '@/lib/api/fees';
+
+type FeeItemRow = NonNullable<ReturnType<typeof useFeeItems>['data']>[number];
 
 /** Groups digits without parsing the string into a float. */
 const money = (v: string) => {
@@ -83,6 +86,8 @@ export default function FeesPage() {
     const setPrice = useSetFeePrice();
 
     const [addOpen, setAddOpen] = useState(false);
+    // Non-null while the fee dialog is editing an existing fee rather than adding.
+    const [editingItem, setEditingItem] = useState<FeeItemRow | null>(null);
     const [copyOpen, setCopyOpen] = useState(false);
 
     // Default to the current session, then to the first one there is.
@@ -348,7 +353,14 @@ export default function FeesPage() {
                                     </thead>
                                     <tbody className="divide-y">
                                         {items.map((item) => (
-                                            <FeeRow key={item.id} item={item} />
+                                            <FeeRow
+                                                key={item.id}
+                                                item={item}
+                                                onEdit={(it) => {
+                                                    setEditingItem(it);
+                                                    setAddOpen(true);
+                                                }}
+                                            />
                                         ))}
                                     </tbody>
                                 </table>
@@ -360,8 +372,12 @@ export default function FeesPage() {
 
             <AddFeeDialog
                 open={addOpen}
-                onOpenChange={setAddOpen}
+                onOpenChange={(v) => {
+                    setAddOpen(v);
+                    if (!v) setEditingItem(null);
+                }}
                 revenueAccounts={revenueAccounts}
+                editing={editingItem}
             />
             <CopyTermDialog
                 open={copyOpen}
@@ -415,8 +431,15 @@ function PriceCell({
     );
 }
 
-function FeeRow({ item }: { item: NonNullable<ReturnType<typeof useFeeItems>['data']>[number] }) {
+function FeeRow({
+    item,
+    onEdit,
+}: {
+    item: FeeItemRow;
+    onEdit: (item: FeeItemRow) => void;
+}) {
     const remove = useRemoveFeeItem();
+    const update = useUpdateFeeItem();
 
     return (
         <tr className={item.active ? '' : 'opacity-50'}>
@@ -444,16 +467,36 @@ function FeeRow({ item }: { item: NonNullable<ReturnType<typeof useFeeItems>['da
                 </div>
             </td>
             <td className="px-4 py-3 text-right">
-                {item.active && (
+                <div className="flex justify-end gap-1">
                     <Button
                         variant="ghost"
-                        size="sm"
-                        disabled={remove.isPending}
-                        onClick={() => remove.mutate(item.id)}
+                        size="icon"
+                        onClick={() => onEdit(item)}
+                        aria-label="Edit fee"
                     >
-                        Retire
+                        <Pencil className="h-4 w-4" />
                     </Button>
-                )}
+                    {item.active ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={remove.isPending}
+                            onClick={() => remove.mutate(item.id)}
+                        >
+                            Retire
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={update.isPending}
+                            onClick={() => update.mutate({ id: item.id, active: true })}
+                        >
+                            <RotateCcw className="mr-1 h-4 w-4" />
+                            Reactivate
+                        </Button>
+                    )}
+                </div>
             </td>
         </tr>
     );
@@ -463,12 +506,15 @@ function AddFeeDialog({
     open,
     onOpenChange,
     revenueAccounts,
+    editing,
 }: {
     open: boolean;
     onOpenChange: (v: boolean) => void;
     revenueAccounts: Array<{ id: string; code: string; name: string }>;
+    editing?: FeeItemRow | null;
 }) {
     const create = useCreateFeeItem();
+    const update = useUpdateFeeItem();
     const [code, setCode] = useState('');
     const [name, setName] = useState('');
     const [category, setCategory] = useState<FeeCategory>('TUITION');
@@ -476,25 +522,36 @@ function AddFeeDialog({
     const [isOptional, setIsOptional] = useState(false);
     const [newStudentsOnly, setNewStudentsOnly] = useState(false);
 
-    const reset = () => {
-        setCode('');
-        setName('');
-        setCategory('TUITION');
-        setRevenueAccountId('');
-        setIsOptional(false);
-        setNewStudentsOnly(false);
-    };
+    // Prefill from the item being edited, or clear back to add-defaults. Runs
+    // when the dialog opens or the target changes.
+    useEffect(() => {
+        if (!open) return;
+        setCode(editing?.code ?? '');
+        setName(editing?.name ?? '');
+        setCategory(editing?.category ?? 'TUITION');
+        setRevenueAccountId(editing?.revenueAccountId ?? '');
+        setIsOptional(editing?.isOptional ?? false);
+        setNewStudentsOnly(editing?.appliesTo === 'NEW_STUDENTS');
+    }, [open, editing]);
+
+    const busy = create.isPending || update.isPending;
 
     const submit = async () => {
-        await create.mutateAsync({
+        const payload = {
             code: code.trim().toUpperCase(),
             name: name.trim(),
             category,
             revenueAccountId,
             isOptional,
-            appliesTo: newStudentsOnly ? 'NEW_STUDENTS' : 'ALL',
-        });
-        reset();
+            appliesTo: (newStudentsOnly ? 'NEW_STUDENTS' : 'ALL') as
+                | 'NEW_STUDENTS'
+                | 'ALL',
+        };
+        if (editing) {
+            await update.mutateAsync({ id: editing.id, ...payload });
+        } else {
+            await create.mutateAsync(payload);
+        }
         onOpenChange(false);
     };
 
@@ -502,7 +559,7 @@ function AddFeeDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add a fee</DialogTitle>
+                    <DialogTitle>{editing ? 'Edit fee' : 'Add a fee'}</DialogTitle>
                     <DialogDescription>
                         What it costs comes later — that depends on the class and the term.
                     </DialogDescription>
@@ -612,13 +669,11 @@ function AddFeeDialog({
                             !name.trim() ||
                             !code.trim() ||
                             !revenueAccountId ||
-                            create.isPending
+                            busy
                         }
                     >
-                        {create.isPending && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Add fee
+                        {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {editing ? 'Save changes' : 'Add fee'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

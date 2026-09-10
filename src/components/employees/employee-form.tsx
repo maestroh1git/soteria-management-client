@@ -54,6 +54,8 @@ const EMPTY: Partial<CreateEmployeeValues> = {
     phone: '',
     dateOfBirth: '',
     address: '',
+    nin: '',
+    bvn: '',
     joinDate: new Date().toISOString().split('T')[0],
     roleId: '',
 };
@@ -283,6 +285,45 @@ export function EmployeeForm({
                                 </FormItem>
                             )}
                         />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="nin"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>NIN</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                inputMode="numeric"
+                                                maxLength={11}
+                                                placeholder="11 digits"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="bvn"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>BVN</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                inputMode="numeric"
+                                                maxLength={11}
+                                                placeholder="11 digits"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 

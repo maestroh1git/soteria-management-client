@@ -107,6 +107,12 @@ export default function EmployeeDetailPage({
                                 {employee.address && (
                                     <InfoRow icon={<MapPin className="h-4 w-4" />} label="Address" value={employee.address} />
                                 )}
+                                {employee.nin && (
+                                    <InfoRow label="NIN" value={employee.nin} />
+                                )}
+                                {employee.bvn && (
+                                    <InfoRow label="BVN" value={employee.bvn} />
+                                )}
                             </CardContent>
                         </Card>
 

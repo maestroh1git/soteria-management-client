@@ -27,6 +27,16 @@ export const createEmployeeSchema = z.object({
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   gender: z.nativeEnum(EmployeeGender, { message: 'Gender is required' }),
   address: z.string().optional(),
+  nin: z
+    .string()
+    .regex(/^\d{11}$/, 'NIN must be 11 digits')
+    .optional()
+    .or(z.literal('')),
+  bvn: z
+    .string()
+    .regex(/^\d{11}$/, 'BVN must be 11 digits')
+    .optional()
+    .or(z.literal('')),
   joinDate: z.string().min(1, 'Join date is required'),
   roleId: z.string().uuid('Select a valid role'),
   gradeId: z.string().uuid().optional(),
