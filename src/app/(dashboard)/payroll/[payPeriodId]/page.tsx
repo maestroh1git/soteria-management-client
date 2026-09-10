@@ -56,6 +56,7 @@ import {
     useMarkAsPaid,
     useBulkPayment,
     useBulkApproval,
+    useSalaryStatusSummary,
 } from '@/lib/hooks/use-payroll';
 import { useAuthStore } from '@/stores/auth-store';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
@@ -89,6 +90,9 @@ export default function PayrollWorkspacePage() {
     // Queries
     const { data: period, isLoading: periodLoading } = usePayPeriod(payPeriodId);
     const { data: salariesResponse, isLoading: salariesLoading } = useSalaries(filters);
+    // Period-wide status breakdown — the summary tiles below are computed from
+    // this, not from the paginated page, so they are correct past 20 employees.
+    const { data: statusSummary } = useSalaryStatusSummary(payPeriodId);
 
     // Mutations
     const processMutation = useProcessPayroll();
@@ -126,10 +130,22 @@ export default function PayrollWorkspacePage() {
     const formatCurrency = (v: number) =>
         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(v);
 
-    // Summary stats
-    const totalGross = salaries.reduce((s, sal) => s + Number(sal.grossSalary), 0);
-    const totalDeductions = salaries.reduce((s, sal) => s + Number(sal.totalDeductions), 0);
-    const totalNet = salaries.reduce((s, sal) => s + Number(sal.netSalary), 0);
+    // Summary stats — from the period-wide status summary, falling back to the
+    // current page only until it loads. (The page holds at most `limit` rows, so
+    // summing it would understate any period with more employees.)
+    const buckets = statusSummary?.byStatus;
+    const sumField = (field: 'gross' | 'deductions' | 'net') =>
+        buckets
+            ? Object.values(buckets).reduce((s, b) => s + Number(b[field]), 0)
+            : null;
+    const totalGross = sumField('gross') ?? salaries.reduce((s, sal) => s + Number(sal.grossSalary), 0);
+    const totalDeductions = sumField('deductions') ?? salaries.reduce((s, sal) => s + Number(sal.totalDeductions), 0);
+    const totalNet = sumField('net') ?? salaries.reduce((s, sal) => s + Number(sal.netSalary), 0);
+    const employeeCount = statusSummary?.total ?? salaries.length;
+    const draftCount = buckets?.[SalaryStatus.DRAFT]?.count ?? 0;
+    const approvedCount = buckets?.[SalaryStatus.APPROVED]?.count ?? 0;
+    const paidCount = buckets?.[SalaryStatus.PAID]?.count ?? 0;
+    const cancelledCount = buckets?.[SalaryStatus.CANCELLED]?.count ?? 0;
 
     // Takes the flag explicitly rather than reading `dryRun` from state. "Run
     // for Real" flips the checkbox and processes in the same click; a setState
@@ -261,7 +277,7 @@ export default function PayrollWorkspacePage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{salaries.length}</p>
+                        <p className="text-2xl font-bold">{employeeCount}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -292,6 +308,39 @@ export default function PayrollWorkspacePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Where the run stands — counts + net by status, over the whole
+                period. Click one to filter the table to it. */}
+            {employeeCount > 0 && (
+                <div className="flex flex-wrap gap-3">
+                    {[
+                        { key: SalaryStatus.DRAFT, label: 'Draft', count: draftCount, net: buckets?.[SalaryStatus.DRAFT]?.net, dot: 'bg-slate-400' },
+                        { key: SalaryStatus.APPROVED, label: 'Approved', count: approvedCount, net: buckets?.[SalaryStatus.APPROVED]?.net, dot: 'bg-blue-500' },
+                        { key: SalaryStatus.PAID, label: 'Paid', count: paidCount, net: buckets?.[SalaryStatus.PAID]?.net, dot: 'bg-green-500' },
+                        ...(cancelledCount > 0
+                            ? [{ key: SalaryStatus.CANCELLED, label: 'Cancelled', count: cancelledCount, net: buckets?.[SalaryStatus.CANCELLED]?.net, dot: 'bg-red-500' }]
+                            : []),
+                    ].map((s) => (
+                        <button
+                            key={s.key}
+                            onClick={() => {
+                                setStatusFilter(statusFilter === s.key ? undefined : (s.key as SalaryStatus));
+                                setPage(1);
+                            }}
+                            className={`flex-1 min-w-[140px] rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 ${statusFilter === s.key ? 'ring-2 ring-primary' : ''}`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+                                <span className="text-sm text-muted-foreground">{s.label}</span>
+                            </div>
+                            <p className="mt-1 text-xl font-bold tabular-nums">{s.count}</p>
+                            {s.net != null && (
+                                <p className="text-xs text-muted-foreground">{formatCurrency(Number(s.net))}</p>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* Filter & Bulk Actions */}
             <div className="flex items-center gap-3">

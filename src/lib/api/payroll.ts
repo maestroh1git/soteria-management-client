@@ -39,6 +39,18 @@ export interface BulkApprovalResult {
   failed: Array<{ salaryId: string; reason: string }>;
 }
 
+export interface SalaryStatusBucket {
+  count: number;
+  gross: string;
+  deductions: string;
+  net: string;
+}
+
+export interface SalaryStatusSummary {
+  total: number;
+  byStatus: Record<string, SalaryStatusBucket>;
+}
+
 // ── API calls ───────────────────────────────────────────────
 export async function processPayroll(dto: ProcessPayrollDto): Promise<PayrollProcessResult> {
   return await api.post('/payroll/process', dto) as unknown as PayrollProcessResult;
@@ -66,6 +78,12 @@ export async function bulkPayment(dto: BulkPaymentDto): Promise<BulkPaymentResul
 
 export async function bulkApprove(dto: BulkApprovalDto): Promise<BulkApprovalResult> {
   return await api.post('/payroll/bulk-approve', dto) as unknown as BulkApprovalResult;
+}
+
+export async function getSalaryStatusSummary(payPeriodId: string): Promise<SalaryStatusSummary> {
+  return await api.get('/payroll/salaries/status-summary', {
+    params: { payPeriodId },
+  }) as unknown as SalaryStatusSummary;
 }
 
 // ── Bank payment file ───────────────────────────────────────
