@@ -129,16 +129,21 @@ export default function PayrollWorkspacePage() {
     const totalDeductions = salaries.reduce((s, sal) => s + Number(sal.totalDeductions), 0);
     const totalNet = salaries.reduce((s, sal) => s + Number(sal.netSalary), 0);
 
-    const handleProcess = () => {
+    // Takes the flag explicitly rather than reading `dryRun` from state. "Run
+    // for Real" flips the checkbox and processes in the same click; a setState
+    // does not apply until the next render, so reading state here would send a
+    // stale `true` and quietly run yet another dry run — which is exactly the
+    // bug where "Run for Real" saved nothing.
+    const handleProcess = (asDryRun: boolean = dryRun) => {
         processMutation.mutate(
-            { payPeriodId, dryRun },
+            { payPeriodId, dryRun: asDryRun },
             {
                 onSuccess: (result) => {
                     setProcessResult(result);
-                    // Close on a clean run. Keep the dialog open when employees
-                    // failed — it is the only place their errors are shown, and
-                    // auto-closing it is what left the failure invisible.
-                    if (!dryRun && result.errors.length === 0) setShowProcess(false);
+                    // Close on a clean real run. Keep the dialog open after a dry
+                    // run (so "Run for Real" is offered) or when employees failed
+                    // — that is the only place their errors are shown.
+                    if (!asDryRun && result.errors.length === 0) setShowProcess(false);
                 },
             },
         );
@@ -489,8 +494,11 @@ export default function PayrollWorkspacePage() {
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setShowProcess(false)}>Close</Button>
                                 {dryRun && (
-                                    <Button onClick={() => { setDryRun(false); handleProcess(); }}>
-                                        Run for Real
+                                    <Button
+                                        disabled={processMutation.isPending}
+                                        onClick={() => { setDryRun(false); handleProcess(false); }}
+                                    >
+                                        {processMutation.isPending ? 'Processing…' : 'Run for Real'}
                                     </Button>
                                 )}
                             </DialogFooter>
@@ -509,7 +517,7 @@ export default function PayrollWorkspacePage() {
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setShowProcess(false)}>Cancel</Button>
-                                <Button onClick={handleProcess} disabled={processMutation.isPending}>
+                                <Button onClick={() => handleProcess()} disabled={processMutation.isPending}>
                                     {processMutation.isPending ? 'Processing…' : dryRun ? 'Preview' : 'Process'}
                                 </Button>
                             </DialogFooter>
