@@ -20,6 +20,7 @@ import {
     useRemoveLogo,
 } from '@/lib/hooks/use-branding';
 import { brandingImageUrl } from '@/lib/api/branding';
+import { ImageCropDialog } from './image-crop-dialog';
 
 function ColorField({
     label,
@@ -140,6 +141,9 @@ export function BrandingSettings() {
 
     const [primary, setPrimary] = useState('');
     const [accent, setAccent] = useState('');
+    const [crop, setCrop] = useState<
+        { target: 'logo' | 'favicon'; file: File } | null
+    >(null);
 
     useEffect(() => {
         if (!branding) return;
@@ -165,7 +169,7 @@ export function BrandingSettings() {
                     hint="PNG, JPEG, WebP or SVG, up to 1 MB."
                     url={logoUrl}
                     pending={uploadLogo.isPending || removeLogo.isPending}
-                    onPick={(f) => uploadLogo.mutate(f)}
+                    onPick={(f) => setCrop({ target: 'logo', file: f })}
                     onRemove={() => removeLogo.mutate()}
                     accept="image/png,image/jpeg,image/webp,image/svg+xml"
                 />
@@ -175,7 +179,7 @@ export function BrandingSettings() {
                     hint="A small square icon — PNG, ICO or SVG, up to 256 KB."
                     url={faviconUrl}
                     pending={uploadFavicon.isPending}
-                    onPick={(f) => uploadFavicon.mutate(f)}
+                    onPick={(f) => setCrop({ target: 'favicon', file: f })}
                     accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml"
                 />
 
@@ -198,6 +202,38 @@ export function BrandingSettings() {
                     </Button>
                 </div>
             </CardContent>
+
+            <ImageCropDialog
+                open={!!crop}
+                file={crop?.file ?? null}
+                title={crop?.target === 'favicon' ? 'Crop favicon' : 'Crop logo'}
+                description={
+                    crop?.target === 'favicon'
+                        ? 'A square icon for the browser tab.'
+                        : 'Frame your logo — pick a shape, zoom and reposition.'
+                }
+                aspectOptions={
+                    crop?.target === 'favicon'
+                        ? [{ label: 'Square', value: 1 }]
+                        : [
+                              { label: 'Wide', value: 16 / 9 },
+                              { label: 'Square', value: 1 },
+                              { label: 'Banner', value: 3 },
+                          ]
+                }
+                maxDim={crop?.target === 'favicon' ? 256 : 640}
+                outputName={crop?.target === 'favicon' ? 'favicon.png' : 'logo.png'}
+                pending={uploadLogo.isPending || uploadFavicon.isPending}
+                onCancel={() => setCrop(null)}
+                onApply={(f) => {
+                    const done = () => setCrop(null);
+                    if (crop?.target === 'favicon') {
+                        uploadFavicon.mutate(f, { onSuccess: done });
+                    } else {
+                        uploadLogo.mutate(f, { onSuccess: done });
+                    }
+                }}
+            />
         </Card>
     );
 }
