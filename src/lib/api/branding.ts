@@ -30,10 +30,19 @@ export async function updateBrandingColors(dto: {
     return (await api.patch('/branding/me', dto)) as unknown as BrandingMeta;
 }
 
+// The browser must set the multipart boundary itself; the client's JSON
+// Content-Type default would otherwise leave the upload unparseable and the
+// server sees no file. Same override the student/employee imports use.
+const multipart = { headers: { 'Content-Type': undefined as never } };
+
 export async function uploadLogo(file: File): Promise<BrandingMeta> {
     const form = new FormData();
     form.append('file', file);
-    return (await api.post('/branding/me/logo', form)) as unknown as BrandingMeta;
+    return (await api.post(
+        '/branding/me/logo',
+        form,
+        multipart,
+    )) as unknown as BrandingMeta;
 }
 
 export async function uploadFavicon(file: File): Promise<BrandingMeta> {
@@ -42,6 +51,7 @@ export async function uploadFavicon(file: File): Promise<BrandingMeta> {
     return (await api.post(
         '/branding/me/favicon',
         form,
+        multipart,
     )) as unknown as BrandingMeta;
 }
 
