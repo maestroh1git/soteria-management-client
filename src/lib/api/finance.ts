@@ -184,10 +184,12 @@ export async function attachExpenseReceipt(
     const form = new FormData();
     form.append('file', file);
     if (description) form.append('description', description);
-    // No explicit Content-Type: the browser has to set the multipart boundary.
+    // Override the client's JSON default so the browser sets the multipart
+    // boundary; without it the server parses no file.
     return (await api.post(
         `/expenses/${expenseId}/receipts`,
         form,
+        { headers: { 'Content-Type': undefined as never } },
     )) as unknown as Receipt;
 }
 
