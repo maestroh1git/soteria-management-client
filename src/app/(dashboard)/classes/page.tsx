@@ -136,7 +136,10 @@ function ClassesPageInner() {
     };
     const openAddLevel = () => {
         setEditingLevel(null);
-        setLevel({ name: '', code: '', sortOrder: '' });
+        // Default to the next rung rather than leaving it blank behind a "1"
+        // placeholder — otherwise every new level reads as position 1 and the
+        // ladder ends up in creation order instead of school order.
+        setLevel({ name: '', code: '', sortOrder: String(levels.length + 1) });
         setLevelOpen(true);
     };
     const openEditLevel = (l: ClassLevel) => {

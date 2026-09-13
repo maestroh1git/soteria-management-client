@@ -129,12 +129,31 @@ export const assignSalaryComponentSchema = z.object({
 export type AssignSalaryComponentValues = z.infer<typeof assignSalaryComponentSchema>;
 
 // ── Pay Period schemas ──────────────────────────────────────
-export const createPayPeriodSchema = z.object({
-  name: z.string().min(1, 'Period name is required'),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().min(1, 'End date is required'),
-  paymentDate: z.string().min(1, 'Payment date is required'),
-});
+// The server refuses these orderings (409), so check them here too — a rule the
+// payroll clerk only discovers after pressing Create is a rule stated too late.
+export const createPayPeriodSchema = z
+  .object({
+    name: z.string().min(1, 'Period name is required'),
+    startDate: z.string().min(1, 'Start date is required'),
+    endDate: z.string().min(1, 'End date is required'),
+    paymentDate: z.string().min(1, 'Payment date is required'),
+  })
+  .superRefine((v, ctx) => {
+    if (v.startDate && v.endDate && v.endDate <= v.startDate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['endDate'],
+        message: 'End date must be after the start date',
+      });
+    }
+    if (v.endDate && v.paymentDate && v.paymentDate <= v.endDate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['paymentDate'],
+        message: 'Payment date must be after the end date',
+      });
+    }
+  });
 
 export type CreatePayPeriodValues = z.infer<typeof createPayPeriodSchema>;
 

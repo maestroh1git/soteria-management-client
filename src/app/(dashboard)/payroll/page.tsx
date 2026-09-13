@@ -286,8 +286,12 @@ export default function PayrollPage() {
                         <div className="space-y-2">
                             <Label htmlFor="paymentDate">Payment Date</Label>
                             <Input id="paymentDate" type="date" {...form.register('paymentDate')} />
-                            {form.formState.errors.paymentDate && (
+                            {form.formState.errors.paymentDate ? (
                                 <p className="text-xs text-destructive">{form.formState.errors.paymentDate.message}</p>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">
+                                    The day staff are actually paid — it must fall after the period ends.
+                                </p>
                             )}
                         </div>
 

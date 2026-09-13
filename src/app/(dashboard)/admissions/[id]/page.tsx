@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertCircle, UserCheck, GraduationCap } from 'lucide-react';
@@ -28,7 +28,9 @@ import {
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
@@ -49,6 +51,27 @@ import type { ApplicationStatus } from '@/lib/api/admissions';
 const label = (s: string) => s.replace(/_/g, ' ').toLowerCase();
 
 /** How each move is worded to a registrar, and whether it needs more than a click. */
+/** `datetime-local` value, e.g. 2026-09-30T17:00. */
+function localDateTime(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** A datetime-local segment takes six digits, so an unbounded field accepts a
+ *  year like 202617. Bound both ends to something a school could mean. */
+function dateBounds() {
+    const now = new Date();
+    const max = new Date(now);
+    max.setFullYear(max.getFullYear() + 2);
+    const min = new Date(now);
+    min.setFullYear(min.getFullYear() - 2);
+    return {
+        now: localDateTime(now),
+        max: localDateTime(max),
+        min: localDateTime(min),
+    };
+}
+
 const ACTION: Record<
     string,
     { label: string; tone?: 'default' | 'destructive' | 'outline'; needs?: 'score' | 'offer' | 'date' | 'reason' }
@@ -83,6 +106,7 @@ export default function ApplicationDetailPage({
     const [notes, setNotes] = useState('');
     const [score, setScore] = useState('');
     const [when, setWhen] = useState('');
+    const bounds = dateBounds();
     const [enrolOpen, setEnrolOpen] = useState(false);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
@@ -298,6 +322,8 @@ export default function ApplicationDetailPage({
                                 <Label>Assessment date</Label>
                                 <Input
                                     type="datetime-local"
+                                    min={bounds.min}
+                                    max={bounds.max}
                                     value={when}
                                     onChange={(e) => setWhen(e.target.value)}
                                 />
@@ -308,12 +334,15 @@ export default function ApplicationDetailPage({
                                 <Label>Offer expires</Label>
                                 <Input
                                     type="datetime-local"
+                                    min={bounds.now}
+                                    max={bounds.max}
                                     value={when}
                                     onChange={(e) => setWhen(e.target.value)}
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Required. An offer with no deadline holds a place for ever
-                                    and the waitlist never moves.
+                                    Required, and must be in the future. An offer with no
+                                    deadline holds a place for ever and the waitlist never
+                                    moves.
                                 </p>
                             </div>
                         )}
@@ -353,6 +382,8 @@ export default function ApplicationDetailPage({
                 onOpenChange={setEnrolOpen}
                 applicationId={id}
                 arms={arms}
+                appliedLevelId={application.classLevel?.id}
+                appliedLevelName={application.classLevel?.name}
                 onDone={(studentId) => router.push(`/students/${studentId}`)}
             />
         </div>
@@ -384,12 +415,22 @@ function EnrolDialog({
     onOpenChange,
     applicationId,
     arms,
+    appliedLevelId,
+    appliedLevelName,
     onDone,
 }: {
     open: boolean;
     onOpenChange: (v: boolean) => void;
     applicationId: string;
-    arms: Array<{ id: string; name: string; capacity: number | null; level?: { name: string } }>;
+    arms: Array<{
+        id: string;
+        name: string;
+        capacity: number | null;
+        levelId: string;
+        level?: { name: string };
+    }>;
+    appliedLevelId?: string;
+    appliedLevelName?: string;
     onDone: (studentId: string) => void;
 }) {
     const [armId, setArmId] = useState('');
@@ -397,6 +438,19 @@ function EnrolDialog({
     const [over, setOver] = useState(false);
     const { data: preview } = useEnrolmentPreview(applicationId, armId || undefined);
     const enrol = useEnrol(applicationId);
+
+    // The child applied to a level, so put that level's classes first. Other
+    // levels stay reachable — a school may place a child a year up or down —
+    // but they are no longer the first thing under the cursor.
+    const matching = appliedLevelId
+        ? arms.filter((a) => a.levelId === appliedLevelId)
+        : [];
+    const others = arms.filter((a) => !matching.includes(a));
+
+    // One obvious destination: choose it, rather than making them find it.
+    useEffect(() => {
+        if (open && !armId && matching.length === 1) setArmId(matching[0].id);
+    }, [open, armId, matching]);
 
     const full =
         preview?.capacity != null && preview.enrolled >= preview.capacity;
@@ -422,12 +476,34 @@ function EnrolDialog({
                                 <SelectValue placeholder="Which class will they sit in?" />
                             </SelectTrigger>
                             <SelectContent>
-                                {arms.map((a) => (
-                                    <SelectItem key={a.id} value={a.id}>
-                                        {`${a.level?.name ?? ''} ${a.name}`.trim()}
-                                        {a.capacity != null ? ` · ${a.capacity} seats` : ''}
-                                    </SelectItem>
-                                ))}
+                                {matching.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>
+                                            {appliedLevelName
+                                                ? `Applied for ${appliedLevelName}`
+                                                : 'Applied for'}
+                                        </SelectLabel>
+                                        {matching.map((a) => (
+                                            <SelectItem key={a.id} value={a.id}>
+                                                {`${a.level?.name ?? ''} ${a.name}`.trim()}
+                                                {a.capacity != null ? ` · ${a.capacity} seats` : ''}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
+                                {others.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>
+                                            {matching.length > 0 ? 'Other classes' : 'Classes'}
+                                        </SelectLabel>
+                                        {others.map((a) => (
+                                            <SelectItem key={a.id} value={a.id}>
+                                                {`${a.level?.name ?? ''} ${a.name}`.trim()}
+                                                {a.capacity != null ? ` · ${a.capacity} seats` : ''}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
                             </SelectContent>
                         </Select>
                         {preview?.capacity != null && (

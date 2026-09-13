@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 import type { PayPeriodFilters, SalaryFilters } from '@/lib/types/api';
 import {
   getPayPeriods,
@@ -56,7 +57,8 @@ export function useCreatePayPeriod() {
       qc.invalidateQueries({ queryKey: ['pay-periods'] });
       toast.success('Pay period created');
     },
-    onError: () => toast.error('Failed to create pay period'),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, 'Failed to create pay period')),
   });
 }
 
@@ -108,7 +110,8 @@ export function useProcessPayroll() {
         toast.success(`Payroll processed: ${summary}`);
       }
     },
-    onError: () => toast.error('Failed to process payroll'),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, 'Failed to process payroll')),
   });
 }
 
@@ -121,7 +124,8 @@ export function useApproveSalary() {
       qc.invalidateQueries({ queryKey: ['salaries'] });
       toast.success('Salary approved');
     },
-    onError: () => toast.error('Failed to approve salary'),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, 'Failed to approve salary')),
   });
 }
 
@@ -134,7 +138,8 @@ export function useMarkAsPaid() {
       qc.invalidateQueries({ queryKey: ['salaries'] });
       toast.success('Salary marked as paid');
     },
-    onError: () => toast.error('Failed to mark salary as paid'),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, 'Failed to mark salary as paid')),
   });
 }
 
@@ -148,7 +153,7 @@ export function useBulkPayment() {
         `Bulk payment: ${result.successful.length} successful, ${result.failed.length} failed`,
       );
     },
-    onError: () => toast.error('Bulk payment failed'),
+    onError: (e) => toast.error(getApiErrorMessage(e, 'Bulk payment failed')),
   });
 }
 
@@ -163,6 +168,6 @@ export function useBulkApproval() {
       if (result.failed.length) toast.error(msg);
       else toast.success(msg);
     },
-    onError: () => toast.error('Bulk approval failed'),
+    onError: (e) => toast.error(getApiErrorMessage(e, 'Bulk approval failed')),
   });
 }
