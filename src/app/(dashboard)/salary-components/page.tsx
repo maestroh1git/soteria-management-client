@@ -171,6 +171,12 @@ export default function SalaryComponentsPage() {
                                     {comp.calculationType === CalculationType.FIXED
                                         ? `₦${Number(comp.value).toLocaleString()}`
                                         : `${comp.value}%`}
+                                    {comp.isBase && Number(comp.value) === 0 && (
+                                        <p className="mt-1 max-w-xs text-xs text-amber-600 dark:text-amber-500">
+                                            Base pay is ₦0, so percentage lines calculate to nothing.
+                                            Set it here, or per person on their Salary Components tab.
+                                        </p>
+                                    )}
                                 </td>
                                 <td className="px-4 py-3">
                                     <div className="flex items-center gap-2">
