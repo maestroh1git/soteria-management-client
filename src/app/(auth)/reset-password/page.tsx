@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -29,6 +29,7 @@ import { authApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
 import { passwordSchema, PASSWORD_POLICY_HINT } from '@/lib/utils/validation';
+import { clearSession } from '@/lib/utils/session';
 
 const schema = z
     .object({
@@ -47,6 +48,19 @@ function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const token = searchParams.get('token') ?? '';
     const [serverError, setServerError] = useState<string | null>(null);
+
+    // A reset link names one account, and is often opened where someone else is
+    // signed in. End that session first — see the note in accept-invite.
+    useEffect(() => {
+        if (token) {
+            clearSession();
+            useAuthStore.setState({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+            });
+        }
+    }, [token]);
 
     const form = useForm<Values>({
         resolver: zodResolver(schema),
@@ -74,7 +88,11 @@ function ResetPasswordForm() {
                 )}; path=/; max-age=${maxAge}`;
             }
 
-            router.push('/');
+            // A parent has no dashboard. Send them where they belong rather
+            // than letting the middleware bounce them off a forbidden page.
+            router.push(
+                res.user?.systemRoles?.includes('PARENT') ? '/portal' : '/',
+            );
         } catch (err) {
             setServerError(
                 getApiErrorMessage(err, 'This reset link is invalid or has expired.'),

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -29,6 +29,7 @@ import { authApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
 import { passwordSchema, PASSWORD_POLICY_HINT } from '@/lib/utils/validation';
+import { clearSession } from '@/lib/utils/session';
 
 const schema = z
     .object({
@@ -55,6 +56,24 @@ function AcceptInviteForm() {
 
     const isSubmitting = form.formState.isSubmitting;
 
+    /**
+     * This link belongs to whoever was invited, not to whoever happens to be
+     * signed in on this machine. Invites get opened on shared computers, so end
+     * the existing session before the password is set — otherwise accepting
+     * leaves two identities half-applied, and abandoning the form leaves the
+     * previous person silently signed in behind it.
+     */
+    useEffect(() => {
+        if (token) {
+            clearSession();
+            useAuthStore.setState({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+            });
+        }
+    }, [token]);
+
     async function onSubmit(values: Values) {
         setServerError(null);
         try {
@@ -80,7 +99,11 @@ function AcceptInviteForm() {
                 )}; path=/; max-age=${maxAge}`;
             }
 
-            router.push('/');
+            // A parent has no dashboard. Send them where they belong rather
+            // than letting the middleware bounce them off a forbidden page.
+            router.push(
+                res.user?.systemRoles?.includes('PARENT') ? '/portal' : '/',
+            );
         } catch (err) {
             setServerError(
                 getApiErrorMessage(err, 'This invite link is invalid or has expired.'),
