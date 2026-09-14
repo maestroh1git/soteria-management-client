@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { formatCurrency } from '@/lib/utils/currency';
 import {
     BarChart3,
     DollarSign,
@@ -52,8 +53,6 @@ export default function ReportsPage() {
 
     // Amounts arrive as strings — `numeric` stays exact all the way from
     // Postgres and is converted here, at the point of display, and nowhere else.
-    const formatCurrency = (v: number | string) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(Number(v));
 
     // Tax chart data — simple bar visualization
     const maxTax = useMemo(() => {
