@@ -38,7 +38,7 @@ import {
     useInvoices,
     useIssueTermInvoices,
 } from '@/lib/hooks/use-fees';
-import type { InvoiceStatus } from '@/lib/api/fees';
+import type { InvoiceStatus, InvoiceSummary } from '@/lib/api/fees';
 
 const money = (v: string) => {
     const [whole, fraction = '00'] = (v ?? '0').split('.');
@@ -51,6 +51,31 @@ const STATUS_STYLES: Record<InvoiceStatus, string> = {
     ISSUED: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
     CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
 };
+
+const PAID_STYLE = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
+const PART_STYLE = 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200';
+
+/**
+ * What the badge should say once money has arrived.
+ *
+ * The stored status only tracks the billing steps — draft, issued, cancelled —
+ * so on its own it calls a fully settled invoice "ISSUED" for ever. Settlement
+ * is derived from allocations, the same source Arrears reads, so the two pages
+ * cannot disagree about one family's money.
+ */
+function settlementLabel(i: InvoiceSummary): string {
+    if (i.status !== 'ISSUED' || i.outstanding === undefined) return i.status;
+    if (Number(i.outstanding) <= 0) return 'PAID';
+    if (Number(i.paid) > 0) return 'PART-PAID';
+    return i.status;
+}
+
+function settlementStyle(i: InvoiceSummary): string {
+    const label = settlementLabel(i);
+    if (label === 'PAID') return PAID_STYLE;
+    if (label === 'PART-PAID') return PART_STYLE;
+    return STATUS_STYLES[i.status];
+}
 
 /**
  * Billing a term.
@@ -211,14 +236,14 @@ export default function InvoicesPage() {
                                                 : '—'}
                                         </td>
                                         <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                                            ₦{money(invoice.total)}
+                                            ₦{money(invoice.outstanding ?? invoice.total)}
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
                                                 variant="secondary"
-                                                className={STATUS_STYLES[invoice.status]}
+                                                className={settlementStyle(invoice)}
                                             >
-                                                {invoice.status}
+                                                {settlementLabel(invoice)}
                                             </Badge>
                                         </td>
                                     </tr>

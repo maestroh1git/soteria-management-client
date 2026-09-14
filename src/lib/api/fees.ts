@@ -184,6 +184,10 @@ export interface InvoiceSummary {
     charges: string;
     discounts: string;
     total: string;
+    /** Allocated from received payments. Derived, never stored. */
+    paid: string;
+    /** total less paid — what the family still owes on this bill. */
+    outstanding: string;
 }
 
 export interface InvoiceLine {
