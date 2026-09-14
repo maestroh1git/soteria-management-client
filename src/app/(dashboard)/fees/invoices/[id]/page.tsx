@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { EmptyState } from '@/components/common/empty-state';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,16 +43,36 @@ const money = (v: string) => {
 export default function InvoiceDetailPage() {
     const params = useParams<{ id: string }>();
     const router = useRouter();
-    const { data: invoice, isLoading } = useInvoice(params.id);
+    const { data: invoice, isLoading, isError } = useInvoice(params.id);
     const issue = useIssueInvoice();
     const cancel = useCancelInvoice();
     const [cancelOpen, setCancelOpen] = useState(false);
     const [reason, setReason] = useState('');
 
-    if (isLoading || !invoice) {
+    if (isLoading) {
         return (
             <div className="flex justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    // Without this a failed load fell through to the spinner and stayed there,
+    // so a cancelled or mistyped invoice looked like it was still loading.
+    if (isError || !invoice) {
+        return (
+            <div className="space-y-4">
+                <Link
+                    href="/fees/invoices"
+                    className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft className="mr-1 h-4 w-4" />
+                    Invoices
+                </Link>
+                <EmptyState
+                    title="We couldn't open that invoice"
+                    description="It may have been deleted, or the link may be wrong. Pick one from the list instead."
+                />
             </div>
         );
     }

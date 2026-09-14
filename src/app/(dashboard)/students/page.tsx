@@ -46,9 +46,12 @@ export default function StudentsPage() {
             accessorKey: 'admissionNumber',
             header: 'Adm. No.',
             cell: ({ row }) => (
-                <span className="font-medium text-blue-600 dark:text-blue-400">
+                <Link
+                    href={`/students/${row.original.id}`}
+                    className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                >
                     {row.original.admissionNumber}
-                </span>
+                </Link>
             ),
         },
         {

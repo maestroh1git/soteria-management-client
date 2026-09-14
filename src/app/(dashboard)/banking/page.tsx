@@ -70,7 +70,7 @@ export default function BankingPage() {
                                         <td className="px-4 py-3">
                                             <Link
                                                 href={`/banking/${s.id}`}
-                                                className="font-medium hover:underline"
+                                                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                                             >
                                                 {s.periodStart} → {s.periodEnd}
                                             </Link>
