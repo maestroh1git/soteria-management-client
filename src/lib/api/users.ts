@@ -5,7 +5,10 @@ export interface CreateUserDto {
   email: string;
   firstName: string;
   lastName: string;
-  employeeId: string;
+  /** A staff invite. Mutually exclusive with guardianId. */
+  employeeId?: string;
+  /** A parent-portal invite: which guardian in the registry this account is. */
+  guardianId?: string;
   systemRoles: string[];
 }
 

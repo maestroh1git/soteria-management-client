@@ -35,6 +35,7 @@ const isOpenRoute = (pathname: string) =>
 const routeRoleMap: Record<string, string[] | undefined> = {
   '/': undefined,
   '/admin': ['super_admin'],
+  '/portal': ['PARENT'],
   '/employees': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'],
   '/roles': ['tenant_owner', 'ADMIN'],
   '/departments': ['tenant_owner', 'ADMIN'],
@@ -57,6 +58,9 @@ function getUserRoles(request: NextRequest): string[] | null {
     return null;
   }
 }
+
+const isParentRole = (roles: string[] | null) =>
+  roles?.includes('PARENT') ?? false;
 
 function getRouteKey(pathname: string): string | null {
   // Exact match first
@@ -118,8 +122,16 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/change-password', request.url));
     }
     return NextResponse.redirect(
-      new URL(isSuperAdmin ? '/admin' : '/', request.url),
+      new URL(isSuperAdmin ? '/admin' : isParentRole(userRoles) ? '/portal' : '/', request.url),
     );
+  }
+
+  // A parent has no school to administer. Keep them inside /portal rather than
+  // letting them land on a dashboard whose every link is forbidden to them.
+  const isParent = userRoles?.includes('PARENT') ?? false;
+  const isPortalRoute = pathname === '/portal' || pathname.startsWith('/portal/');
+  if (token && isParent && !isPortalRoute && !isChangePasswordRoute) {
+    return NextResponse.redirect(new URL('/portal', request.url));
   }
 
   // Platform operators have no tenant context — keep them inside /admin so they

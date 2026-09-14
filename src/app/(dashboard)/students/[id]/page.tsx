@@ -2,9 +2,18 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Star, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Star, Loader2, Plus, Mail } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { useCreateUser } from '@/lib/hooks/use-users';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -227,9 +236,17 @@ export default function StudentDetailPage({
                                                         : ''}
                                                 </p>
                                             </div>
-                                            {!link.canCollect && (
-                                                <Badge variant="destructive">May not collect</Badge>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {!link.canCollect && (
+                                                    <Badge variant="destructive">May not collect</Badge>
+                                                )}
+                                                <InviteParentButton
+                                                    guardianId={link.guardian.id}
+                                                    firstName={link.guardian.firstName}
+                                                    lastName={link.guardian.lastName}
+                                                    email={link.guardian.email}
+                                                />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -489,5 +506,138 @@ function Text({
             <Input value={value} onChange={(e) => onChange(e.target.value)} />
             {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
+    );
+}
+
+
+/**
+ * Giving a parent a login.
+ *
+ * On the guardian rather than in Settings, because this is where somebody is
+ * already looking at the person. Reuses the staff invite: the parent sets their
+ * own password, and if mail is not configured the link comes back for the
+ * office to pass on by hand.
+ */
+function InviteParentButton({
+    guardianId,
+    firstName,
+    lastName,
+    email,
+}: {
+    guardianId: string;
+    firstName: string;
+    lastName: string;
+    email?: string | null;
+}) {
+    const [open, setOpen] = useState(false);
+    const [address, setAddress] = useState(email ?? '');
+    const [link, setLink] = useState<string | null>(null);
+    const invite = useCreateUser();
+
+    const send = () => {
+        invite.mutate(
+            {
+                email: address.trim(),
+                firstName,
+                lastName,
+                guardianId,
+                systemRoles: ['PARENT'],
+            },
+            {
+                onSuccess: (res) => {
+                    setOpen(false);
+                    if (!res.emailed && res.inviteUrl) {
+                        // Mail is not configured — hand the link over rather
+                        // than letting the invite vanish.
+                        setLink(res.inviteUrl);
+                    }
+                },
+            },
+        );
+    };
+
+    return (
+        <>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                    setAddress(email ?? '');
+                    setOpen(true);
+                }}
+            >
+                <Mail className="mr-2 h-3.5 w-3.5" />
+                Invite to portal
+            </Button>
+
+            {/* Mail unconfigured: the office has to pass the link on itself,
+                so it has to be visible somewhere. */}
+            <Dialog open={!!link} onOpenChange={(o) => !o && setLink(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Send this link to {firstName}</DialogTitle>
+                        <DialogDescription>
+                            Email is not set up on this school, so the invite could
+                            not be sent. This link lets them set their password —
+                            it is the only copy.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <code className="block w-full break-all rounded bg-muted p-3 text-xs">
+                        {link}
+                    </code>
+                    <DialogFooter>
+                        <Button
+                            onClick={() => {
+                                if (link) navigator.clipboard?.writeText(link);
+                            }}
+                        >
+                            Copy link
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            Invite {firstName} {lastName} to the parent portal
+                        </DialogTitle>
+                        <DialogDescription>
+                            They get a link to set their own password, and can then
+                            see every child of theirs on the roll — fees, payments
+                            and what is still owed. You never set a password for
+                            them.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input
+                            type="email"
+                            value={address}
+                            placeholder="parent@example.com"
+                            onChange={(e) => setAddress(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Where the invite goes. It does not have to match the
+                            number the school rings.
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={send}
+                            disabled={invite.isPending || !address.trim()}
+                        >
+                            Send invite
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
