@@ -36,6 +36,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEmployees } from '@/lib/hooks/use-employees';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { CurrencyDisplay } from '@/components/common/currency-display';
@@ -68,6 +69,9 @@ export default function LoansPage() {
     const { data: loans, isLoading } = useLoans(filters);
     const applyLoanMutation = useApplyForLoan();
     const applyAdvanceMutation = useApplyForAdvance();
+
+    // Staff are chosen by name here, as everywhere else in the app.
+    const { data: employees = [] } = useEmployees({ status: 'ACTIVE' });
 
     const loanForm = useForm<CreateLoanValues>({
         resolver: zodResolver(createLoanSchema),
@@ -273,8 +277,27 @@ export default function LoansPage() {
                     </DialogHeader>
                     <form onSubmit={loanForm.handleSubmit(onSubmitLoan)} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="loan-employeeId">Employee ID</Label>
-                            <Input id="loan-employeeId" placeholder="Employee UUID" {...loanForm.register('employeeId')} />
+                            <Label htmlFor="loan-employeeId">Employee</Label>
+                            {/* A UUID box here asked the bursar for a value the
+                                interface never shows. Same picker as everywhere
+                                else staff are chosen. */}
+                            <Select
+                                value={loanForm.watch('employeeId')}
+                                onValueChange={(v) =>
+                                    loanForm.setValue('employeeId', v, { shouldValidate: true })
+                                }
+                            >
+                                <SelectTrigger id="loan-employeeId">
+                                    <SelectValue placeholder="Select an employee" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {employees.map((e) => (
+                                        <SelectItem key={e.id} value={e.id}>
+                                            {e.firstName} {e.lastName} ({e.employeeNumber})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             {loanForm.formState.errors.employeeId && (
                                 <p className="text-xs text-destructive">{loanForm.formState.errors.employeeId.message}</p>
                             )}
@@ -325,8 +348,24 @@ export default function LoansPage() {
                     </DialogHeader>
                     <form onSubmit={advanceForm.handleSubmit(onSubmitAdvance)} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="adv-employeeId">Employee ID</Label>
-                            <Input id="adv-employeeId" placeholder="Employee UUID" {...advanceForm.register('employeeId')} />
+                            <Label htmlFor="adv-employeeId">Employee</Label>
+                            <Select
+                                value={advanceForm.watch('employeeId')}
+                                onValueChange={(v) =>
+                                    advanceForm.setValue('employeeId', v, { shouldValidate: true })
+                                }
+                            >
+                                <SelectTrigger id="adv-employeeId">
+                                    <SelectValue placeholder="Select an employee" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {employees.map((e) => (
+                                        <SelectItem key={e.id} value={e.id}>
+                                            {e.firstName} {e.lastName} ({e.employeeNumber})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             {advanceForm.formState.errors.employeeId && (
                                 <p className="text-xs text-destructive">{advanceForm.formState.errors.employeeId.message}</p>
                             )}
