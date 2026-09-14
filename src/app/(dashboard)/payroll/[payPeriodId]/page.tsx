@@ -45,6 +45,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatCurrency } from '@/lib/utils/currency';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { CurrencyDisplay } from '@/components/common/currency-display';
@@ -131,8 +132,6 @@ export default function PayrollWorkspacePage() {
     const formatDate = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    const formatCurrency = (v: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(v);
 
     // Summary stats — from the period-wide status summary, falling back to the
     // current page only until it loads. (The page holds at most `limit` rows, so
