@@ -9,7 +9,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Soteria Payroll",
+  // A template so a page can name itself and still carry the product name —
+  // without it every tab, bookmark and shared link reads "Soteria Payroll".
+  title: {
+    default: "Soteria Payroll",
+    template: "%s · Soteria Payroll",
+  },
   description: "Manage your payroll, employees, loans, and finances with ease",
 };
 

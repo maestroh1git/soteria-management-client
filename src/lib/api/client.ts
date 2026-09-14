@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { ApiError, BackendErrorBody } from '@/lib/types/api';
+import { clearSession, isAuthPath } from '@/lib/utils/session';
 
 // Must include the backend's global prefix (`/api`). The deployed value is set
 // via NEXT_PUBLIC_API_URL (e.g. https://<backend-host>/api).
@@ -37,11 +38,17 @@ api.interceptors.response.use(
   (error: AxiosError<BackendErrorBody>) => {
     const status = error.response?.status;
 
-    // 401 Unauthorized — redirect to login
+    // 401 Unauthorized — end the session properly.
     if (status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('auth-token');
-      localStorage.removeItem('auth-store');
-      window.location.href = '/login';
+      // Both stores, or the middleware keeps believing we are signed in and
+      // bounces us off /login straight back to a dashboard with no session.
+      clearSession();
+      // On an auth page the 401 IS the answer — a wrong password. Reloading
+      // there throws away the "Invalid credentials" message the form is about
+      // to render, and the user sees an empty form and no explanation.
+      if (!isAuthPath(window.location.pathname)) {
+        window.location.href = '/login';
+      }
       return Promise.reject(error);
     }
 

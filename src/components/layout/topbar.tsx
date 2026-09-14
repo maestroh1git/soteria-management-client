@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { clearSession } from '@/lib/utils/session';
 import { useUIStore } from '@/stores/ui-store';
 
 import { ModeToggle } from '@/components/common/mode-toggle';
@@ -24,8 +25,9 @@ export function Topbar() {
     const { setMobileSidebarOpen } = useUIStore();
 
     function handleLogout() {
-        // Remove the middleware cookie
-        document.cookie = 'auth-token=; path=/; max-age=0';
+        // Clears both stores — the cookie the middleware reads and the
+        // localStorage the API client reads.
+        clearSession();
         logout();
         router.push('/login');
     }
