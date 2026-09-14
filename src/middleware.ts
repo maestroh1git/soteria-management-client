@@ -3,13 +3,22 @@ import type { NextRequest } from 'next/server';
 
 // Auth pages. Unauthenticated users may reach them, and authenticated users
 // are redirected AWAY from them — you do not log in twice.
-const publicRoutes = [
-    '/login',
-    '/register',
-    '/accept-invite',
-    '/forgot-password',
-    '/reset-password',
-];
+const publicRoutes = ['/login', '/register', '/forgot-password'];
+
+/**
+ * Auth pages that name a DIFFERENT account than whoever is signed in.
+ *
+ * An invite or reset link carries a token identifying one specific person, and
+ * they are often opened on a machine where someone else is already signed in —
+ * a shared office computer, a parent using the school's front desk. Redirecting
+ * those away as "you are already logged in" silently swallows the link: the
+ * invited person lands on the other person's dashboard, and the only clue is a
+ * name in the corner. It happened to a real parent invite on production.
+ *
+ * So these stay reachable while signed in, and the pages themselves end the old
+ * session on arrival.
+ */
+const identityRoutes = ['/accept-invite', '/reset-password'];
 
 /**
  * Routes open to anyone, matched by prefix.
@@ -90,7 +99,8 @@ export function middleware(request: NextRequest) {
 
   // Check for auth token in cookie
   const token = request.cookies.get('auth-token')?.value;
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const isIdentityRoute = identityRoutes.includes(pathname);
+  const isPublicRoute = publicRoutes.includes(pathname) || isIdentityRoute;
   const isChangePasswordRoute = pathname === '/change-password';
   const mustChangePassword =
     request.cookies.get('must-change-password')?.value === 'true';
@@ -117,7 +127,7 @@ export function middleware(request: NextRequest) {
 
   // Authenticated user trying to access auth pages (except change-password) →
   // send platform operators to the console, tenant users to the dashboard.
-  if (token && isPublicRoute) {
+  if (token && isPublicRoute && !isIdentityRoute) {
     if (mustChangePassword) {
       return NextResponse.redirect(new URL('/change-password', request.url));
     }
@@ -130,7 +140,7 @@ export function middleware(request: NextRequest) {
   // letting them land on a dashboard whose every link is forbidden to them.
   const isParent = userRoles?.includes('PARENT') ?? false;
   const isPortalRoute = pathname === '/portal' || pathname.startsWith('/portal/');
-  if (token && isParent && !isPortalRoute && !isChangePasswordRoute) {
+  if (token && isParent && !isPortalRoute && !isChangePasswordRoute && !isIdentityRoute) {
     return NextResponse.redirect(new URL('/portal', request.url));
   }
 
@@ -140,7 +150,8 @@ export function middleware(request: NextRequest) {
     token &&
     isSuperAdmin &&
     !isAdminRoute &&
-    !isChangePasswordRoute
+    !isChangePasswordRoute &&
+    !isIdentityRoute
   ) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }

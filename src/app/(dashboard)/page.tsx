@@ -98,10 +98,39 @@ export default function DashboardPage() {
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const { data: monthlySummary, isLoading: loadingSummary } = useMonthlySummary(currentMonth, currentYear, seesPayroll);
-    const { data: loanPortfolio, isLoading: loadingLoans } = useLoanPortfolio(seesPayroll);
-    const { data: departmentCost, isLoading: loadingDept } = useDepartmentCost(currentMonth, currentYear, seesPayroll);
     const { data: yearEnd, isLoading: loadingYearEnd } = useYearEndReport(currentYear, seesPayroll);
+
+    /**
+     * Which month this dashboard is reporting on.
+     *
+     * It used to ask only about today's calendar month and, finding nothing,
+     * declare "No payroll data yet" — on a school with two months of approved
+     * payroll already on the books. The monthly summary counts cost, so it
+     * excludes DRAFT salaries; a month whose run is calculated but not yet
+     * approved reads as empty, and the year's real figures were fetched and
+     * then thrown away by an early return.
+     *
+     * So: today's month when it has anything, otherwise the most recent month
+     * that does — and the header says which, because a total with no date on it
+     * is worse than no total.
+     */
+    const monthsWithData =
+        yearEnd?.monthlySummaries?.filter((ms) => ms.summary.totalEmployees > 0) ?? [];
+    const currentMonthHasData = monthsWithData.some(
+        (ms) => ms.period.month === currentMonth,
+    );
+    const latestMonthWithData = monthsWithData.length
+        ? monthsWithData[monthsWithData.length - 1].period.month
+        : null;
+    const displayMonth =
+        currentMonthHasData || latestMonthWithData === null
+            ? currentMonth
+            : latestMonthWithData;
+    const showingEarlierMonth = displayMonth !== currentMonth;
+
+    const { data: monthlySummary, isLoading: loadingSummary } = useMonthlySummary(displayMonth, currentYear, seesPayroll);
+    const { data: loanPortfolio, isLoading: loadingLoans } = useLoanPortfolio(seesPayroll);
+    const { data: departmentCost, isLoading: loadingDept } = useDepartmentCost(displayMonth, currentYear, seesPayroll);
     const { data: recentSalaries, isLoading: loadingRecent } = useRecentSalaries(5, seesPayroll);
 
     const isLoading =
@@ -125,10 +154,15 @@ export default function DashboardPage() {
         employees: d.employeeCount,
     })) ?? [];
 
+    // Genuinely nothing to show: no month this year has any approved payroll.
     // Only meaningful to somebody who can see payroll at all. For a teacher the
     // query never runs, so this stays false and the school section shows instead.
     const hasNoData =
-        seesPayroll && !loadingSummary && monthlySummary?.summary?.totalEmployees === 0;
+        seesPayroll &&
+        !loadingYearEnd &&
+        !loadingSummary &&
+        latestMonthWithData === null &&
+        monthlySummary?.summary?.totalEmployees === 0;
 
     // Rendered after the hooks above so their order never changes; those queries
     // are disabled for this person anyway (seesPayroll is false), so nothing is
@@ -172,8 +206,8 @@ export default function DashboardPage() {
                 <GettingStartedCard />
                 <EmptyState
                     icon={BarChart3}
-                    title="No payroll data yet"
-                    description="Once you add employees and process payroll, your dashboard metrics and charts will appear here."
+                    title="No approved payroll yet"
+                    description="These figures count approved payroll. Once a pay period is processed and its salaries approved, the metrics and charts appear here — a run that is still in draft will not show."
                 />
             </div>
         );
@@ -189,6 +223,15 @@ export default function DashboardPage() {
                     Welcome back, {fullName.split(' ')[0] || 'Admin'}
                 </h1>
                 <p className="text-muted-foreground mt-1">{subtitle}</p>
+                {seesPayroll && showingEarlierMonth && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Showing <span className="font-medium text-foreground">
+                            {MONTH_LABELS[displayMonth - 1]} {currentYear}
+                        </span>
+                        {' '}— the most recent month with approved payroll.{' '}
+                        {MONTH_LABELS[currentMonth - 1]} has nothing approved yet.
+                    </p>
+                )}
             </div>
 
             {/* Onboarding checklist (self-hides once complete/dismissed) */}
@@ -206,7 +249,7 @@ export default function DashboardPage() {
                 <StatCard
                     title="Monthly Payroll"
                     value={summary ? formatCompactCurrency(summary.totalGrossSalary) : '—'}
-                    subtitle="Current period gross"
+                    subtitle={`${MONTH_LABELS[displayMonth - 1]} ${currentYear} gross`}
                     icon={Calculator}
                 />
                 <StatCard
@@ -233,12 +276,11 @@ export default function DashboardPage() {
                 itself for a tenant that has never billed anything. */}
             <FeesWidget />
 
-            {/* Upcoming events + birthdays */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                    <EventsWidget />
-                </div>
-            </div>
+            {/* Upcoming events. This was a three-column grid holding a single
+                one-column card — the birthdays widget that used to sit beside it
+                is gone — so two thirds of the row was empty. Full width, like
+                the cards above it. */}
+            <EventsWidget />
 
             {seesPayroll && (
             <>
