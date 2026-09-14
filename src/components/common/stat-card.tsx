@@ -40,21 +40,34 @@ export function StatCard({
 
     return (
         <Card className={cn('relative overflow-hidden', className)}>
-            <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                        <p className="text-2xl font-bold tracking-tight">{value}</p>
-                        {subtitle && (
-                            <p className="text-xs text-muted-foreground">{subtitle}</p>
-                        )}
-                    </div>
+            <CardContent className="p-5 sm:p-6">
+                {/*
+                 * The label and the icon share the top row; the figure gets a
+                 * line to itself underneath. Previously all three sat in one
+                 * flex row, so the icon took width from the number and "NGN
+                 * 1.5M" broke across two lines at anything under ~1200px — the
+                 * one thing on the card nobody should have to reassemble.
+                 *
+                 * The label reserves two lines whether it needs them or not, so
+                 * four cards side by side line their figures up even when one
+                 * title wraps and the others do not.
+                 */}
+                <div className="flex items-start justify-between gap-3">
+                    <p className="min-h-[2.4rem] text-sm font-medium leading-snug text-muted-foreground">
+                        {title}
+                    </p>
                     {Icon && (
-                        <div className="rounded-lg bg-primary/10 p-3">
+                        <div className="shrink-0 rounded-lg bg-primary/10 p-2.5">
                             <Icon className="h-5 w-5 text-primary" />
                         </div>
                     )}
                 </div>
+                <p className="text-xl font-bold tracking-tight tabular-nums whitespace-nowrap sm:text-2xl">
+                    {value}
+                </p>
+                {subtitle && (
+                    <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+                )}
                 {trend && (
                     <div className={cn('flex items-center gap-1 mt-3 text-xs font-medium', trendColor)}>
                         <TrendIcon className="h-3.5 w-3.5" />

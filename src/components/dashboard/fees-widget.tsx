@@ -21,6 +21,14 @@ const money = (v: string) => {
     return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
 };
 
+/** The sign belongs outside the symbol: -₦1,000.00, never ₦-1,000.00. */
+const signedMoney = (v: string) => {
+    const formatted = money(v);
+    return formatted.startsWith('-')
+        ? `-₦${formatted.slice(1)}`
+        : `₦${formatted}`;
+};
+
 /**
  * Fees in against costs out — the Phase 4 milestone, on the dashboard.
  *
@@ -104,7 +112,7 @@ export function FeesWidget() {
                                 net !== null && net < 0 ? 'text-red-600' : ''
                             }`}
                         >
-                            {income ? `₦${money(income.net)}` : '—'}
+                            {income ? signedMoney(income.net) : '—'}
                         </p>
                     </div>
                 </div>
