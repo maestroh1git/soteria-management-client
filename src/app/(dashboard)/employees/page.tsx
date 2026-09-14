@@ -57,9 +57,14 @@ export default function EmployeesPage() {
             accessorKey: 'employeeNumber',
             header: 'Emp #',
             cell: ({ row }) => (
-                <span className="font-medium text-blue-600 dark:text-blue-400">
+                // Was a blue span: it read as a link, and clicking it did
+                // nothing. The only way in was the row's overflow menu.
+                <Link
+                    href={`/employees/${row.original.id}`}
+                    className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                >
                     {row.original.employeeNumber}
-                </span>
+                </Link>
             ),
         },
         {

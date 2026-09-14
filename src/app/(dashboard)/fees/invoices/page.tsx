@@ -213,7 +213,7 @@ export default function InvoicesPage() {
                                         <td className="px-4 py-3">
                                             <Link
                                                 href={`/fees/invoices/${invoice.id}`}
-                                                className="font-medium hover:underline"
+                                                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                                             >
                                                 {invoice.invoiceNumber ?? 'Draft'}
                                             </Link>

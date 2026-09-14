@@ -37,6 +37,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { EmptyState } from '@/components/common/empty-state';
 import { useAccounts } from '@/lib/hooks/use-finance';
 import {
     useAutoMatch,
@@ -68,7 +69,7 @@ const kobo = (v: string) => Math.round(Number(v || 0) * 100);
  */
 export default function ReconcilePage() {
     const params = useParams<{ id: string }>();
-    const { data: report, isLoading } = useReconciliationReport(params.id);
+    const { data: report, isLoading, isError } = useReconciliationReport(params.id);
     const { data: accounts } = useAccounts();
     const match = useMatchLines(params.id);
     const auto = useAutoMatch(params.id);
@@ -80,10 +81,31 @@ export default function ReconcilePage() {
     const [postTarget, setPostTarget] = useState<string | null>(null);
     const [postAccountId, setPostAccountId] = useState('');
 
-    if (isLoading || !report) {
+    if (isLoading) {
         return (
             <div className="flex justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    // A failed or empty load used to fall through to the spinner above and sit
+    // there for ever, so a stale or mistyped statement link looked like the page
+    // was still working.
+    if (isError || !report) {
+        return (
+            <div className="space-y-4">
+                <Link
+                    href="/banking"
+                    className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft className="mr-1 h-4 w-4" />
+                    Statements
+                </Link>
+                <EmptyState
+                    title="We couldn't open that statement"
+                    description="It may have been deleted, or the link may be wrong. Pick one from the list instead."
+                />
             </div>
         );
     }

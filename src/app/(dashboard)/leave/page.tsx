@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Check, X, Ban, Loader2, CalendarDays } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
@@ -31,10 +32,12 @@ import {
     useApproveLeaveRequest,
     useRejectLeaveRequest,
     useCancelLeaveRequest,
+    useCreateLeaveType,
+    useUpdateLeaveType,
 } from '@/lib/hooks/use-leave';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useAuthStore } from '@/stores/auth-store';
-import type { LeaveRequest, LeaveStatus } from '@/lib/types/api';
+import type { LeaveRequest, LeaveStatus, LeaveType } from '@/lib/types/api';
 
 const STATUS_VARIANT: Record<
     LeaveStatus,
@@ -154,6 +157,8 @@ export default function LeavePage() {
                     )}
                 </CardContent>
             </Card>
+
+            <LeaveTypesCard />
 
             <RequestLeaveDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>
@@ -453,6 +458,232 @@ function RequestLeaveDialog({
                             <CalendarDays className="mr-2 h-4 w-4" />
                         )}
                         Submit request
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+/**
+ * Managing the categories themselves.
+ *
+ * A tenant is provisioned with a starter set, but a school that wants Study
+ * Leave had nowhere to add one: the create and update hooks existed and were
+ * wired to no screen, so the only way in was the API.
+ */
+function LeaveTypesCard() {
+    const { data: types = [] } = useLeaveTypes(true);
+    const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState<LeaveType | null>(null);
+
+    const openAdd = () => {
+        setEditing(null);
+        setOpen(true);
+    };
+    const openEdit = (t: LeaveType) => {
+        setEditing(t);
+        setOpen(true);
+    };
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                    <CardTitle className="text-lg">Leave types</CardTitle>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        What staff can ask for. Unpaid types reduce pay for the days
+                        taken; paid ones do not.
+                    </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={openAdd}>
+                    <Plus className="mr-2 h-4 w-4" /> Add type
+                </Button>
+            </CardHeader>
+            <CardContent>
+                {types.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                        No leave types yet. Add one so staff can request leave.
+                    </p>
+                ) : (
+                    <div className="divide-y">
+                        {types.map((t) => (
+                            <div
+                                key={t.id}
+                                className="flex items-center justify-between py-3"
+                            >
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium">{t.name}</span>
+                                        {!t.paid && (
+                                            <Badge
+                                                variant="outline"
+                                                className="text-amber-600 dark:text-amber-500"
+                                            >
+                                                Unpaid
+                                            </Badge>
+                                        )}
+                                        {!t.active && (
+                                            <Badge variant="secondary">Retired</Badge>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {Number(t.daysPerYear) === 0
+                                            ? 'Uncapped'
+                                            : `${Number(t.daysPerYear)} days a year`}
+                                        {t.carriesOver ? ' · carries over' : ''}
+                                        {t.description ? ` · ${t.description}` : ''}
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEdit(t)}
+                                >
+                                    Edit
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+
+            <LeaveTypeDialog
+                open={open}
+                onOpenChange={setOpen}
+                editing={editing}
+            />
+        </Card>
+    );
+}
+
+function LeaveTypeDialog({
+    open,
+    onOpenChange,
+    editing,
+}: {
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+    editing: LeaveType | null;
+}) {
+    const create = useCreateLeaveType();
+    const update = useUpdateLeaveType();
+
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [daysPerYear, setDaysPerYear] = useState('0');
+    const [paid, setPaid] = useState(true);
+    const [carriesOver, setCarriesOver] = useState(false);
+    const [active, setActive] = useState(true);
+
+    useEffect(() => {
+        if (!open) return;
+        setName(editing?.name ?? '');
+        setDescription(editing?.description ?? '');
+        setDaysPerYear(editing ? String(Number(editing.daysPerYear)) : '0');
+        setPaid(editing?.paid ?? true);
+        setCarriesOver(editing?.carriesOver ?? false);
+        setActive(editing?.active ?? true);
+    }, [open, editing]);
+
+    const busy = create.isPending || update.isPending;
+
+    const submit = () => {
+        const dto = {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            daysPerYear: Number(daysPerYear) || 0,
+            paid,
+            carriesOver,
+            active,
+        };
+        const done = () => onOpenChange(false);
+        if (editing) update.mutate({ id: editing.id, dto }, { onSuccess: done });
+        else create.mutate(dto, { onSuccess: done });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>
+                        {editing ? 'Edit leave type' : 'Add a leave type'}
+                    </DialogTitle>
+                    <DialogDescription>
+                        Whether it is paid is the only part payroll reads.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Name *</Label>
+                        <Input
+                            value={name}
+                            placeholder="Study Leave"
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Input
+                            value={description}
+                            placeholder="What this covers"
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Days a year</Label>
+                        <Input
+                            type="number"
+                            min={0}
+                            value={daysPerYear}
+                            onChange={(e) => setDaysPerYear(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Zero means uncapped, which is what unpaid leave usually is.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="lt-paid"
+                            checked={paid}
+                            onCheckedChange={(v) => setPaid(v === true)}
+                        />
+                        <Label htmlFor="lt-paid" className="font-normal">
+                            Paid — days taken do not reduce pay
+                        </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="lt-carries"
+                            checked={carriesOver}
+                            onCheckedChange={(v) => setCarriesOver(v === true)}
+                        />
+                        <Label htmlFor="lt-carries" className="font-normal">
+                            Unused days carry into the next leave year
+                        </Label>
+                    </div>
+                    {editing && (
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="lt-active"
+                                checked={active}
+                                onCheckedChange={(v) => setActive(v === true)}
+                            />
+                            <Label htmlFor="lt-active" className="font-normal">
+                                Available to request
+                            </Label>
+                        </div>
+                    )}
+                </div>
+
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={submit} disabled={busy || !name.trim()}>
+                        {editing ? 'Save changes' : 'Add type'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
