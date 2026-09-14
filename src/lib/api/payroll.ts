@@ -86,6 +86,23 @@ export async function getSalaryStatusSummary(payPeriodId: string): Promise<Salar
   }) as unknown as SalaryStatusSummary;
 }
 
+export interface DiscardDraftRunResult {
+  discarded: number;
+  repaymentsReversed: number;
+}
+
+/**
+ * Throw away a calculated-but-unapproved run so the period can be re-processed.
+ * The server refuses once anything is approved, paid, or has a payslip.
+ */
+export async function discardDraftRun(
+  payPeriodId: string,
+): Promise<DiscardDraftRunResult> {
+  return await api.delete('/payroll/salaries/draft', {
+    params: { payPeriodId },
+  }) as unknown as DiscardDraftRunResult;
+}
+
 // ── Bank payment file ───────────────────────────────────────
 
 export interface UnpayableEmployee {
