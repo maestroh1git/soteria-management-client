@@ -18,6 +18,7 @@ import {
   bulkPayment,
   bulkApprove,
   getSalaryStatusSummary,
+  discardDraftRun,
   type ProcessPayrollDto,
   type SalaryApprovalDto,
   type SalaryPaymentDto,
@@ -154,6 +155,26 @@ export function useBulkPayment() {
       );
     },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Bulk payment failed')),
+  });
+}
+
+export function useDiscardDraftRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payPeriodId: string) => discardDraftRun(payPeriodId),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['salaries'] });
+      qc.invalidateQueries({ queryKey: ['pay-periods'] });
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      const repayments = result.repaymentsReversed
+        ? `, ${result.repaymentsReversed} loan repayments reversed`
+        : '';
+      toast.success(
+        `Discarded ${result.discarded} draft salaries${repayments}. The period is open again.`,
+      );
+    },
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, 'Failed to discard the draft run')),
   });
 }
 

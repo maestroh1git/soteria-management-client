@@ -13,6 +13,7 @@ import {
     Eye,
     Check,
     CreditCard,
+    Trash2,
     X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ import {
     useBulkPayment,
     useBulkApproval,
     useSalaryStatusSummary,
+    useDiscardDraftRun,
 } from '@/lib/hooks/use-payroll';
 import { useAuthStore } from '@/stores/auth-store';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
@@ -100,6 +102,8 @@ export default function PayrollWorkspacePage() {
     const payMutation = useMarkAsPaid();
     const bulkPayMutation = useBulkPayment();
     const bulkApproveMutation = useBulkApproval();
+    const discardMutation = useDiscardDraftRun();
+    const [showDiscard, setShowDiscard] = useState(false);
 
     // Dialogs
     const [showProcess, setShowProcess] = useState(false);
@@ -142,6 +146,16 @@ export default function PayrollWorkspacePage() {
     const totalDeductions = sumField('deductions') ?? salaries.reduce((s, sal) => s + Number(sal.totalDeductions), 0);
     const totalNet = sumField('net') ?? salaries.reduce((s, sal) => s + Number(sal.netSalary), 0);
     const employeeCount = statusSummary?.total ?? salaries.length;
+
+    /**
+     * A run can only be discarded while nothing in it has been approved or
+     * paid — past that the figures are in the ledger and the fix is a reversal.
+     * Derived from the whole-period summary, not the page of rows on screen, so
+     * a period with 40 staff does not answer from its first 20.
+     */
+    const canDiscard =
+        (statusSummary?.total ?? 0) > 0 &&
+        (buckets?.DRAFT?.count ?? 0) === statusSummary?.total;
     const draftCount = buckets?.[SalaryStatus.DRAFT]?.count ?? 0;
     const approvedCount = buckets?.[SalaryStatus.APPROVED]?.count ?? 0;
     const paidCount = buckets?.[SalaryStatus.PAID]?.count ?? 0;
@@ -382,6 +396,24 @@ export default function PayrollWorkspacePage() {
                     >
                         <CreditCard className="mr-2 h-4 w-4" />
                         Mark {selectedApprovedIds.length} as Paid
+                    </Button>
+                )}
+
+                {/* A run reads the salary components as they stood when it ran,
+                    and re-processing only ever skips duplicates — so a run made
+                    against the wrong pay structure has no way back without
+                    this. Offered only while every salary is still a draft,
+                    which is exactly when the server will allow it. */}
+                {canDiscard && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto text-muted-foreground hover:text-destructive"
+                        onClick={() => setShowDiscard(true)}
+                        disabled={discardMutation.isPending}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Discard this run
                     </Button>
                 )}
             </div>
@@ -823,6 +855,58 @@ export default function PayrollWorkspacePage() {
                     )}
                 </SheetContent>
             </Sheet>
+
+            {/* ─── Discard draft run ────────────────────────────────── */}
+            <Dialog open={showDiscard} onOpenChange={setShowDiscard}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Discard this payroll run?</DialogTitle>
+                        <DialogDescription asChild>
+                            <div className="space-y-3 pt-2 text-sm text-muted-foreground">
+                                <p>
+                                    This deletes all{' '}
+                                    <span className="font-medium text-foreground">
+                                        {statusSummary?.total ?? 0} draft salaries
+                                    </span>{' '}
+                                    calculated for {period.name} and reopens the period so
+                                    you can process it again.
+                                </p>
+                                <p>
+                                    Use it when a run was calculated against the wrong pay
+                                    structure — a missing salary component, say. Nothing has
+                                    been approved or paid, so nothing has reached the ledger.
+                                    Any loan repayments this run recorded are put back.
+                                </p>
+                                <p className="font-medium text-foreground">
+                                    This cannot be undone.
+                                </p>
+                            </div>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowDiscard(false)}
+                            disabled={discardMutation.isPending}
+                        >
+                            Keep it
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={discardMutation.isPending}
+                            onClick={() =>
+                                discardMutation.mutate(payPeriodId, {
+                                    onSuccess: () => setShowDiscard(false),
+                                })
+                            }
+                        >
+                            {discardMutation.isPending
+                                ? 'Discarding…'
+                                : 'Discard the run'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
