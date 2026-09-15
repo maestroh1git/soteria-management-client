@@ -300,16 +300,16 @@ function SetBudgetDialog({
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label>From</Label>
-                            <Input
+                            <Label htmlFor="budgets-page-from">From</Label>
+                            <Input id="budgets-page-from"
                                 type="date"
                                 value={form.periodStart}
                                 onChange={(e) => set('periodStart', e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>To</Label>
-                            <Input
+                            <Label htmlFor="budgets-page-to">To</Label>
+                            <Input id="budgets-page-to"
                                 type="date"
                                 value={form.periodEnd}
                                 onChange={(e) => set('periodEnd', e.target.value)}
@@ -322,8 +322,8 @@ function SetBudgetDialog({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Amount (₦)</Label>
-                        <Input
+                        <Label htmlFor="budgets-page-amount">Amount (₦)</Label>
+                        <Input id="budgets-page-amount"
                             type="number"
                             min="0"
                             step="0.01"

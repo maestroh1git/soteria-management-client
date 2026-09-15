@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useId } from 'react';
 import { Loader2, CheckCircle2, Copy, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -244,9 +244,12 @@ export default function ApplyPage({
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Date of birth *</Label>
+                            <Label htmlFor="apply-dob">Date of birth *</Label>
                             <Input
+                                id="apply-dob"
                                 type="date"
+                                required
+                                aria-required
                                 value={form.dateOfBirth}
                                 onChange={(e) => set('dateOfBirth', e.target.value)}
                             />
@@ -268,30 +271,42 @@ export default function ApplyPage({
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
+                    {/* autoComplete only on the parent's OWN details. The
+                        child's name fields deliberately have none: autofilling
+                        them from the browser would put the parent's name on the
+                        application. */}
                     <Text
                         label="Your first name *"
+                        autoComplete="given-name"
                         value={form.guardianFirstName}
                         onChange={(v) => set('guardianFirstName', v)}
                     />
                     <Text
                         label="Your surname *"
+                        autoComplete="family-name"
                         value={form.guardianLastName}
                         onChange={(v) => set('guardianLastName', v)}
                     />
                     <div className="space-y-2">
-                        <Label>Phone number *</Label>
+                        <Label htmlFor="apply-phone">Phone number *</Label>
                         <Input
+                            id="apply-phone"
                             inputMode="tel"
+                            autoComplete="tel"
+                            required
+                            aria-required
                             placeholder="08031234567"
                             value={form.guardianPhone}
                             onChange={(e) => set('guardianPhone', e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Email</Label>
+                        <Label htmlFor="apply-email">Email</Label>
                         <Input
+                            id="apply-email"
                             type="email"
                             inputMode="email"
+                            autoComplete="email"
                             value={form.guardianEmail}
                             onChange={(e) => set('guardianEmail', e.target.value)}
                         />
@@ -344,15 +359,29 @@ function Text({
     label,
     value,
     onChange,
+    autoComplete,
 }: {
     label: string;
     value: string;
     onChange: (v: string) => void;
+    autoComplete?: string;
 }) {
+    // Without htmlFor/id the label is decoration: it looks attached and is not,
+    // so a screen reader announces an anonymous edit box. A label ending in *
+    // is required, and saying so only in the text leaves that unannounced too.
+    const id = useId();
+    const required = label.trim().endsWith('*');
     return (
         <div className="space-y-2">
-            <Label>{label}</Label>
-            <Input value={value} onChange={(e) => onChange(e.target.value)} />
+            <Label htmlFor={id}>{label}</Label>
+            <Input
+                id={id}
+                value={value}
+                required={required}
+                aria-required={required || undefined}
+                autoComplete={autoComplete}
+                onChange={(e) => onChange(e.target.value)}
+            />
         </div>
     );
 }

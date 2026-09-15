@@ -307,8 +307,8 @@ export default function ApplicationDetailPage({
                     <div className="space-y-4">
                         {needs === 'score' && (
                             <div className="space-y-2">
-                                <Label>Score out of 100</Label>
-                                <Input
+                                <Label htmlFor="id-page-score-out-of-100">Score out of 100</Label>
+                                <Input id="id-page-score-out-of-100"
                                     type="number"
                                     min={0}
                                     max={100}
@@ -319,8 +319,8 @@ export default function ApplicationDetailPage({
                         )}
                         {needs === 'date' && (
                             <div className="space-y-2">
-                                <Label>Assessment date</Label>
-                                <Input
+                                <Label htmlFor="id-page-assessment-date">Assessment date</Label>
+                                <Input id="id-page-assessment-date"
                                     type="datetime-local"
                                     min={bounds.min}
                                     max={bounds.max}
@@ -331,8 +331,8 @@ export default function ApplicationDetailPage({
                         )}
                         {needs === 'offer' && (
                             <div className="space-y-2">
-                                <Label>Offer expires</Label>
-                                <Input
+                                <Label htmlFor="id-page-offer-expires">Offer expires</Label>
+                                <Input id="id-page-offer-expires"
                                     type="datetime-local"
                                     min={bounds.now}
                                     max={bounds.max}

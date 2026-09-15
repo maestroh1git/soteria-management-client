@@ -382,8 +382,8 @@ export default function LoanDetailPage() {
                     </DialogHeader>
                     <div className="space-y-3">
                         <div className="space-y-2">
-                            <Label>Notes (optional)</Label>
-                            <Textarea
+                            <Label htmlFor="id-page-notes-optional">Notes (optional)</Label>
+                            <Textarea id="id-page-notes-optional"
                                 value={approveNotes}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setApproveNotes(e.target.value)}
                                 placeholder="Optional approval notes…"
@@ -410,8 +410,8 @@ export default function LoanDetailPage() {
                     </DialogHeader>
                     <div className="space-y-3">
                         <div className="space-y-2">
-                            <Label>Reason (optional)</Label>
-                            <Textarea
+                            <Label htmlFor="id-page-reason-optional">Reason (optional)</Label>
+                            <Textarea id="id-page-reason-optional"
                                 value={rejectNotes}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectNotes(e.target.value)}
                                 placeholder="Reason for rejection…"

@@ -313,8 +313,8 @@ function RaiseDialog({
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>What is it for</Label>
-                        <Input
+                        <Label htmlFor="expenses-page-what-is-it-for">What is it for</Label>
+                        <Input id="expenses-page-what-is-it-for"
                             placeholder="Diesel for the generator, July"
                             value={form.description}
                             onChange={(e) => set('description', e.target.value)}
@@ -322,8 +322,8 @@ function RaiseDialog({
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label>Amount (₦)</Label>
-                            <Input
+                            <Label htmlFor="expenses-page-amount">Amount (₦)</Label>
+                            <Input id="expenses-page-amount"
                                 type="number"
                                 min="0"
                                 step="0.01"
@@ -332,8 +332,8 @@ function RaiseDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Date</Label>
-                            <Input
+                            <Label htmlFor="expenses-page-date">Date</Label>
+                            <Input id="expenses-page-date"
                                 type="date"
                                 value={form.expenseDate}
                                 onChange={(e) => set('expenseDate', e.target.value)}
@@ -359,15 +359,15 @@ function RaiseDialog({
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Paid to (optional)</Label>
-                        <Input
+                        <Label htmlFor="expenses-page-paid-to-optional">Paid to (optional)</Label>
+                        <Input id="expenses-page-paid-to-optional"
                             value={form.vendor}
                             onChange={(e) => set('vendor', e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Notes (optional)</Label>
-                        <Textarea
+                        <Label htmlFor="expenses-page-notes-optional">Notes (optional)</Label>
+                        <Textarea id="expenses-page-notes-optional"
                             rows={2}
                             value={form.notes}
                             onChange={(e) => set('notes', e.target.value)}
@@ -470,8 +470,8 @@ function PayDialog({
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>When</Label>
-                            <Input
+                            <Label htmlFor="expenses-page-when">When</Label>
+                            <Input id="expenses-page-when"
                                 type="date"
                                 value={form.paidOn}
                                 onChange={(e) => setForm({ ...form, paidOn: e.target.value })}
@@ -479,8 +479,8 @@ function PayDialog({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Reference (optional)</Label>
-                        <Input
+                        <Label htmlFor="expenses-page-reference-optional">Reference (optional)</Label>
+                        <Input id="expenses-page-reference-optional"
                             placeholder="Transfer reference, cheque number"
                             value={form.paymentReference}
                             onChange={(e) =>

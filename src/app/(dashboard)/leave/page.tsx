@@ -370,8 +370,8 @@ function RequestLeaveDialog({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>From *</Label>
-                            <Input
+                            <Label htmlFor="leave-page-from">From *</Label>
+                            <Input id="leave-page-from"
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => {
@@ -381,8 +381,8 @@ function RequestLeaveDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>To *</Label>
-                            <Input
+                            <Label htmlFor="leave-page-to">To *</Label>
+                            <Input id="leave-page-to"
                                 type="date"
                                 value={endDate}
                                 min={startDate || undefined}
@@ -395,8 +395,8 @@ function RequestLeaveDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Days claimed *</Label>
-                        <Input
+                        <Label htmlFor="leave-page-days-claimed">Days claimed *</Label>
+                        <Input id="leave-page-days-claimed"
                             type="number"
                             min={0.5}
                             step={0.5}
@@ -414,8 +414,8 @@ function RequestLeaveDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Reason</Label>
-                        <Input
+                        <Label htmlFor="leave-page-reason">Reason</Label>
+                        <Input id="leave-page-reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             placeholder="Optional"
@@ -617,24 +617,24 @@ function LeaveTypeDialog({
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Name *</Label>
-                        <Input
+                        <Label htmlFor="leave-page-name">Name *</Label>
+                        <Input id="leave-page-name"
                             value={name}
                             placeholder="Study Leave"
                             onChange={(e) => setName(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Description</Label>
-                        <Input
+                        <Label htmlFor="leave-page-description">Description</Label>
+                        <Input id="leave-page-description"
                             value={description}
                             placeholder="What this covers"
                             onChange={(e) => setDescription(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Days a year</Label>
-                        <Input
+                        <Label htmlFor="leave-page-days-a-year">Days a year</Label>
+                        <Input id="leave-page-days-a-year"
                             type="number"
                             min={0}
                             value={daysPerYear}

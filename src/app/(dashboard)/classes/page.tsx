@@ -447,16 +447,16 @@ function ClassesPageInner() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Name</Label>
-                            <Input
+                            <Label htmlFor="classes-page-name">Name</Label>
+                            <Input id="classes-page-name"
                                 placeholder="Primary 1"
                                 value={level.name}
                                 onChange={(e) => setLevel({ ...level, name: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Shorthand (optional)</Label>
-                            <Input
+                            <Label htmlFor="classes-page-shorthand-optional">Shorthand (optional)</Label>
+                            <Input id="classes-page-shorthand-optional"
                                 placeholder="PRY 1"
                                 value={level.code}
                                 onChange={(e) => setLevel({ ...level, code: e.target.value })}
@@ -467,8 +467,8 @@ function ClassesPageInner() {
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <Label>Position on the ladder</Label>
-                            <Input
+                            <Label htmlFor="classes-page-position-on-the-ladder">Position on the ladder</Label>
+                            <Input id="classes-page-position-on-the-ladder"
                                 type="number"
                                 placeholder="1"
                                 value={level.sortOrder}
@@ -559,16 +559,16 @@ function ClassesPageInner() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Class name</Label>
-                            <Input
+                            <Label htmlFor="classes-page-class-name">Class name</Label>
+                            <Input id="classes-page-class-name"
                                 placeholder="A"
                                 value={arm.name}
                                 onChange={(e) => setArm({ ...arm, name: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Seats (optional)</Label>
-                            <Input
+                            <Label htmlFor="classes-page-seats-optional">Seats (optional)</Label>
+                            <Input id="classes-page-seats-optional"
                                 type="number"
                                 placeholder="30"
                                 value={arm.capacity}
@@ -646,8 +646,8 @@ function ClassesPageInner() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Name</Label>
-                            <Input
+                            <Label htmlFor="classes-page-name-2">Name</Label>
+                            <Input id="classes-page-name-2"
                                 placeholder="2026/2027"
                                 value={session.name}
                                 onChange={(e) =>
@@ -657,8 +657,8 @@ function ClassesPageInner() {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
-                                <Label>Starts</Label>
-                                <Input
+                                <Label htmlFor="classes-page-starts">Starts</Label>
+                                <Input id="classes-page-starts"
                                     type="date"
                                     value={session.startDate}
                                     onChange={(e) =>
@@ -667,8 +667,8 @@ function ClassesPageInner() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Ends</Label>
-                                <Input
+                                <Label htmlFor="classes-page-ends">Ends</Label>
+                                <Input id="classes-page-ends"
                                     type="date"
                                     value={session.endDate}
                                     onChange={(e) =>
@@ -746,8 +746,8 @@ function ClassesPageInner() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Name</Label>
-                            <Input
+                            <Label htmlFor="classes-page-name-3">Name</Label>
+                            <Input id="classes-page-name-3"
                                 placeholder="First Term"
                                 value={term.name}
                                 onChange={(e) => setTerm({ ...term, name: e.target.value })}
@@ -755,8 +755,8 @@ function ClassesPageInner() {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
-                                <Label>Starts</Label>
-                                <Input
+                                <Label htmlFor="classes-page-starts-2">Starts</Label>
+                                <Input id="classes-page-starts-2"
                                     type="date"
                                     value={term.startDate}
                                     onChange={(e) =>
@@ -765,8 +765,8 @@ function ClassesPageInner() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Ends</Label>
-                                <Input
+                                <Label htmlFor="classes-page-ends-2">Ends</Label>
+                                <Input id="classes-page-ends-2"
                                     type="date"
                                     value={term.endDate}
                                     onChange={(e) =>

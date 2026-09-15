@@ -219,8 +219,8 @@ export function BankAccountsPanel({ employeeId, employeeName, canEdit }: Props) 
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Account number</Label>
-                            <Input
+                            <Label htmlFor="employees-bank-accounts-panel-account-number">Account number</Label>
+                            <Input id="employees-bank-accounts-panel-account-number"
                                 inputMode="numeric"
                                 maxLength={10}
                                 placeholder="10 digits"
@@ -240,8 +240,8 @@ export function BankAccountsPanel({ employeeId, employeeName, canEdit }: Props) 
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Account name</Label>
-                            <Input
+                            <Label htmlFor="employees-bank-accounts-panel-account-name">Account name</Label>
+                            <Input id="employees-bank-accounts-panel-account-name"
                                 value={form.accountName}
                                 onChange={(e) =>
                                     setForm({ ...form, accountName: e.target.value })

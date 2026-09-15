@@ -368,8 +368,8 @@ function AdjustmentFormDialog({
                     )}
 
                     <div className="space-y-2">
-                        <Label>Description *</Label>
-                        <Input
+                        <Label htmlFor="payroll-adjustments-panel-description">Description *</Label>
+                        <Input id="payroll-adjustments-panel-description"
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
                             placeholder="e.g. Special Duty Assignment, Award Ceremony"
@@ -381,8 +381,8 @@ function AdjustmentFormDialog({
 
                     {!isWaiver && (
                         <div className="space-y-2">
-                            <Label>Amount *</Label>
-                            <Input
+                            <Label htmlFor="payroll-adjustments-panel-amount">Amount *</Label>
+                            <Input id="payroll-adjustments-panel-amount"
                                 type="number"
                                 min={0}
                                 step="0.01"
@@ -394,8 +394,8 @@ function AdjustmentFormDialog({
                     )}
 
                     <div className="space-y-2">
-                        <Label>Reason</Label>
-                        <Input
+                        <Label htmlFor="payroll-adjustments-panel-reason">Reason</Label>
+                        <Input id="payroll-adjustments-panel-reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             placeholder="e.g. Management approval"
