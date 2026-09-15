@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ColumnDef } from '@tanstack/react-table';
@@ -39,7 +39,15 @@ export default function StudentsPage() {
 
     const [status, setStatus] = useState('all');
     const [search, setSearch] = useState('');
-    const { data: students = [], isLoading } = useStudents({ status, search });
+    const [page, setPage] = useState(1);
+    const { data: rollPage, isLoading } = useStudents({ status, search, page });
+    const students = rollPage?.items ?? [];
+
+    // A filter or search change with the reader on page 5 shows an empty table
+    // that reads as "no pupils".
+    useEffect(() => {
+        setPage(1);
+    }, [status, search]);
 
     const columns: ColumnDef<Student>[] = [
         {
@@ -157,6 +165,40 @@ export default function StudentsPage() {
             </div>
 
             <DataTable columns={columns} data={students} loading={isLoading} />
+
+            {(rollPage?.totalPages ?? 1) > 1 && (
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                    <p className="text-muted-foreground">
+                        Showing{' '}
+                        <span className="font-medium text-foreground">
+                            {(page - 1) * (rollPage?.limit ?? 50) + 1}–
+                            {Math.min(page * (rollPage?.limit ?? 50), rollPage?.total ?? 0)}
+                        </span>{' '}
+                        of {rollPage?.total} pupils
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page <= 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        >
+                            Previous
+                        </Button>
+                        <span className="text-muted-foreground">
+                            Page {page} of {rollPage?.totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page >= (rollPage?.totalPages ?? 1)}
+                            onClick={() => setPage((p) => p + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

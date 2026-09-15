@@ -27,6 +27,9 @@ export function useStudents(
         status?: string;
         classArmId?: string;
         search?: string;
+    
+        page?: number;
+        limit?: number;
     },
     enabled = true,
 ) {
