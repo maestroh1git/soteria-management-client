@@ -58,6 +58,13 @@ const routeRoleMap: Record<string, string[] | undefined> = {
   '/roles': ['tenant_owner', 'ADMIN'],
   '/departments': ['tenant_owner', 'ADMIN'],
   '/events': ['tenant_owner', 'ADMIN'],
+  // Attendance. The gate and the calendar are narrower than the register: the
+  // register is the form teacher's daily job, the gate releases children to
+  // adults, and the calendar is the denominator of every rate the school quotes.
+  '/attendance': ['tenant_owner', 'ADMIN', 'academic.attendance_officer', 'academic.teacher'],
+  '/attendance/gate': ['tenant_owner', 'ADMIN', 'academic.attendance_officer'],
+  '/attendance/calendar': ['tenant_owner', 'ADMIN'],
+  '/attendance/at-risk': ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'],
   '/payroll': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'],
   '/salary-components': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'],
   '/loans': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'],
@@ -85,13 +92,15 @@ function getRouteKey(pathname: string): string | null {
   if (routeRoleMap[pathname] !== undefined || pathname in routeRoleMap) {
     return pathname;
   }
-  // Prefix match for nested routes (e.g., /employees/123)
+  // Prefix match for nested routes (e.g., /employees/123). Longest match wins:
+  // with both '/attendance' and '/attendance/gate' in the map, first-match
+  // order would hand a nested gate route the broader register roles.
+  let best: string | null = null;
   for (const route of Object.keys(routeRoleMap)) {
-    if (route !== '/' && pathname.startsWith(route + '/')) {
-      return route;
-    }
+    if (route === '/' || !pathname.startsWith(route + '/')) continue;
+    if (!best || route.length > best.length) best = route;
   }
-  return null;
+  return best;
 }
 
 export function middleware(request: NextRequest) {

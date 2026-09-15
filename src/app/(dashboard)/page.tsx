@@ -24,6 +24,7 @@ import {
 import { EventsWidget } from '@/components/dashboard/events-widget';
 import { EmployeeDashboard } from '@/components/dashboard/employee-dashboard';
 import { SchoolWidget } from '@/components/dashboard/school-widget';
+import { AttendanceTile } from '@/components/dashboard/attendance-tile';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils/currency';
@@ -267,6 +268,10 @@ export default function DashboardPage() {
             </div>
 
             )}
+
+            {/* Today's attendance, and — louder — the registers nobody has
+                taken. Hides itself for a tenant with no classes. */}
+            <AttendanceTile />
 
             {/* The school, for the people who run it. Self-gates on org type
                 and role, and stays hidden until there is a roll. */}

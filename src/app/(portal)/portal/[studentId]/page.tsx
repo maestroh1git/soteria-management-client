@@ -4,6 +4,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChildAttendance } from '@/components/portal/child-attendance';
 import { EmptyState } from '@/components/common/empty-state';
 import { useChildStatement } from '@/lib/hooks/use-portal';
 
@@ -55,6 +56,11 @@ export default function ChildStatementPage({
                     this child&apos;s account.
                 </p>
             </div>
+
+            {/* Attendance first: it is the thing a parent checks daily, and the
+                reason they open the portal at all rather than only when a bill
+                is due. */}
+            <ChildAttendance studentId={data.student.id} />
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <Card>

@@ -25,6 +25,10 @@ import {
     Settings,
     Shield,
     UserCircle,
+    CalendarCheck,
+    DoorOpen,
+    CalendarRange,
+    AlertTriangle,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -63,6 +67,10 @@ export const navigation: NavGroup[] = [
         // from the token — there is nothing here to gate.
         label: 'My Account',
         items: [
+            // A form teacher's landing page. Beside My Pay rather than in the
+            // admin sidebar: before this, a teacher signing in got the payroll
+            // dashboard, which is nobody's idea of a teacher's home page.
+            { title: 'My Classes', href: '/me/classes', icon: School, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'academic.teacher'] },
             { title: 'My Pay', href: '/me', icon: Wallet },
             { title: 'My Leave', href: '/me/leave', icon: CalendarDays },
             { title: 'My Profile', href: '/me/profile', icon: UserCircle },
@@ -78,6 +86,10 @@ export const navigation: NavGroup[] = [
             { title: 'Students', href: '/students', icon: GraduationCap, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer', 'academic.teacher'] },
             { title: 'Admissions', href: '/admissions', icon: ClipboardList, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'admissions.officer'] },
             { title: 'Classes', href: '/classes', icon: School, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'admissions.registrar', 'academic.teacher'] },
+            { title: 'Register', href: '/attendance', icon: CalendarCheck, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'academic.attendance_officer', 'academic.teacher'] },
+            { title: 'The Gate', href: '/attendance/gate', icon: DoorOpen, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'academic.attendance_officer'] },
+            { title: 'Follow Up', href: '/attendance/at-risk', icon: AlertTriangle, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'] },
+            { title: 'School Calendar', href: '/attendance/calendar', icon: CalendarRange, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN'] },
             { title: 'Fees', href: '/fees', icon: BadgeDollarSign, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
             { title: 'Invoices', href: '/fees/invoices', icon: ReceiptText, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
             { title: 'Receipts', href: '/fees/payments', icon: HandCoins, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'admissions.registrar'] },
