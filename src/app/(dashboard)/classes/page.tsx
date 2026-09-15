@@ -540,13 +540,13 @@ function ClassesPageInner() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Level</Label>
+                            <Label htmlFor="classes-page-level">Level</Label>
                             <Select
                                 value={arm.levelId}
                                 onValueChange={(v) => setArm({ ...arm, levelId: v })}
                                 disabled={!!editingArm}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="classes-page-level">
                                     <SelectValue placeholder="Select a level" />
                                 </SelectTrigger>
                                 <SelectContent>

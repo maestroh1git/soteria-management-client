@@ -200,12 +200,12 @@ export function BankAccountsPanel({ employeeId, employeeName, canEdit }: Props) 
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Bank</Label>
+                            <Label htmlFor="employees-bank-accounts-panel-bank">Bank</Label>
                             <Select
                                 value={form.bankName}
                                 onValueChange={(v) => setForm({ ...form, bankName: v })}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="employees-bank-accounts-panel-bank">
                                     <SelectValue placeholder="Select a bank" />
                                 </SelectTrigger>
                                 <SelectContent>

@@ -307,9 +307,9 @@ function AdjustmentFormDialog({
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Employee *</Label>
+                        <Label htmlFor="payroll-adjustments-panel-employee">Employee *</Label>
                         <Select value={employeeId} onValueChange={setEmployeeId}>
-                            <SelectTrigger>
+                            <SelectTrigger id="payroll-adjustments-panel-employee">
                                 <SelectValue placeholder="Select an employee" />
                             </SelectTrigger>
                             <SelectContent>
@@ -323,7 +323,7 @@ function AdjustmentFormDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Type *</Label>
+                        <Label htmlFor="payroll-adjustments-panel-type">Type *</Label>
                         <Select
                             value={type}
                             onValueChange={(v) => {
@@ -332,7 +332,7 @@ function AdjustmentFormDialog({
                                 setAmount('');
                             }}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="payroll-adjustments-panel-type">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -349,9 +349,9 @@ function AdjustmentFormDialog({
 
                     {isWaiver && (
                         <div className="space-y-2">
-                            <Label>Component to waive *</Label>
+                            <Label htmlFor="payroll-adjustments-panel-component-to-waive">Component to waive *</Label>
                             <Select value={componentId} onValueChange={setComponentId}>
-                                <SelectTrigger>
+                                <SelectTrigger id="payroll-adjustments-panel-component-to-waive">
                                     <SelectValue placeholder="Select a component" />
                                 </SelectTrigger>
                                 <SelectContent>

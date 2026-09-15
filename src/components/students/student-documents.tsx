@@ -70,12 +70,12 @@ export function StudentDocuments({
             {canEdit && (
                 <div className="flex flex-wrap items-end gap-3 rounded-lg border p-3">
                     <div className="space-y-1.5">
-                        <Label>What is it?</Label>
+                        <Label htmlFor="students-student-documents-what-is-it">What is it?</Label>
                         <Select
                             value={kind}
                             onValueChange={(v) => setKind(v as DocumentKind)}
                         >
-                            <SelectTrigger className="w-56">
+                            <SelectTrigger id="students-student-documents-what-is-it" className="w-56">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

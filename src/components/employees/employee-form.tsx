@@ -378,7 +378,7 @@ export function EmployeeForm({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Department *</Label>
+                                <Label htmlFor="employees-employee-form-department">Department *</Label>
                                 <Select
                                     value={departmentFilter}
                                     onValueChange={(value) => {
@@ -388,7 +388,7 @@ export function EmployeeForm({
                                         form.setValue('roleId', '');
                                     }}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger id="employees-employee-form-department">
                                         <SelectValue placeholder="Select a department" />
                                     </SelectTrigger>
                                     <SelectContent>

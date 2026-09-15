@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useId } from 'react';
 import { Loader2, Upload, Trash2, Palette } from 'lucide-react';
 import {
     Card,
@@ -31,9 +31,10 @@ function ColorField({
     value: string;
     onChange: (v: string) => void;
 }) {
+    const fieldId = useId();
     return (
         <div className="space-y-1.5">
-            <Label>{label}</Label>
+            <Label htmlFor={fieldId}>{label}</Label>
             <div className="flex items-center gap-2">
                 <input
                     type="color"
@@ -43,6 +44,7 @@ function ColorField({
                     aria-label={`${label} swatch`}
                 />
                 <Input
+                    id={fieldId}
                     value={value}
                     placeholder="#1D4ED8"
                     className="w-32 font-mono"
@@ -71,9 +73,12 @@ function ImageUploader({
     accept: string;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
+    const groupId = useId();
     return (
-        <div className="space-y-2">
-            <Label>{label}</Label>
+        // The control here is a hidden file input driven by a button, so this
+        // labels a group rather than one field.
+        <div className="space-y-2" role="group" aria-labelledby={groupId}>
+            <Label id={groupId}>{label}</Label>
             <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-muted/40">
                     {url ? (

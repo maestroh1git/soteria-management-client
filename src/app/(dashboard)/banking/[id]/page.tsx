@@ -398,9 +398,9 @@ export default function ReconcilePage() {
                     </DialogHeader>
 
                     <div className="space-y-1.5">
-                        <Label>Account</Label>
+                        <Label htmlFor="id-page-account">Account</Label>
                         <Select value={postAccountId} onValueChange={setPostAccountId}>
-                            <SelectTrigger>
+                            <SelectTrigger id="id-page-account">
                                 <SelectValue placeholder="Bank charges, interest, …" />
                             </SelectTrigger>
                             <SelectContent>

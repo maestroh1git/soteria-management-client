@@ -894,9 +894,9 @@ export default function SettingsPage() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Employee</Label>
+                            <Label htmlFor="settings-page-employee">Employee</Label>
                             <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                                <SelectTrigger>
+                                <SelectTrigger id="settings-page-employee">
                                     <SelectValue placeholder="Select an employee" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -925,8 +925,13 @@ export default function SettingsPage() {
                         })()}
 
                         <div className="space-y-2">
-                            <Label>System Roles</Label>
-                            <div className="grid grid-cols-2 gap-2">
+                            {/* Labels a set of checkboxes, not one control. */}
+                            <Label id="settings-system-roles-label">System Roles</Label>
+                            <div
+                                className="grid grid-cols-2 gap-2"
+                                role="group"
+                                aria-labelledby="settings-system-roles-label"
+                            >
                                 {allRolesForAssignment.map((role) => (
                                     <label key={role} className="flex items-center gap-2 text-sm cursor-pointer">
                                         <Checkbox

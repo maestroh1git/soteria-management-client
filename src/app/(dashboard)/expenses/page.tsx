@@ -341,12 +341,12 @@ function RaiseDialog({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Charge to</Label>
+                        <Label htmlFor="expenses-page-charge-to">Charge to</Label>
                         <Select
                             value={form.accountId}
                             onValueChange={(v) => set('accountId', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="expenses-page-charge-to">
                                 <SelectValue placeholder="Which category" />
                             </SelectTrigger>
                             <SelectContent>
@@ -433,12 +433,12 @@ function PayDialog({
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Paid from</Label>
+                        <Label htmlFor="expenses-page-paid-from">Paid from</Label>
                         <Select
                             value={form.paymentAccountId}
                             onValueChange={(v) => setForm({ ...form, paymentAccountId: v })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="expenses-page-paid-from">
                                 <SelectValue placeholder="Which account did the money leave" />
                             </SelectTrigger>
                             <SelectContent>
@@ -452,14 +452,14 @@ function PayDialog({
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label>How</Label>
+                            <Label htmlFor="expenses-page-how">How</Label>
                             <Select
                                 value={form.paymentMethod}
                                 onValueChange={(v) =>
                                     setForm({ ...form, paymentMethod: v as any })
                                 }
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="expenses-page-how">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

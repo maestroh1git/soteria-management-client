@@ -347,10 +347,11 @@ export default function ApplicationDetailPage({
                             </div>
                         )}
                         <div className="space-y-2">
-                            <Label>
+                            <Label htmlFor="admissions-decision-notes">
                                 Notes{needs === 'reason' ? '' : ' (optional)'}
                             </Label>
                             <Textarea
+                                id="admissions-decision-notes"
                                 rows={2}
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
@@ -470,9 +471,9 @@ function EnrolDialog({
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Class</Label>
+                        <Label htmlFor="id-page-class">Class</Label>
                         <Select value={armId} onValueChange={setArmId}>
-                            <SelectTrigger>
+                            <SelectTrigger id="id-page-class">
                                 <SelectValue placeholder="Which class will they sit in?" />
                             </SelectTrigger>
                             <SelectContent>
@@ -534,12 +535,15 @@ function EnrolDialog({
 
                     {(preview?.possibleGuardians.length ?? 0) > 0 && (
                         <div className="space-y-2">
-                            <Label>Who is {preview?.guardianName}?</Label>
+                            <Label id="admissions-guardian-match-label">
+                                Who is {preview?.guardianName}?
+                            </Label>
                             <p className="text-xs text-muted-foreground">
                                 Somebody already on file has this number — usually a
                                 sibling&apos;s parent. Linking the same person is what makes
                                 the children siblings.
                             </p>
+                            {/* A choice between people, made with buttons. */}
                             {preview!.possibleGuardians.map((g) => (
                                 <button
                                     key={g.id}

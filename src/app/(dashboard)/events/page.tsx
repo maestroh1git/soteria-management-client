@@ -259,14 +259,14 @@ export default function EventsPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Type</Label>
+                                <Label htmlFor="events-page-type">Type</Label>
                                 <Select
                                     value={form.type}
                                     onValueChange={(v) =>
                                         setForm({ ...form, type: v as EventType })
                                     }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger id="events-page-type">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>

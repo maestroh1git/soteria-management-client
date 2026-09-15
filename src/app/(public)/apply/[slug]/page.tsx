@@ -209,12 +209,12 @@ export default function ApplyPage({
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Class applying for *</Label>
+                        <Label htmlFor="slug-page-class-applying-for">Class applying for *</Label>
                         <Select
                             value={form.classLevelId}
                             onValueChange={(v) => set('classLevelId', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="slug-page-class-applying-for">
                                 <SelectValue placeholder="Select a class" />
                             </SelectTrigger>
                             <SelectContent>
@@ -232,9 +232,9 @@ export default function ApplyPage({
                         <Text label="Middle name" value={form.middleName} onChange={(v) => set('middleName', v)} />
                         <Text label="Surname *" value={form.lastName} onChange={(v) => set('lastName', v)} />
                         <div className="space-y-2">
-                            <Label>Gender *</Label>
+                            <Label htmlFor="slug-page-gender">Gender *</Label>
                             <Select value={form.gender} onValueChange={(v) => set('gender', v)}>
-                                <SelectTrigger>
+                                <SelectTrigger id="slug-page-gender">
                                     <SelectValue placeholder="Select" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -312,12 +312,12 @@ export default function ApplyPage({
                         />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
-                        <Label>You are the child&apos;s *</Label>
+                        <Label htmlFor="slug-page-you-are-the-childs">You are the child&apos;s *</Label>
                         <Select
                             value={form.guardianRelationship}
                             onValueChange={(v) => set('guardianRelationship', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="slug-page-you-are-the-childs">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

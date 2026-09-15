@@ -607,12 +607,12 @@ function AddFeeDialog({
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label>Category</Label>
+                        <Label htmlFor="fees-page-category">Category</Label>
                         <Select
                             value={category}
                             onValueChange={(v) => setCategory(v as FeeCategory)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="fees-page-category">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -626,12 +626,12 @@ function AddFeeDialog({
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label>Income account</Label>
+                        <Label htmlFor="fees-page-income-account">Income account</Label>
                         <Select
                             value={revenueAccountId}
                             onValueChange={setRevenueAccountId}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="fees-page-income-account">
                                 <SelectValue placeholder="Which income this is" />
                             </SelectTrigger>
                             <SelectContent>
@@ -737,9 +737,9 @@ function CopyTermDialog({
 
                 <div className="space-y-4">
                     <div className="space-y-1.5">
-                        <Label>Copy from</Label>
+                        <Label htmlFor="fees-page-copy-from">Copy from</Label>
                         <Select value={fromTermId} onValueChange={setFromTermId}>
-                            <SelectTrigger>
+                            <SelectTrigger id="fees-page-copy-from">
                                 <SelectValue placeholder="Which term" />
                             </SelectTrigger>
                             <SelectContent>
@@ -831,12 +831,12 @@ function CopyLevelDialog({
 
                 <div className="space-y-4">
                     <div className="space-y-1.5">
-                        <Label>Copy from</Label>
+                        <Label htmlFor="fees-page-copy-from-2">Copy from</Label>
                         <Select
                             value={fromClassLevelId}
                             onValueChange={setFromClassLevelId}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="fees-page-copy-from-2">
                                 <SelectValue placeholder="Which class" />
                             </SelectTrigger>
                             <SelectContent>
@@ -852,9 +852,9 @@ function CopyLevelDialog({
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label>Copy to</Label>
+                        <Label htmlFor="fees-page-copy-to">Copy to</Label>
                         <Select value={toClassLevelId} onValueChange={setToClassLevelId}>
-                            <SelectTrigger>
+                            <SelectTrigger id="fees-page-copy-to">
                                 <SelectValue placeholder="Which class" />
                             </SelectTrigger>
                             <SelectContent>

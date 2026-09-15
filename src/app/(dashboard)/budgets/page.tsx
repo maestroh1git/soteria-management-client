@@ -260,12 +260,12 @@ function SetBudgetDialog({
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Category</Label>
+                        <Label htmlFor="budgets-page-category">Category</Label>
                         <Select
                             value={form.accountId}
                             onValueChange={(v) => set('accountId', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="budgets-page-category">
                                 <SelectValue placeholder="Which expense account" />
                             </SelectTrigger>
                             <SelectContent>
@@ -278,12 +278,12 @@ function SetBudgetDialog({
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Department (optional)</Label>
+                        <Label htmlFor="budgets-page-department-optional">Department (optional)</Label>
                         <Select
                             value={form.departmentId}
                             onValueChange={(v) => set('departmentId', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="budgets-page-department-optional">
                                 <SelectValue placeholder="The whole organisation" />
                             </SelectTrigger>
                             <SelectContent>

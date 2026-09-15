@@ -323,12 +323,12 @@ export default function StudentDetailPage({
                                 <div className="space-y-4">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="space-y-2">
-                                            <Label>Blood group</Label>
+                                            <Label htmlFor="id-page-blood-group">Blood group</Label>
                                             <Select
                                                 value={value('bloodGroup')}
                                                 onValueChange={(v) => set('bloodGroup', v)}
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger id="id-page-blood-group">
                                                     <SelectValue placeholder="Not known" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -341,12 +341,12 @@ export default function StudentDetailPage({
                                             </Select>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Genotype</Label>
+                                            <Label htmlFor="id-page-genotype">Genotype</Label>
                                             <Select
                                                 value={value('genotype')}
                                                 onValueChange={(v) => set('genotype', v)}
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger id="id-page-genotype">
                                                     <SelectValue placeholder="Not known" />
                                                 </SelectTrigger>
                                                 <SelectContent>

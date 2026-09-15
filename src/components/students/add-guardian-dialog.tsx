@@ -274,14 +274,14 @@ export function AddGuardianDialog({
                         )}
 
                         <div className="space-y-2">
-                            <Label>Relationship to {firstName}</Label>
+                            <Label htmlFor="students-add-guardian-dialog-relationship-to-firstname">Relationship to {firstName}</Label>
                             <Select
                                 value={relationship}
                                 onValueChange={(v) =>
                                     setRelationship(v as GuardianRelationship)
                                 }
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="students-add-guardian-dialog-relationship-to-firstname">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
