@@ -303,8 +303,8 @@ function RequestOwnLeaveDialog({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>From *</Label>
-                            <Input
+                            <Label htmlFor="leave-page-from">From *</Label>
+                            <Input id="leave-page-from"
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => {
@@ -314,8 +314,8 @@ function RequestOwnLeaveDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>To *</Label>
-                            <Input
+                            <Label htmlFor="leave-page-to">To *</Label>
+                            <Input id="leave-page-to"
                                 type="date"
                                 value={endDate}
                                 min={startDate || undefined}
@@ -328,8 +328,8 @@ function RequestOwnLeaveDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Days *</Label>
-                        <Input
+                        <Label htmlFor="leave-page-days">Days *</Label>
+                        <Input id="leave-page-days"
                             type="number"
                             min={0.5}
                             step={0.5}
@@ -345,8 +345,8 @@ function RequestOwnLeaveDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Reason</Label>
-                        <Input
+                        <Label htmlFor="leave-page-reason">Reason</Label>
+                        <Input id="leave-page-reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             placeholder="Optional"

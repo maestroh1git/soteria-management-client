@@ -682,8 +682,8 @@ export default function PayrollWorkspacePage() {
                     </DialogHeader>
                     <div className="space-y-3">
                         <div className="space-y-2">
-                            <Label>Notes (optional)</Label>
-                            <Textarea
+                            <Label htmlFor="payperiodid-page-notes-optional">Notes (optional)</Label>
+                            <Textarea id="payperiodid-page-notes-optional"
                                 value={approveNotes}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setApproveNotes(e.target.value)}
                                 placeholder="Optional notes about this approval…"
@@ -723,8 +723,8 @@ export default function PayrollWorkspacePage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Notes (optional)</Label>
-                            <Textarea
+                            <Label htmlFor="payperiodid-page-notes-optional-2">Notes (optional)</Label>
+                            <Textarea id="payperiodid-page-notes-optional-2"
                                 value={payNotes}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPayNotes(e.target.value)}
                                 placeholder="Optional payment notes…"

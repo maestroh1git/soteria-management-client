@@ -301,8 +301,8 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Effective from</Label>
-                            <Input
+                            <Label htmlFor="employees-salary-components-pane-effective-from">Effective from</Label>
+                            <Input id="employees-salary-components-pane-effective-from"
                                 type="date"
                                 value={effectiveFrom}
                                 onChange={(e) => setEffectiveFrom(e.target.value)}
@@ -355,8 +355,8 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Effective from</Label>
-                            <Input
+                            <Label htmlFor="employees-salary-components-pane-effective-from-2">Effective from</Label>
+                            <Input id="employees-salary-components-pane-effective-from-2"
                                 type="date"
                                 value={editFrom}
                                 onChange={(e) => setEditFrom(e.target.value)}

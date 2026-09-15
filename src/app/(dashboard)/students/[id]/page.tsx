@@ -482,8 +482,8 @@ function Editable({
 }) {
     return (
         <div className="space-y-2">
-            <Label>{label}</Label>
-            <Textarea rows={2} value={value} onChange={(e) => onChange(e.target.value)} />
+            <Label htmlFor="id-page-label">{label}</Label>
+            <Textarea id="id-page-label" rows={2} value={value} onChange={(e) => onChange(e.target.value)} />
             {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
     );
@@ -502,8 +502,8 @@ function Text({
 }) {
     return (
         <div className="space-y-2">
-            <Label>{label}</Label>
-            <Input value={value} onChange={(e) => onChange(e.target.value)} />
+            <Label htmlFor="id-page-label-2">{label}</Label>
+            <Input id="id-page-label-2" value={value} onChange={(e) => onChange(e.target.value)} />
             {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
     );
@@ -612,8 +612,8 @@ function InviteParentButton({
                     </DialogHeader>
 
                     <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input
+                        <Label htmlFor="id-page-email">Email</Label>
+                        <Input id="id-page-email"
                             type="email"
                             value={address}
                             placeholder="parent@example.com"

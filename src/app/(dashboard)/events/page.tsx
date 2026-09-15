@@ -228,8 +228,8 @@ export default function EventsPage() {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Title</Label>
-                            <Input
+                            <Label htmlFor="events-page-title">Title</Label>
+                            <Input id="events-page-title"
                                 placeholder="e.g. End-of-term staff meeting"
                                 value={form.title}
                                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -237,8 +237,8 @@ export default function EventsPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Date</Label>
-                                <Input
+                                <Label htmlFor="events-page-date">Date</Label>
+                                <Input id="events-page-date"
                                     type="date"
                                     value={form.eventDate}
                                     onChange={(e) =>
@@ -247,8 +247,8 @@ export default function EventsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Time (optional)</Label>
-                                <Input
+                                <Label htmlFor="events-page-time-optional">Time (optional)</Label>
+                                <Input id="events-page-time-optional"
                                     type="time"
                                     value={form.startTime}
                                     onChange={(e) =>
@@ -279,8 +279,8 @@ export default function EventsPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Location (optional)</Label>
-                                <Input
+                                <Label htmlFor="events-page-location-optional">Location (optional)</Label>
+                                <Input id="events-page-location-optional"
                                     placeholder="e.g. Main hall"
                                     value={form.location}
                                     onChange={(e) =>
@@ -290,8 +290,8 @@ export default function EventsPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Description (optional)</Label>
-                            <Textarea
+                            <Label htmlFor="events-page-description-optional">Description (optional)</Label>
+                            <Textarea id="events-page-description-optional"
                                 placeholder="Anything staff should know"
                                 value={form.description}
                                 onChange={(e) =>

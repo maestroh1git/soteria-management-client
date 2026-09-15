@@ -196,16 +196,16 @@ export default function BanksPage() {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Bank name</Label>
-                            <Input
+                            <Label htmlFor="banks-page-bank-name">Bank name</Label>
+                            <Input id="banks-page-bank-name"
                                 placeholder="e.g. PalmPay"
                                 value={form.name}
                                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>NIBSS code</Label>
-                            <Input
+                            <Label htmlFor="banks-page-nibss-code">NIBSS code</Label>
+                            <Input id="banks-page-nibss-code"
                                 inputMode="numeric"
                                 placeholder="e.g. 999991"
                                 value={form.code}

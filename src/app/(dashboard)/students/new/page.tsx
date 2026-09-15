@@ -116,22 +116,22 @@ export default function NewStudentPage() {
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                        <Label>First name *</Label>
-                        <Input
+                        <Label htmlFor="new-page-first-name">First name *</Label>
+                        <Input id="new-page-first-name"
                             value={form.firstName}
                             onChange={(e) => set('firstName', e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Middle name</Label>
-                        <Input
+                        <Label htmlFor="new-page-middle-name">Middle name</Label>
+                        <Input id="new-page-middle-name"
                             value={form.middleName}
                             onChange={(e) => set('middleName', e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Last name *</Label>
-                        <Input
+                        <Label htmlFor="new-page-last-name">Last name *</Label>
+                        <Input id="new-page-last-name"
                             value={form.lastName}
                             onChange={(e) => set('lastName', e.target.value)}
                         />
@@ -152,16 +152,16 @@ export default function NewStudentPage() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Date of birth *</Label>
-                        <Input
+                        <Label htmlFor="new-page-date-of-birth">Date of birth *</Label>
+                        <Input id="new-page-date-of-birth"
                             type="date"
                             value={form.dateOfBirth}
                             onChange={(e) => set('dateOfBirth', e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Admission date *</Label>
-                        <Input
+                        <Label htmlFor="new-page-admission-date">Admission date *</Label>
+                        <Input id="new-page-admission-date"
                             type="date"
                             value={form.admissionDate}
                             onChange={(e) => set('admissionDate', e.target.value)}
@@ -191,8 +191,8 @@ export default function NewStudentPage() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Admission number</Label>
-                        <Input
+                        <Label htmlFor="new-page-admission-number">Admission number</Label>
+                        <Input id="new-page-admission-number"
                             placeholder="Leave blank to allocate one"
                             value={form.admissionNumber}
                             onChange={(e) => set('admissionNumber', e.target.value)}
@@ -203,8 +203,8 @@ export default function NewStudentPage() {
                         </p>
                     </div>
                     <div className="space-y-2 sm:col-span-2">
-                        <Label>Home address</Label>
-                        <Textarea
+                        <Label htmlFor="new-page-home-address">Home address</Label>
+                        <Textarea id="new-page-home-address"
                             rows={2}
                             value={form.address}
                             onChange={(e) => set('address', e.target.value)}

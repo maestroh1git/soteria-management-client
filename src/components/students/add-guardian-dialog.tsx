@@ -155,8 +155,8 @@ export function AddGuardianDialog({
 
                 {step === 'phone' && (
                     <div className="space-y-2">
-                        <Label>Phone number</Label>
-                        <Input
+                        <Label htmlFor="students-add-guardian-dialog-phone-number">Phone number</Label>
+                        <Input id="students-add-guardian-dialog-phone-number"
                             autoFocus
                             inputMode="tel"
                             placeholder="08031234567"
@@ -233,8 +233,8 @@ export function AddGuardianDialog({
                         ) : (
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label>First name</Label>
-                                    <Input
+                                    <Label htmlFor="students-add-guardian-dialog-first-name">First name</Label>
+                                    <Input id="students-add-guardian-dialog-first-name"
                                         autoFocus
                                         value={form.firstName}
                                         onChange={(e) =>
@@ -243,8 +243,8 @@ export function AddGuardianDialog({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Last name</Label>
-                                    <Input
+                                    <Label htmlFor="students-add-guardian-dialog-last-name">Last name</Label>
+                                    <Input id="students-add-guardian-dialog-last-name"
                                         value={form.lastName}
                                         onChange={(e) =>
                                             setForm({ ...form, lastName: e.target.value })
@@ -252,8 +252,8 @@ export function AddGuardianDialog({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Email (optional)</Label>
-                                    <Input
+                                    <Label htmlFor="students-add-guardian-dialog-email-optional">Email (optional)</Label>
+                                    <Input id="students-add-guardian-dialog-email-optional"
                                         type="email"
                                         value={form.email}
                                         onChange={(e) =>
@@ -262,8 +262,8 @@ export function AddGuardianDialog({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Occupation (optional)</Label>
-                                    <Input
+                                    <Label htmlFor="students-add-guardian-dialog-occupation-optional">Occupation (optional)</Label>
+                                    <Input id="students-add-guardian-dialog-occupation-optional"
                                         value={form.occupation}
                                         onChange={(e) =>
                                             setForm({ ...form, occupation: e.target.value })
