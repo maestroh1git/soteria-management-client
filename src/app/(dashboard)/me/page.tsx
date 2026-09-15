@@ -39,7 +39,10 @@ export default function MyPayPage() {
                 <CardContent className="flex gap-3 py-8">
                     <AlertCircle className="h-5 w-5 flex-shrink-0 text-amber-600" />
                     <div>
-                        <p className="font-medium">No personal payroll record</p>
+                        {/* A heading, not a bold paragraph: this branch replaces
+                            the whole page, so without it the page has no h1 at
+                            all and nothing to navigate to by heading. */}
+                        <h1 className="font-medium">No personal payroll record</h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {errorMessage(employeeQuery.error)}
                         </p>
