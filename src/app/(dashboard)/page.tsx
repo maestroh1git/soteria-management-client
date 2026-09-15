@@ -305,7 +305,16 @@ export default function DashboardPage() {
                                         formatter={(value) => formatCurrency(value as number)}
                                         contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
                                     />
-                                    <Legend />
+                                    {/* Recharts colours the legend text with the
+                                        series colour, which on this background
+                                        measures 3.7:1 and 2.5:1 — under the 4.5:1
+                                        WCAG 1.4.3 needs. The swatch still carries
+                                        the colour; the words are readable. */}
+                                    <Legend
+                                        formatter={(value) => (
+                                            <span className="text-foreground">{value}</span>
+                                        )}
+                                    />
                                     <Bar dataKey="gross" name="Gross Salary" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                                     <Bar dataKey="net" name="Net Salary" fill="#10b981" radius={[4, 4, 0, 0]} />
                                 </BarChart>
