@@ -30,6 +30,32 @@ export function AttendanceTile() {
     // A school with no attendance set up yet should not see a broken tile.
     if (isError || !data || data.armsTotal === 0) return null;
 
+    // A missing calendar and a genuine holiday are different facts, and saying
+    // "not a teaching day" for the first one sends an administrator looking for
+    // a holiday nobody entered.
+    if (data.dayType === null) {
+        return (
+            <Card>
+                <CardContent className="py-5">
+                    <p className="text-sm font-medium text-muted-foreground">
+                        Attendance today
+                    </p>
+                    <p className="mt-2 text-sm">
+                        Today is not in the school calendar yet, so no register can
+                        be taken.{' '}
+                        <Link
+                            href="/attendance/calendar"
+                            className="font-medium underline"
+                        >
+                            Set up the calendar
+                        </Link>
+                        .
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
+
     if (!data.isTeachingDay) {
         return (
             <Card>

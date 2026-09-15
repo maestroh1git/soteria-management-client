@@ -57,11 +57,23 @@ export function RegisterScreen({
      * read is idempotent and this branch only runs on the client, after the
      * query has resolved.
      */
-    const seedKey = data ? `${classArmId}:${date}:${data.pupils.length}` : null;
+    /*
+     * Keyed on what the payload DESCRIBES, not on what was asked for.
+     *
+     * Building this from the `date` prop reseeded the moment the picker moved,
+     * while `data` was still the previous day's — so yesterday's marks were
+     * copied onto a register that had never been taken, and submitting would
+     * have written them. `data.date` cannot drift from the marks beside it.
+     */
+    const seedKey = data
+        ? `${data.classArmId}:${data.date}:${data.pupils.length}`
+        : null;
     if (data && seedKey && seedKey !== seededFor) {
         let restored: Record<string, Draft> | null = null;
         try {
-            const raw = window.localStorage.getItem(draftKey(classArmId, date));
+            const raw = window.localStorage.getItem(
+                draftKey(data.classArmId, data.date),
+            );
             if (raw) restored = JSON.parse(raw);
         } catch {
             // A private window, or blocked site data. The register still works.
@@ -108,7 +120,10 @@ export function RegisterScreen({
         [drafts],
     );
 
-    if (isLoading) {
+    // `data.date !== date` means the picker has moved and this payload is the
+    // previous day's. Showing it under the new date's heading is how a teacher
+    // ends up marking the wrong register.
+    if (isLoading || (data && data.date !== date)) {
         return (
             <div className="flex justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
