@@ -11,22 +11,29 @@ export default function DashboardLayout({
 }) {
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+            {/*
+              * WCAG 2.4.1, and it has to be FIRST in the DOM to mean anything:
+              * the whole point is reaching it before the sidebar's seventeen
+              * links, so anything rendered above it defeats it.
+              *
+              * Parked off-screen with `top`, not `sr-only` and not a transform.
+              * `focus:not-sr-only` does not reliably win back the 1px box, and
+              * the translate utilities compose through a CSS variable that the
+              * focus variant updated without moving the element — verified in
+              * the browser, both times. A skip link that stays invisible when
+              * focused is worse than none: a sighted keyboard user loses track
+              * of where focus went. `top` is a plain property and just works.
+              */}
+            <a
+                href="#main-content"
+                className="absolute left-4 -top-20 z-50 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all focus:top-4 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                Skip to main content
+            </a>
             <BrandingHead />
             <CommandMenu />
             <Sidebar />
             <MobileSidebar />
-            {/*
-              * WCAG 2.4.1. The sidebar is seventeen links, and without this a
-              * keyboard or screen-reader user tabs through every one of them to
-              * reach the page content — on every page, every time. Invisible
-              * until focused, which is the first thing Tab reaches.
-              */}
-            <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-                Skip to main content
-            </a>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Topbar />
                 <main
