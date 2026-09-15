@@ -32,7 +32,16 @@ const identityRoutes = ['/accept-invite', '/reset-password'];
  * application's token. Exact matching, which is what `publicRoutes` uses, would
  * send every parent to a login page they can never pass.
  */
-const openRoutes = ['/apply', '/application', '/invoice'];
+const openRoutes = [
+  '/apply',
+  '/application',
+  '/invoice',
+  // Policies have to be readable by somebody who has no account and is deciding
+  // whether to trust the school with their child's records. Bouncing them to a
+  // login is the opposite of the point.
+  '/privacy',
+  '/terms',
+];
 
 const isOpenRoute = (pathname: string) =>
   openRoutes.some(

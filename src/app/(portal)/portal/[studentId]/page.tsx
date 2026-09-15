@@ -159,7 +159,7 @@ function BackLink() {
     return (
         <Link
             href="/portal"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+            className="-my-1 inline-flex min-h-[24px] items-center gap-1 py-1 text-sm text-muted-foreground hover:text-foreground"
         >
             <ArrowLeft className="mr-1 h-4 w-4" />
             Your children

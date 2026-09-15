@@ -26,6 +26,24 @@ export default function AuthLayout({
                     </p>
                 </div>
                 {children}
+                {/* Reachable from the page everyone starts on. */}
+                <nav
+                    aria-label="Legal"
+                    className="mt-8 flex justify-center gap-4 text-xs text-muted-foreground"
+                >
+                    <a
+                        href="/privacy"
+                        className="-my-1 inline-flex min-h-[24px] items-center py-1 hover:underline"
+                    >
+                        Privacy policy
+                    </a>
+                    <a
+                        href="/terms"
+                        className="-my-1 inline-flex min-h-[24px] items-center py-1 hover:underline"
+                    >
+                        Terms
+                    </a>
+                </nav>
             </div>
         </div>
     );
