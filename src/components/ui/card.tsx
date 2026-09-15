@@ -28,9 +28,22 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * Renders a real heading, not a div.
+ *
+ * A card title is a heading by every meaning except the markup: shipped as a
+ * <div>, all 112 of them across the app were invisible to heading navigation,
+ * which is how screen-reader users move around a page. h3 because cards sit
+ * under a page h1 and usually a section h2; `as` is there for the cases that
+ * need a different level rather than a reason to go back to a div.
+ */
+function CardTitle({
+  className,
+  as: Comp = "h3",
+  ...props
+}: React.ComponentProps<"h3"> & { as?: React.ElementType }) {
   return (
-    <div
+    <Comp
       data-slot="card-title"
       className={cn("leading-none font-semibold", className)}
       {...props}
