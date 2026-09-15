@@ -109,7 +109,7 @@ export function EventsWidget() {
                 {canManage && (
                     <Link
                         href="/events"
-                        className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400 flex items-center gap-0.5"
+                        className="-my-1 flex min-h-[24px] items-center gap-0.5 py-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
                     >
                         Manage <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -134,7 +134,7 @@ export function EventsWidget() {
                         {canManage && (
                             <Link
                                 href="/events"
-                                className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400 mt-1 inline-block"
+                                className="mt-1 inline-flex min-h-[24px] items-center py-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
                             >
                                 Create an event
                             </Link>

@@ -326,9 +326,9 @@ function RecordPaymentDialog({
                 <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                            <Label>Who it is for</Label>
+                            <Label htmlFor="payments-page-who-it-is-for">Who it is for</Label>
                             <Select value={studentId} onValueChange={setStudentId}>
-                                <SelectTrigger>
+                                <SelectTrigger id="payments-page-who-it-is-for">
                                     <SelectValue placeholder="Child" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -353,9 +353,9 @@ function RecordPaymentDialog({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label>Method</Label>
+                            <Label htmlFor="payments-page-method">Method</Label>
                             <Select value={method} onValueChange={setMethod}>
-                                <SelectTrigger>
+                                <SelectTrigger id="payments-page-method">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -379,12 +379,12 @@ function RecordPaymentDialog({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label>Into</Label>
+                            <Label htmlFor="payments-page-into">Into</Label>
                             <Select
                                 value={depositAccountId}
                                 onValueChange={setDepositAccountId}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="payments-page-into">
                                     <SelectValue placeholder="Account" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -421,7 +421,9 @@ function RecordPaymentDialog({
                     {amountKobo > 0 && (outstanding?.length ?? 0) > 0 && (
                         <div className="space-y-2 rounded-lg border p-3">
                             <div className="flex items-center justify-between">
-                                <Label>What it settles</Label>
+                                {/* Heads a list of invoices to allocate against,
+                                    not a single control. */}
+                                <Label id="payment-allocation-label">What it settles</Label>
                                 <span
                                     className={
                                         remainingKobo < 0
@@ -435,7 +437,11 @@ function RecordPaymentDialog({
                                 </span>
                             </div>
 
-                            <div className="space-y-1.5">
+                            <div
+                                className="space-y-1.5"
+                                role="group"
+                                aria-labelledby="payment-allocation-label"
+                            >
                                 {(outstanding ?? []).map((row) => (
                                     <div
                                         key={row.invoiceId}

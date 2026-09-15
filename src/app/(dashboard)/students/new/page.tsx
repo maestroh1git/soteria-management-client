@@ -137,12 +137,12 @@ export default function NewStudentPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Gender *</Label>
+                        <Label htmlFor="new-page-gender">Gender *</Label>
                         <Select
                             value={form.gender}
                             onValueChange={(v) => set('gender', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="new-page-gender">
                                 <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent>
@@ -173,12 +173,12 @@ export default function NewStudentPage() {
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label>Class</Label>
+                        <Label htmlFor="new-page-class">Class</Label>
                         <Select
                             value={form.currentClassArmId}
                             onValueChange={(v) => set('currentClassArmId', v)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger id="new-page-class">
                                 <SelectValue placeholder="Not placed yet" />
                             </SelectTrigger>
                             <SelectContent>

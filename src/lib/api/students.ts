@@ -1,4 +1,5 @@
 import api from './client';
+import type { PaginatedResponse } from '@/lib/types/api';
 
 export type StudentStatus =
     | 'ACTIVE'
@@ -88,17 +89,27 @@ export interface StudentImportPreview {
     totalRows: number;
 }
 
+/**
+ * One page of the roll. The server used to return every pupil in the school —
+ * 758 KB for 800 of them, on every visit to the register.
+ */
 export async function getStudents(filters?: {
     status?: string;
     classArmId?: string;
     search?: string;
-}): Promise<Student[]> {
+    page?: number;
+    limit?: number;
+}): Promise<PaginatedResponse<Student>> {
     const q = new URLSearchParams();
     if (filters?.status && filters.status !== 'all') q.set('status', filters.status);
     if (filters?.classArmId) q.set('classArmId', filters.classArmId);
     if (filters?.search) q.set('search', filters.search);
+    if (filters?.page) q.set('page', String(filters.page));
+    if (filters?.limit) q.set('limit', String(filters.limit));
     const qs = q.toString();
-    return (await api.get(`/students${qs ? `?${qs}` : ''}`)) as unknown as Student[];
+    return (await api.get(
+        `/students${qs ? `?${qs}` : ''}`,
+    )) as unknown as PaginatedResponse<Student>;
 }
 
 export async function getStudent(id: string): Promise<Student> {

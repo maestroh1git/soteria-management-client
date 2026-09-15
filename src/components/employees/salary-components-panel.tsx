@@ -266,9 +266,9 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Component</Label>
+                            <Label htmlFor="employees-salary-components-pane-component">Component</Label>
                             <Select value={componentId} onValueChange={onPickComponent}>
-                                <SelectTrigger>
+                                <SelectTrigger id="employees-salary-components-pane-component">
                                     <SelectValue placeholder="Select a component" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -282,7 +282,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>
+                            <Label htmlFor="salary-component-add-value">
                                 Value{' '}
                                 {selected &&
                                     (isPercentage(selected.calculationType)
@@ -290,6 +290,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                         : '(₦)')}
                             </Label>
                             <Input
+                                id="salary-component-add-value"
                                 inputMode="decimal"
                                 placeholder={selected ? '' : 'Select a component first'}
                                 disabled={!selected}
@@ -339,7 +340,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>
+                            <Label htmlFor="salary-component-edit-value">
                                 Value{' '}
                                 {editing &&
                                     (isPercentage(editing.salaryComponent?.calculationType)
@@ -347,6 +348,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                         : '(₦)')}
                             </Label>
                             <Input
+                                id="salary-component-edit-value"
                                 inputMode="decimal"
                                 value={editValue}
                                 onChange={(e) =>

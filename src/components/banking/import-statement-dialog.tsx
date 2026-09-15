@@ -166,9 +166,9 @@ export function ImportStatementDialog({
                 <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                            <Label>Account</Label>
+                            <Label htmlFor="banking-import-statement-dialog-account">Account</Label>
                             <Select value={accountId} onValueChange={setAccountId}>
-                                <SelectTrigger>
+                                <SelectTrigger id="banking-import-statement-dialog-account">
                                     <SelectValue placeholder="Which account" />
                                 </SelectTrigger>
                                 <SelectContent>

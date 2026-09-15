@@ -39,7 +39,9 @@ export function SchoolWidget() {
     const isSchool = tenantOrgType === 'SCHOOL';
     const active = isSchool && canSee;
 
-    const { data: students } = useStudents(undefined, active);
+    // Only the count is shown, so ask for one row and read the total rather
+    // than pulling the whole roll down to call .length on it.
+    const { data: students } = useStudents({ limit: 1 }, active);
     const { data: arms } = useClassArms(undefined, active);
     // Only the registrar's side sees the admissions queue; a form teacher has
     // no business in it, and the endpoint would refuse them anyway.
@@ -56,7 +58,7 @@ export function SchoolWidget() {
 
     if (!active) return null;
 
-    const onRoll = students?.length ?? 0;
+    const onRoll = students?.total ?? 0;
     const classes = arms?.length ?? 0;
     // Anything not yet enrolled, rejected or withdrawn is still work.
     const inProgress = (applications ?? []).filter((a) =>
@@ -77,7 +79,7 @@ export function SchoolWidget() {
                     </div>
                     <Link
                         href="/students"
-                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
+                        className="-my-1 inline-flex min-h-[24px] items-center gap-1 py-1 text-sm text-muted-foreground hover:underline"
                     >
                         Pupils
                         <ArrowRight className="h-3.5 w-3.5" />

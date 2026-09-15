@@ -96,7 +96,7 @@ export function useOnboardingProgress(): OnboardingProgress {
   const schoolQueries = canSetup && isSchool;
   const sessions = useSessions(schoolQueries);
   const classArms = useClassArms(undefined, schoolQueries);
-  const students = useStudents(undefined, schoolQueries);
+  const students = useStudents({ limit: 1 }, schoolQueries);
   const feeItems = useFeeItems(false, schoolQueries);
 
   const periods = payPeriods.data ?? [];
@@ -200,7 +200,7 @@ export function useOnboardingProgress(): OnboardingProgress {
             description:
               'Import the roll from a spreadsheet, or add them one at a time. Each needs a class.',
             href: '/students',
-            done: (students.data?.length ?? 0) > 0,
+            done: (students.data?.total ?? 0) > 0,
             optional: true,
           },
           {

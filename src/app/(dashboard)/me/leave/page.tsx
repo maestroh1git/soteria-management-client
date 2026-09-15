@@ -279,9 +279,9 @@ function RequestOwnLeaveDialog({
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Leave type *</Label>
+                        <Label htmlFor="leave-page-leave-type">Leave type *</Label>
                         <Select value={leaveTypeId} onValueChange={setLeaveTypeId}>
-                            <SelectTrigger>
+                            <SelectTrigger id="leave-page-leave-type">
                                 <SelectValue placeholder="Select a type" />
                             </SelectTrigger>
                             <SelectContent>

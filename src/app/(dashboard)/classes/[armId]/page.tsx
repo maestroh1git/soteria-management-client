@@ -41,7 +41,10 @@ export default function ClassRegisterPage({
 
     const { data: arms = [] } = useClassArms();
     const arm = arms.find((a) => a.id === armId);
-    const { data: students = [], isLoading } = useStudents({ classArmId: armId });
+    // A class register, bounded by the size of a class. 200 is the server's
+    // cap and far above any real arm.
+    const { data: armPage, isLoading } = useStudents({ classArmId: armId, limit: 200 });
+    const students = armPage?.items ?? [];
     const { data: alerts = [] } = useMedicalAlerts(armId);
     const { data: occupancy } = useArmOccupancy(armId);
 
