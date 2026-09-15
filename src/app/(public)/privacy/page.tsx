@@ -34,8 +34,10 @@ export default function PrivacyPolicyPage() {
                 <p>
                     <Placeholder>LEGAL ENTITY NAME</Placeholder> provides the software
                     and stores the data on the school&apos;s behalf — the{' '}
-                    <strong>data processor</strong>. We do not decide what is collected
-                    and we do not use it for our own purposes.
+                    <strong>data processor</strong>. We do not decide what is collected.
+                    We do not sell it, use it for advertising, or use it to train
+                    anything. We do count it: see{' '}
+                    <em>What we can see across schools</em> below.
                 </p>
                 <p>
                     Registered address: <Placeholder>REGISTERED ADDRESS</Placeholder>.
@@ -127,6 +129,41 @@ export default function PrivacyPolicyPage() {
                 </p>
             </Section>
 
+            <Section title="What we can see across schools">
+                <p>
+                    We keep an operational view across all schools using the service. It
+                    shows <strong>counts and totals only</strong> — how many schools,
+                    how many staff, and the total value of salaries paid — so we can run
+                    and support the service. It does not show any individual&apos;s
+                    name, record, pay or fees.
+                </p>
+                <p>
+                    We also keep a log of significant actions across schools, used to
+                    investigate faults and suspected misuse.
+                </p>
+            </Section>
+
+            <Section title="Links that open without a login">
+                <p>
+                    Some documents are reached by a link containing a long random code
+                    rather than by signing in — a fee invoice or receipt sent to a
+                    parent, and a payslip sent to a member of staff. Anyone holding that
+                    link can open that one document, so treat it as you would the
+                    document itself. The link opens nothing else, and gives no access to
+                    any other child, parent or member of staff.
+                </p>
+            </Section>
+
+            <Section title="Cookies">
+                <p>
+                    Signing in sets a small number of cookies so the service knows you
+                    are signed in, which school you belong to, and whether you still
+                    need to change your password. They are required for the service to
+                    work and are not used to track you or to advertise. Signing out
+                    removes them.
+                </p>
+            </Section>
+
             <Section title="How it is protected">
                 <ul>
                     <li>
@@ -167,6 +204,14 @@ export default function PrivacyPolicyPage() {
                     period Nigerian tax and employment law requires. The specific
                     periods are set by your school:{' '}
                     <Placeholder>RETENTION SCHEDULE</Placeholder>.
+                </p>
+                <p>
+                    One deletion is built in: an{' '}
+                    <strong>unsuccessful admission application</strong> is deleted once
+                    it passes the retention date the school sets for it, along with the
+                    documents attached to it. A child who was never offered a place does
+                    not stay on file indefinitely. The school triggers this, so ask them
+                    when it last ran if it matters to you.
                 </p>
             </Section>
 

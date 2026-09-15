@@ -96,11 +96,24 @@ export default function TermsPage() {
                     and do not use it to train anything or to build products.
                 </p>
                 <p>
-                    On request while the subscription is live, and for{' '}
+                    The school can export payroll reports, payslips, invoices and
+                    receipts from the application at any time.
+                </p>
+                <p>
+                    A <strong>complete</strong> export — the roll, guardians, the fee
+                    ledger and payroll history together — is produced by us on request,
+                    in a machine-readable format, within{' '}
+                    <Placeholder>EXPORT TURNAROUND</Placeholder> of asking. It is not
+                    yet a button in the application, and we would rather say so than
+                    imply one exists. The right to ask does not depend on why the school
+                    is asking, and applies while the subscription is live and for{' '}
                     <Placeholder>EXPORT WINDOW AFTER TERMINATION</Placeholder> after it
-                    ends, the school may export its data in a machine-readable format.
-                    After that window it is deleted from live systems, and from backups
-                    within <Placeholder>BACKUP RETENTION PERIOD</Placeholder>.
+                    ends.
+                </p>
+                <p>
+                    After that window the data is deleted from live systems, and from
+                    backups within{' '}
+                    <Placeholder>BACKUP RETENTION PERIOD</Placeholder>.
                 </p>
             </Section>
 
