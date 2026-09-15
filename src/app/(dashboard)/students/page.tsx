@@ -54,9 +54,13 @@ export default function StudentsPage() {
             accessorKey: 'admissionNumber',
             header: 'Adm. No.',
             cell: ({ row }) => (
+                // On a phone this is the only way into a pupil's record, and it
+                // was a 36x17 target in a 53px row — under the 24x24 WCAG 2.5.8
+                // minimum, surrounded by dead space. The negative margin keeps
+                // the row's height unchanged while the tap area fills it.
                 <Link
                     href={`/students/${row.original.id}`}
-                    className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                    className="-my-2 inline-flex min-h-[44px] items-center py-2 font-medium text-blue-600 hover:underline dark:text-blue-400"
                 >
                     {row.original.admissionNumber}
                 </Link>

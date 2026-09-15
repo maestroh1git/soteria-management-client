@@ -79,7 +79,7 @@ export function SchoolWidget() {
                     </div>
                     <Link
                         href="/students"
-                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
+                        className="-my-1 inline-flex min-h-[24px] items-center gap-1 py-1 text-sm text-muted-foreground hover:underline"
                     >
                         Pupils
                         <ArrowRight className="h-3.5 w-3.5" />
