@@ -402,6 +402,8 @@ export interface PayrollProcessResult {
   totalGrossSalary: number;
   totalNetSalary: number;
   errors: Array<{ employeeId: string; message: string }>;
+  /** Did not fail the run, but must be seen before approving. */
+  warnings?: string[];
 }
 
 export interface BulkPaymentResult {

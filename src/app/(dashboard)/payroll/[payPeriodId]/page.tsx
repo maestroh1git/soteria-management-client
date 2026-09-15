@@ -13,6 +13,7 @@ import {
     Eye,
     Check,
     CreditCard,
+    AlertTriangle,
     Trash2,
     X,
 } from 'lucide-react';
@@ -602,6 +603,22 @@ export default function PayrollWorkspacePage() {
                                     <p className="text-lg font-semibold">{formatCurrency(processResult.totalNetSalary)}</p>
                                 </div>
                             </div>
+                            {/* Above the errors: this one does not fail the
+                                run, so it is the thing most easily missed, and
+                                it is the one that silently untaxes a payroll. */}
+                            {(processResult.warnings?.length ?? 0) > 0 && (
+                                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+                                    <p className="mb-1 flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Check before approving
+                                    </p>
+                                    <ul className="space-y-1 text-xs text-amber-600 dark:text-amber-400">
+                                        {processResult.warnings?.map((w, i) => (
+                                            <li key={i}>{w}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                             {processResult.errors.length > 0 && (
                                 <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
                                     <p className="mb-1 text-sm font-medium text-destructive">Errors ({processResult.errors.length})</p>

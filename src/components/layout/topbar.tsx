@@ -40,6 +40,7 @@ export function Topbar() {
                     variant="ghost"
                     size="icon"
                     className="lg:hidden"
+                    aria-label="Open navigation menu"
                     onClick={() => setMobileSidebarOpen(true)}
                 >
                     <Menu className="h-5 w-5" />
@@ -49,7 +50,12 @@ export function Topbar() {
             {/* Right: notifications + user menu */}
             <div className="flex items-center gap-2">
                 <ModeToggle />
-                <Button variant="ghost" size="icon" className="relative">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    aria-label="Notifications"
+                >
                     <Bell className="h-5 w-5" />
                 </Button>
 

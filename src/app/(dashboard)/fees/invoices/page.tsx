@@ -92,10 +92,34 @@ export default function InvoicesPage() {
     const [runOpen, setRunOpen] = useState(false);
 
     const { data: terms } = useTerms(sessionId);
-    const { data: invoices, isLoading } = useInvoices({
+    const [page, setPage] = useState(1);
+    const { data: invoicePage, isLoading } = useInvoices({
         termId,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
+        page,
     });
+    // The server returns one page; it used to return every invoice the school
+    // had ever issued.
+    const invoices = invoicePage?.items;
+
+    /*
+     * The draft count has to come from the server, not from the page on screen.
+     * "Issue N drafts" issues the whole TERM, so counting the visible rows would
+     * promise to issue 25 and actually issue 800. Asking for a single row is
+     * enough — only the total is wanted.
+     */
+    const { data: draftPage } = useInvoices({
+        termId,
+        status: 'DRAFT' as InvoiceStatus,
+        limit: 1,
+    });
+    const draftCount = draftPage?.total ?? 0;
+
+    // A filter change with the reader still on page 7 would show an empty
+    // table that looks like "nothing billed".
+    useEffect(() => {
+        setPage(1);
+    }, [termId, statusFilter]);
     const issueTerm = useIssueTermInvoices();
 
     useEffect(() => {
@@ -110,7 +134,6 @@ export default function InvoicesPage() {
         }
     }, [terms, termId]);
 
-    const drafts = (invoices ?? []).filter((i) => i.status === 'DRAFT');
 
     return (
         <div className="space-y-6">
@@ -169,7 +192,7 @@ export default function InvoicesPage() {
                     </SelectContent>
                 </Select>
 
-                {drafts.length > 0 && (
+                {draftCount > 0 && (
                     <Button
                         variant="outline"
                         onClick={() => termId && issueTerm.mutate(termId)}
@@ -178,7 +201,7 @@ export default function InvoicesPage() {
                         {issueTerm.isPending && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        Issue {drafts.length} draft{drafts.length === 1 ? '' : 's'}
+                        Issue {draftCount} draft{draftCount === 1 ? '' : 's'}
                     </Button>
                 )}
             </div>
@@ -251,6 +274,42 @@ export default function InvoicesPage() {
                             </tbody>
                         </table>
                     </div>
+                    {(invoicePage?.totalPages ?? 1) > 1 && (
+                        <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
+                            <p className="text-muted-foreground">
+                                Showing{' '}
+                                <span className="font-medium text-foreground">
+                                    {(page - 1) * (invoicePage?.limit ?? 25) + 1}–
+                                    {Math.min(
+                                        page * (invoicePage?.limit ?? 25),
+                                        invoicePage?.total ?? 0,
+                                    )}
+                                </span>{' '}
+                                of {invoicePage?.total} invoices
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page <= 1}
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-muted-foreground">
+                                    Page {page} of {invoicePage?.totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page >= (invoicePage?.totalPages ?? 1)}
+                                    onClick={() => setPage((p) => p + 1)}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </Card>
             )}
 

@@ -110,6 +110,11 @@ export function useProcessPayroll() {
       } else {
         toast.success(`Payroll processed: ${summary}`);
       }
+      // Separate from the outcome toast on purpose: a warning rides on an
+      // otherwise successful run, which is exactly why it gets missed.
+      for (const warning of result.warnings ?? []) {
+        toast.warning(warning, { duration: 12000 });
+      }
     },
     onError: (e) =>
       toast.error(getApiErrorMessage(e, 'Failed to process payroll')),

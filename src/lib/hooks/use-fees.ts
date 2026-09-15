@@ -188,6 +188,8 @@ export function useInvoices(filters?: {
     termId?: string;
     studentId?: string;
     status?: InvoiceStatus;
+    page?: number;
+    limit?: number;
 }) {
     return useQuery({
         queryKey: ['fees', 'invoices', filters],

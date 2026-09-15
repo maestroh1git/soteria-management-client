@@ -1,4 +1,5 @@
 import api from './client';
+import type { PaginatedResponse } from '@/lib/types/api';
 
 export type FeeCategory =
     | 'TUITION'
@@ -300,14 +301,20 @@ export async function cancelInvoice(
     };
 }
 
+/**
+ * One page of invoices. The server used to return every invoice the school had
+ * ever issued — 4.3 MB at five years — so page/limit are not optional niceties.
+ */
 export async function getInvoices(filters?: {
     termId?: string;
     studentId?: string;
     status?: InvoiceStatus;
-}): Promise<InvoiceSummary[]> {
+    page?: number;
+    limit?: number;
+}): Promise<PaginatedResponse<InvoiceSummary>> {
     return (await api.get('/fees/invoices', {
         params: filters ?? {},
-    })) as unknown as InvoiceSummary[];
+    })) as unknown as PaginatedResponse<InvoiceSummary>;
 }
 
 export async function getInvoice(id: string): Promise<InvoiceDetail> {
