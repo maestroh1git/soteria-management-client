@@ -53,17 +53,14 @@ export function RegisterScreen({
      *
      * Seeded during render rather than in an effect — it is state derived from
      * what the server returned, and doing it in an effect renders the register
-     * empty for a frame and then again with the pupils in it. The localStorage
-     * read is idempotent and this branch only runs on the client, after the
-     * query has resolved.
-     */
-    /*
-     * Keyed on what the payload DESCRIBES, not on what was asked for.
+     * empty for a frame and then again with the pupils in it.
      *
-     * Building this from the `date` prop reseeded the moment the picker moved,
-     * while `data` was still the previous day's — so yesterday's marks were
-     * copied onto a register that had never been taken, and submitting would
-     * have written them. `data.date` cannot drift from the marks beside it.
+     * Both the read below and the write further down key on what the payload
+     * DESCRIBES (`data.classArmId`, `data.date`) rather than on what was asked
+     * for. Keyed on the `date` prop, the write fired the instant the picker
+     * moved — while `drafts` still held the previous day's marks — and stamped
+     * them under the new day's key, which the read then restored onto a register
+     * that had never been taken.
      */
     const seedKey = data
         ? `${data.classArmId}:${data.date}:${data.pupils.length}`
@@ -88,22 +85,41 @@ export function RegisterScreen({
                   }
                 : { status: 'PRESENT' };
         }
+        // A draft only helps a register that never reached the server. Once the
+        // school has marks for that day the server is the record, and restoring
+        // a leftover draft over it silently reverts whatever someone else saved.
+        const usable = data.alreadyMarked ? null : restored;
+
+        // Drafts for other days can only be stale, and a stale draft that
+        // outlives its register is exactly how the wrong marks come back.
+        try {
+            const keep = draftKey(data.classArmId, data.date);
+            for (const k of Object.keys(window.localStorage)) {
+                if (k.startsWith('attendance-draft:') && k !== keep) {
+                    window.localStorage.removeItem(k);
+                }
+            }
+        } catch {
+            // Storage unavailable; nothing to prune.
+        }
+
         setSeededFor(seedKey);
-        setDrafts({ ...seeded, ...(restored ?? {}) });
+        setDrafts({ ...seeded, ...(usable ?? {}) });
         setSubmitted(false);
     }
 
     useEffect(() => {
-        if (!Object.keys(drafts).length || submitted) return;
+        if (!data || submitted) return;
+        if (!Object.keys(drafts).length) return;
         try {
             window.localStorage.setItem(
-                draftKey(classArmId, date),
+                draftKey(data.classArmId, data.date),
                 JSON.stringify(drafts),
             );
         } catch {
             // Nothing to do; the in-memory state is still authoritative.
         }
-    }, [drafts, classArmId, date, submitted]);
+    }, [drafts, data, submitted]);
 
     const tally = useMemo(() => {
         const t = { PRESENT: 0, LATE: 0, ABSENT: 0, EXCUSED: 0 };
@@ -204,7 +220,9 @@ export function RegisterScreen({
                 onSuccess: () => {
                     setSubmitted(true);
                     try {
-                        window.localStorage.removeItem(draftKey(classArmId, date));
+                        window.localStorage.removeItem(
+                            draftKey(data.classArmId, data.date),
+                        );
                     } catch {
                         // Nothing to clean up if storage is unavailable.
                     }
