@@ -233,6 +233,18 @@ export function RegisterScreen({
 
     const isToday = date === new Date().toISOString().slice(0, 10);
 
+    /*
+     * Changing a register after its own day needs a written reason, and the
+     * server enforces it. Say so here rather than letting a 400 be the first the
+     * user hears of the rule — the standing agreement in this repo, and the
+     * whole reason the note field is on screen at all.
+     *
+     * Only for a register that already exists: taking one that was never taken
+     * is a backfill, not a correction, and needs no explanation.
+     */
+    const needsCorrectionNote =
+        !isToday && data.alreadyMarked && !correctionNote.trim();
+
     return (
         <div className="space-y-4 pb-28">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -274,12 +286,18 @@ export function RegisterScreen({
                 <div className="space-y-2">
                     <Label htmlFor="correction-note">
                         Why is this register being changed after its own day?
+                        {data.alreadyMarked ? (
+                            <span className="ml-1 text-muted-foreground">
+                                (required)
+                            </span>
+                        ) : null}
                     </Label>
                     <Input
                         id="correction-note"
                         value={correctionNote}
                         onChange={(e) => setCorrectionNote(e.target.value)}
                         placeholder="The school office will be asked about this"
+                        aria-required={data.alreadyMarked}
                     />
                 </div>
             )}
@@ -396,6 +414,13 @@ export function RegisterScreen({
 
             <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 p-3 backdrop-blur md:left-64">
                 <div className="mx-auto max-w-4xl">
+                    {needsCorrectionNote && (
+                        <p className="mb-2 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
+                            <AlertTriangle className="h-3.5 w-3.5 flex-none" />
+                            Changing a register after its own day needs a note
+                            saying why.
+                        </p>
+                    )}
                     {incomplete > 0 && (
                         <p className="mb-2 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
                             <AlertTriangle className="h-3.5 w-3.5 flex-none" />
@@ -406,7 +431,9 @@ export function RegisterScreen({
                     <Button
                         className="h-12 w-full text-base"
                         onClick={onSubmit}
-                        disabled={submit.isPending || incomplete > 0}
+                        disabled={
+                            submit.isPending || incomplete > 0 || needsCorrectionNote
+                        }
                     >
                         {submit.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
