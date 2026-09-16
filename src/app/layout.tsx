@@ -24,7 +24,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    /*
+     * `suppressHydrationWarning` is required by next-themes and is not
+     * cosmetic. Its blocking script sets `class="dark"` and `color-scheme` on
+     * <html> before React hydrates — that is the whole point, it is what stops
+     * a white flash on a dark-theme load — so the server's <html> and the
+     * client's provably differ. Without this React reports the mismatch on
+     * EVERY page, including the ones with no session at all. It suppresses one
+     * level deep, on <html>'s own attributes, not on the tree below.
+     */
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
           {children}
