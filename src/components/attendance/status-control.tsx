@@ -50,12 +50,12 @@ export function AttendanceStatusControl({
 }: Props) {
     return (
         <fieldset
-            className="flex-none"
+            className="w-full sm:w-auto sm:flex-none"
             disabled={disabled}
             aria-describedby={undefined}
         >
             <legend className="sr-only">{pupilName} — attendance</legend>
-            <div className="flex overflow-hidden rounded-lg border border-input bg-background">
+            <div className="flex w-full overflow-hidden rounded-lg border border-input bg-background">
                 {OPTIONS.map((opt, i) => {
                     const id = `${name}-${opt.value}`;
                     const selected = value === opt.value;
@@ -74,7 +74,7 @@ export function AttendanceStatusControl({
                                 htmlFor={id}
                                 title={opt.label}
                                 className={cn(
-                                    'grid h-11 w-11 cursor-pointer place-items-center text-sm font-semibold',
+                                    'grid h-11 flex-1 cursor-pointer place-items-center text-sm font-semibold sm:w-11 sm:flex-none',
                                     'text-muted-foreground transition-colors select-none',
                                     'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1',
                                     'hover:bg-accent',
