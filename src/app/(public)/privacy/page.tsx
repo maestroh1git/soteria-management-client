@@ -59,7 +59,23 @@ export default function PrivacyPolicyPage() {
                         it — allergies, conditions, blood group and genotype. This is
                         sensitive personal data and is treated as such;
                     </li>
-                    <li>fees billed, paid and outstanding.</li>
+                    <li>fees billed, paid and outstanding;</li>
+                    <li>
+                        <strong>attendance</strong> — whether the child was present,
+                        late, away or excused on each teaching day, and the reason
+                        recorded when they were not in school. A register is never
+                        overwritten: when a mark is corrected, the original is kept
+                        alongside it, with who changed it and when;
+                    </li>
+                    <li>
+                        <strong>leaving school during the day</strong> — the time, the
+                        adult who collected the child, the member of staff who
+                        authorised it, the reason, and the time the child returned.
+                        Where a child is released to an adult the school has recorded
+                        as not permitted to collect them, the written reason given is
+                        kept as part of that record;
+                    </li>
+                    <li>awards and commendations the school records.</li>
                 </ul>
                 <p>About a parent or guardian:</p>
                 <ul>
@@ -67,7 +83,11 @@ export default function PrivacyPolicyPage() {
                     <li>
                         whether you are permitted to collect the child from school;
                     </li>
-                    <li>payments you have made.</li>
+                    <li>payments you have made;</li>
+                    <li>
+                        that you collected a child from school during the day, and
+                        when.
+                    </li>
                 </ul>
                 <p>About a member of staff:</p>
                 <ul>
@@ -110,8 +130,16 @@ export default function PrivacyPolicyPage() {
                     </li>
                     <li>
                         <strong>You</strong>, through the parent portal: your own
-                        children, their fees and what is owed, and nothing belonging to
-                        another family.
+                        children, their fees and what is owed, their attendance and any
+                        awards, and nothing belonging to another family.
+                    </li>
+                    <li>
+                        <strong>Not everything about attendance reaches the portal.</strong>{' '}
+                        A register carries a reason for an absence — &ldquo;illness&rdquo;,
+                        &ldquo;appointment&rdquo; — and the school may also add an
+                        internal note against it, which can contain health detail. You
+                        are shown the reason. The school&apos;s internal note is never
+                        sent to the portal.
                     </li>
                     <li>
                         <strong>No other school.</strong> Each school&apos;s data is
@@ -185,9 +213,10 @@ export default function PrivacyPolicyPage() {
             <Section title="Where it is held, and by whom">
                 <p>
                     The service runs on infrastructure provided by{' '}
-                    <Placeholder>HOSTING PROVIDER AND REGION</Placeholder>, and email is
-                    sent through <Placeholder>EMAIL PROVIDER</Placeholder>. These
-                    providers process data on our instructions only.
+                    <strong>Railway</strong>, in{' '}
+                    <Placeholder>HOSTING REGION — CONFIRM</Placeholder>, and email is
+                    sent through <strong>Postmark</strong>. These providers process data
+                    on our instructions only.
                 </p>
                 <p>
                     Where data is stored or processed outside Nigeria, that transfer is
@@ -201,9 +230,12 @@ export default function PrivacyPolicyPage() {
                     School records are kept for as long as the school requires them,
                     which for a pupil&apos;s record is usually well beyond the time the
                     child is on the roll. Financial and payroll records are kept for the
-                    period Nigerian tax and employment law requires. The specific
-                    periods are set by your school:{' '}
-                    <Placeholder>RETENTION SCHEDULE</Placeholder>.
+                    period Nigerian tax and employment law requires. Attendance
+                    registers and records of a child leaving school during the day are
+                    kept beyond the child&apos;s time at the school, because they are
+                    the school&apos;s evidence of where a child was on a given day. The
+                    specific periods are set by your school:{' '}
+                    <Placeholder>RETENTION SCHEDULE — INCLUDING ATTENDANCE</Placeholder>.
                 </p>
                 <p>
                     One deletion is built in: an{' '}
