@@ -233,9 +233,14 @@ export default function PrivacyPolicyPage() {
                     period Nigerian tax and employment law requires. Attendance
                     registers and records of a child leaving school during the day are
                     kept beyond the child&apos;s time at the school, because they are
-                    the school&apos;s evidence of where a child was on a given day. The
-                    specific periods are set by your school:{' '}
-                    <Placeholder>RETENTION SCHEDULE — INCLUDING ATTENDANCE</Placeholder>.
+                    the school&apos;s evidence of where a child was on a given day.
+                </p>
+                <p>
+                    The principle is the same across all of it: nothing is kept for
+                    longer than the school has a reason to keep it, and the school —
+                    not us — sets the actual periods and can tell you what they are for
+                    your child. We hold the data on their instructions and delete it
+                    when they tell us to.
                 </p>
                 <p>
                     One deletion is built in: an{' '}

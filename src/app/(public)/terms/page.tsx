@@ -84,8 +84,12 @@ export default function TermsPage() {
                         Telling the school without undue delay if its data is exposed.
                     </li>
                     <li>
-                        Targeting <Placeholder>UPTIME COMMITMENT</Placeholder>{' '}
-                        availability, excluding announced maintenance.
+                        Keeping the service available, and giving notice of planned
+                        maintenance. We do not publish an availability figure, because
+                        we do not yet measure one, and a number we cannot stand behind
+                        is worth nothing to a school. Where a school needs a
+                        contractual target, it is agreed in that school&apos;s written
+                        agreement with us.
                     </li>
                 </ul>
             </Section>
@@ -102,35 +106,35 @@ export default function TermsPage() {
                 <p>
                     A <strong>complete</strong> export — the roll, guardians, the fee
                     ledger and payroll history together — is produced by us on request,
-                    in a machine-readable format, within{' '}
-                    <Placeholder>EXPORT TURNAROUND</Placeholder> of asking. It is not
-                    yet a button in the application, and we would rather say so than
-                    imply one exists. The right to ask does not depend on why the school
-                    is asking, and applies while the subscription is live and for{' '}
-                    <Placeholder>EXPORT WINDOW AFTER TERMINATION</Placeholder> after it
-                    ends.
+                    in a machine-readable format. It is not yet a button in the
+                    application, and we would rather say so than imply one exists. The
+                    right to ask does not depend on why the school is asking, and
+                    applies while the subscription is live and for a period after it
+                    ends. The turnaround and that period are set out in the
+                    school&apos;s written agreement with us.
                 </p>
                 <p>
-                    After that window the data is deleted from live systems, and from
-                    backups within{' '}
-                    <Placeholder>BACKUP RETENTION PERIOD</Placeholder>.
+                    After that period the data is deleted from live systems. It may
+                    persist in backups for a time after that; the school&apos;s written
+                    agreement with us sets out how long.
                 </p>
             </Section>
 
             <Section title="Fees">
                 <p>
-                    Charges, billing period and notice of price changes:{' '}
-                    <Placeholder>COMMERCIAL TERMS</Placeholder>. Unpaid fees may lead to
-                    suspension after notice; suspension does not delete data.
+                    Charges, billing period and notice of price changes are set out in
+                    the school&apos;s written agreement with us, not here. Unpaid fees
+                    may lead to suspension after notice; suspension does not delete
+                    data.
                 </p>
             </Section>
 
             <Section title="Ending the arrangement">
                 <p>
-                    Either side may end it with{' '}
-                    <Placeholder>NOTICE PERIOD</Placeholder> notice. We may suspend an
-                    account immediately where it is being used unlawfully or is
-                    endangering the service for others; we will say why.
+                    Either side may end it on the notice set out in the school&apos;s
+                    written agreement with us. We may suspend an account immediately
+                    where it is being used unlawfully or is endangering the service for
+                    others; we will say why.
                 </p>
             </Section>
 
@@ -149,7 +153,8 @@ export default function TermsPage() {
 
             <Section title="Governing law">
                 <p>
-                    <Placeholder>GOVERNING LAW AND JURISDICTION</Placeholder>.
+                    These terms are governed by the laws of the Federal Republic of
+                    Nigeria, and the courts of Lagos State have jurisdiction.
                 </p>
             </Section>
         </LegalDocument>
