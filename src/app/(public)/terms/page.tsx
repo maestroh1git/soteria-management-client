@@ -22,7 +22,7 @@ export default function TermsPage() {
         >
             <Section title="Who these terms are between">
                 <p>
-                    Between <Placeholder>LEGAL ENTITY NAME</Placeholder> (&ldquo;we&rdquo;)
+                    Between <strong>Amaku Solutions Ltd</strong> (&ldquo;we&rdquo;)
                     and the school that has subscribed (&ldquo;the school&rdquo;).
                 </p>
                 <p>

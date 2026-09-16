@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
                     <strong>data controller</strong>.
                 </p>
                 <p>
-                    <Placeholder>LEGAL ENTITY NAME</Placeholder> provides the software
+                    <strong>Amaku Solutions Ltd</strong> provides the software
                     and stores the data on the school&apos;s behalf — the{' '}
                     <strong>data processor</strong>. We do not decide what is collected.
                     We do not sell it, use it for advertising, or use it to train
@@ -40,9 +40,9 @@ export default function PrivacyPolicyPage() {
                     <em>What we can see across schools</em> below.
                 </p>
                 <p>
-                    Registered address: <Placeholder>REGISTERED ADDRESS</Placeholder>.
+                    Registered address: <Placeholder>FULL STREET ADDRESS, Lagos, Nigeria</Placeholder>.
                     Data protection contact:{' '}
-                    <Placeholder>DPO EMAIL ADDRESS</Placeholder>.
+                    <strong>Hello@amakusolutions.com</strong>.
                 </p>
             </Section>
 
@@ -257,7 +257,7 @@ export default function PrivacyPolicyPage() {
                 <p>
                     Ask your child&apos;s school first — they decide what is held. If
                     they cannot resolve it, contact us at{' '}
-                    <Placeholder>DPO EMAIL ADDRESS</Placeholder>. You may also complain
+                    <strong>Hello@amakusolutions.com</strong>. You may also complain
                     to the Nigeria Data Protection Commission.
                 </p>
             </Section>
