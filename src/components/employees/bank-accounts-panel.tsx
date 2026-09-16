@@ -39,7 +39,12 @@ interface Props {
     canEdit: boolean;
 }
 
-const EMPTY = { bankName: '', accountNumber: '', accountName: '' };
+const EMPTY = {
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
+    branchCode: '',
+};
 
 /**
  * Bank accounts for one employee.
@@ -81,7 +86,12 @@ export function BankAccountsPanel({ employeeId, employeeName, canEdit }: Props) 
         // never leave the server, so a correction means typing them again in
         // full — which for the field that decides where money lands is the
         // better behaviour anyway: no editing a digit of something half-read.
-        setForm({ bankName: account.bankName, accountNumber: '', accountName: '' });
+        setForm({
+            bankName: account.bankName,
+            accountNumber: '',
+            accountName: '',
+            branchCode: account.branchCode ?? '',
+        });
         setOpen(true);
     };
 
@@ -94,6 +104,9 @@ export function BankAccountsPanel({ employeeId, employeeName, canEdit }: Props) 
             bankName: form.bankName,
             accountNumber: form.accountNumber.trim(),
             accountName: form.accountName.trim(),
+            // Optional, and most Nigerian banks do not use one — but the API has
+            // accepted it since bank details were written and no form offered it.
+            branchCode: form.branchCode.trim() || undefined,
         };
         if (editing) {
             await update.mutateAsync({ id: editing.id, employeeId, dto });
@@ -246,6 +259,19 @@ export function BankAccountsPanel({ employeeId, employeeName, canEdit }: Props) 
                                 onChange={(e) =>
                                     setForm({ ...form, accountName: e.target.value })
                                 }
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="employees-bank-accounts-panel-branch-code">
+                                Branch code (optional)
+                            </Label>
+                            <Input
+                                id="employees-bank-accounts-panel-branch-code"
+                                value={form.branchCode}
+                                onChange={(e) =>
+                                    setForm({ ...form, branchCode: e.target.value })
+                                }
+                                placeholder="Leave blank unless your bank requires one"
                             />
                         </div>
                     </div>
