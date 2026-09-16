@@ -29,6 +29,7 @@ import {
   DoorOpen,
   CalendarRange,
   AlertTriangle,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { routeRolesFor } from "@/lib/auth/route-roles";
@@ -129,6 +130,12 @@ export const navigation: NavGroup[] = [
         title: "Follow Up",
         href: "/attendance/at-risk",
         icon: AlertTriangle,
+        orgTypes: ["SCHOOL"],
+      },
+      {
+        title: "Awards",
+        href: "/awards",
+        icon: Trophy,
         orgTypes: ["SCHOOL"],
       },
       {

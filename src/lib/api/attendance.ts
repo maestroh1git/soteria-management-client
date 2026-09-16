@@ -360,6 +360,58 @@ export interface StudentAward {
     visibleToParent: boolean;
 }
 
+export type AwardCategory =
+    | 'ACADEMIC'
+    | 'SPORT'
+    | 'CHARACTER'
+    | 'ATTENDANCE'
+    | 'ARTS'
+    | 'LEADERSHIP'
+    | 'GENERAL';
+
+export const AWARD_CATEGORY_LABELS: Record<AwardCategory, string> = {
+    ACADEMIC: 'Academic',
+    SPORT: 'Sport',
+    CHARACTER: 'Character',
+    ATTENDANCE: 'Attendance',
+    ARTS: 'Arts',
+    LEADERSHIP: 'Leadership',
+    GENERAL: 'General',
+};
+
+/** One row of the school-wide list: the award, the pupil and who gave it. */
+export interface AwardFeedRow {
+    id: string;
+    title: string;
+    description: string | null;
+    category: AwardCategory;
+    awardedOn: string;
+    visibleToParent: boolean;
+    studentId: string;
+    pupilName: string;
+    admissionNumber: string;
+    className: string | null;
+    awardedByName: string | null;
+}
+
+export async function getAwardFeed(params: {
+    termId?: string;
+    classArmId?: string;
+    category?: AwardCategory;
+    awardedBy?: string;
+    page?: number;
+    limit?: number;
+}): Promise<Paginated<AwardFeedRow>> {
+    return (await api.get('/awards', { params })) as unknown as Paginated<AwardFeedRow>;
+}
+
+export async function deleteAward(
+    studentId: string,
+    awardId: string,
+): Promise<void> {
+    await api.delete(`/students/${studentId}/awards/${awardId}`);
+}
+
 export async function getAwards(studentId: string): Promise<StudentAward[]> {
     return (await api.get(
         `/students/${studentId}/awards`,
