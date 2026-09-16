@@ -26,6 +26,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StudentAwards } from '@/components/attendance/student-awards';
+import { useCurrentSession, useTerms } from '@/lib/hooks/use-academics';
 import {
     Select,
     SelectContent,
@@ -66,6 +68,11 @@ export default function StudentDetailPage({
     const { data: student, isLoading } = useStudent(id);
     const { data: guardians = [] } = useStudentGuardians(id);
     const { data: medical } = useStudentMedical(id);
+    // So an award lands in a term rather than nowhere. termId is nullable and
+    // nothing had ever set it.
+    const { data: session } = useCurrentSession();
+    const { data: terms = [] } = useTerms(session?.id);
+    const currentTerm = terms.find((t) => t.isCurrent) ?? terms[0];
     const save = useUpsertStudentMedical(id);
 
     const [form, setForm] = useState<Record<string, string>>({});
@@ -150,6 +157,7 @@ export default function StudentDetailPage({
                         Guardians{guardians.length ? ` (${guardians.length})` : ''}
                     </TabsTrigger>
                     <TabsTrigger value="medical">Medical</TabsTrigger>
+                    <TabsTrigger value="awards">Awards</TabsTrigger>
                     <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
 
@@ -429,6 +437,22 @@ export default function StudentDetailPage({
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+            
+                <TabsContent value="awards" className="space-y-4">
+            
+                    <StudentAwards
+            
+                        studentId={student.id}
+            
+                        pupilName={`${student.lastName}, ${student.firstName}`}
+            
+                        termId={currentTerm?.id}
+            
+                    />
+            
+                </TabsContent>
+
             
                 <TabsContent value="documents" className="space-y-4">
                     <Card>

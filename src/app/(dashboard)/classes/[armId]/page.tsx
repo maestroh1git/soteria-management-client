@@ -1,8 +1,14 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Users, Eye } from 'lucide-react';
+import {
+    ArrowLeft,
+    AlertTriangle,
+    Users,
+    Eye,
+    Award as AwardIcon,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +22,13 @@ import {
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { useStudents, useMedicalAlerts } from '@/lib/hooks/use-students';
-import { useClassArms, useArmOccupancy } from '@/lib/hooks/use-academics';
+import {
+    useClassArms,
+    useArmOccupancy,
+    useCurrentSession,
+    useTerms,
+} from '@/lib/hooks/use-academics';
+import { AwardDialog } from '@/components/attendance/award-dialog';
 import { formatDate } from '@/lib/utils/dates';
 
 const SICKLE = ['SS', 'SC'];
@@ -47,6 +59,13 @@ export default function ClassRegisterPage({
     const students = armPage?.items ?? [];
     const { data: alerts = [] } = useMedicalAlerts(armId);
     const { data: occupancy } = useArmOccupancy(armId);
+    const { data: session } = useCurrentSession();
+    const { data: terms = [] } = useTerms(session?.id);
+    const currentTerm = terms.find((t) => t.isCurrent) ?? terms[0];
+    const [recognising, setRecognising] = useState<{
+        id: string;
+        name: string;
+    } | null>(null);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
 
@@ -185,6 +204,28 @@ export default function ClassRegisterPage({
                                                     {formatDate(s.dateOfBirth)}
                                                 </td>
                                                 <td className="px-3 py-2 text-right">
+                                                    {/*
+                                                        The in-the-moment path. An
+                                                        educator noticing something is
+                                                        already looking at this roster;
+                                                        making them go to Students,
+                                                        search, open a pupil and find a
+                                                        tab is how a recognition feature
+                                                        ends up unused.
+                                                    */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        aria-label={`Recognise ${s.firstName} ${s.lastName}`}
+                                                        onClick={() =>
+                                                            setRecognising({
+                                                                id: s.id,
+                                                                name: `${s.lastName}, ${s.firstName}`,
+                                                            })
+                                                        }
+                                                    >
+                                                        <AwardIcon className="h-4 w-4" />
+                                                    </Button>
                                                     <Link href={`/students/${s.id}`}>
                                                         <Button variant="ghost" size="sm">
                                                             <Eye className="h-4 w-4" />
@@ -200,6 +241,14 @@ export default function ClassRegisterPage({
                     )}
                 </CardContent>
             </Card>
+
+            <AwardDialog
+                open={!!recognising}
+                onOpenChange={(o) => !o && setRecognising(null)}
+                studentId={recognising?.id ?? ''}
+                pupilName={recognising?.name ?? ''}
+                termId={currentTerm?.id}
+            />
         </div>
     );
 }

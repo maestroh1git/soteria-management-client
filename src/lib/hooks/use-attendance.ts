@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
     createAward,
+    deleteAward,
+    getAwardFeed,
     generateCalendar,
     getAtRisk,
     getAwards,
@@ -209,6 +211,25 @@ export function useCreateAward(studentId: string) {
         onSuccess: () => {
             toast.success('Award recorded');
             qc.invalidateQueries({ queryKey: ['attendance', 'awards', studentId] });
+        },
+    });
+}
+
+/** Awards across the school — prize-giving, and whether recognition lands evenly. */
+export function useAwardFeed(params: Parameters<typeof getAwardFeed>[0]) {
+    return useQuery({
+        queryKey: ['attendance', 'award-feed', params],
+        queryFn: () => getAwardFeed(params),
+    });
+}
+
+export function useDeleteAward(studentId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (awardId: string) => deleteAward(studentId, awardId),
+        onSuccess: () => {
+            toast.success('Award withdrawn');
+            qc.invalidateQueries({ queryKey: ['attendance'] });
         },
     });
 }

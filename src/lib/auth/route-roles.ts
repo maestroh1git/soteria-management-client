@@ -78,6 +78,7 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
     "academic.teacher",
   ],
   "/tax-rules": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
+  "/awards": ["tenant_owner", "ADMIN", "academic.teacher", "VIEWER"],
   "/attendance/at-risk": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
   "/attendance/calendar": ["tenant_owner", "ADMIN"],
   "/attendance/gate": ["tenant_owner", "ADMIN", "academic.attendance_officer"],
