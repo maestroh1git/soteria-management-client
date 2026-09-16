@@ -53,7 +53,7 @@ export default function AwardsPage() {
     const [category, setCategory] = useState<string>(ANY);
     const [page, setPage] = useState(1);
 
-    const { data, isLoading } = useAwardFeed({
+    const { data, isLoading, isError } = useAwardFeed({
         termId: termId === ANY ? undefined : termId,
         classArmId: classArmId === ANY ? undefined : classArmId,
         category: category === ANY ? undefined : (category as AwardCategory),
@@ -131,6 +131,16 @@ export default function AwardsPage() {
                 <div className="flex justify-center py-16">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
+            ) : isError ? (
+                /*
+                    "Nothing recorded yet" on a failed request is a lie: it says
+                    nothing exists when we could not ask. A signed-out session
+                    renders exactly that, which is how this was found.
+                */
+                <EmptyState
+                    title="We couldn't load the awards"
+                    description="Please try again in a moment. If it keeps happening, you may have been signed out."
+                />
             ) : !data || data.items.length === 0 ? (
                 <EmptyState
                     title="Nothing recorded yet"

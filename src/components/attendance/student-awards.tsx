@@ -27,7 +27,7 @@ export function StudentAwards({
     pupilName: string;
     termId?: string | null;
 }) {
-    const { data: awards = [], isLoading } = useAwards(studentId);
+    const { data: awards = [], isLoading, isError } = useAwards(studentId);
     const remove = useDeleteAward(studentId);
     const [adding, setAdding] = useState(false);
     const [removing, setRemoving] = useState<{ id: string; title: string } | null>(
@@ -57,7 +57,12 @@ export function StudentAwards({
                 </Button>
             </div>
 
-            {awards.length === 0 ? (
+            {isError ? (
+                <EmptyState
+                    title="We couldn't load this pupil's awards"
+                    description="Please try again in a moment."
+                />
+            ) : awards.length === 0 ? (
                 <EmptyState
                     title="No awards yet"
                     description="Anything the school recognises — a prize, a commendation, an act worth remembering."
