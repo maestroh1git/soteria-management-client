@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // Auth pages. Unauthenticated users may reach them, and authenticated users
 // are redirected AWAY from them — you do not log in twice.
-const publicRoutes = ['/login', '/register', '/forgot-password'];
+const publicRoutes = ["/login", "/register", "/forgot-password"];
 
 /**
  * Auth pages that name a DIFFERENT account than whoever is signed in.
@@ -18,7 +18,9 @@ const publicRoutes = ['/login', '/register', '/forgot-password'];
  * So these stay reachable while signed in, and the pages themselves end the old
  * session on arrival.
  */
-const identityRoutes = ['/accept-invite', '/reset-password'];
+import { routeRolesFor } from '@/lib/auth/route-roles';
+
+const identityRoutes = ["/accept-invite", "/reset-password"];
 
 /**
  * Routes open to anyone, matched by prefix.
@@ -33,49 +35,25 @@ const identityRoutes = ['/accept-invite', '/reset-password'];
  * send every parent to a login page they can never pass.
  */
 const openRoutes = [
-  '/apply',
-  '/application',
-  '/invoice',
+  "/apply",
+  "/application",
+  "/invoice",
   // Policies have to be readable by somebody who has no account and is deciding
   // whether to trust the school with their child's records. Bouncing them to a
   // login is the opposite of the point.
-  '/privacy',
-  '/terms',
+  "/privacy",
+  "/terms",
 ];
 
 const isOpenRoute = (pathname: string) =>
   openRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + '/'),
+    (route) => pathname === route || pathname.startsWith(route + "/"),
   );
 
 // Route-to-roles map for authorization
-// undefined means accessible to all authenticated users
-const routeRoleMap: Record<string, string[] | undefined> = {
-  '/': undefined,
-  '/admin': ['super_admin'],
-  '/portal': ['PARENT'],
-  '/employees': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'VIEWER'],
-  '/roles': ['tenant_owner', 'ADMIN'],
-  '/departments': ['tenant_owner', 'ADMIN'],
-  '/events': ['tenant_owner', 'ADMIN'],
-  // Attendance. The gate and the calendar are narrower than the register: the
-  // register is the form teacher's daily job, the gate releases children to
-  // adults, and the calendar is the denominator of every rate the school quotes.
-  '/attendance': ['tenant_owner', 'ADMIN', 'academic.attendance_officer', 'academic.teacher'],
-  '/attendance/gate': ['tenant_owner', 'ADMIN', 'academic.attendance_officer'],
-  '/attendance/calendar': ['tenant_owner', 'ADMIN'],
-  '/attendance/at-risk': ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'],
-  '/payroll': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'],
-  '/salary-components': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'],
-  '/loans': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER', 'FINANCE_ADMIN', 'APPROVER'],
-  '/tax-rules': ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN'],
-  '/payslips': ['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER'],
-  '/reports': ['tenant_owner', 'ADMIN', 'FINANCE_ADMIN', 'VIEWER'],
-  '/settings': ['tenant_owner', 'ADMIN'],
-};
 
 function getUserRoles(request: NextRequest): string[] | null {
-  const cookie = request.cookies.get('user-roles')?.value;
+  const cookie = request.cookies.get("user-roles")?.value;
   if (!cookie) return null;
   try {
     return JSON.parse(decodeURIComponent(cookie)) as string[];
@@ -85,46 +63,30 @@ function getUserRoles(request: NextRequest): string[] | null {
 }
 
 const isParentRole = (roles: string[] | null) =>
-  roles?.includes('PARENT') ?? false;
-
-function getRouteKey(pathname: string): string | null {
-  // Exact match first
-  if (routeRoleMap[pathname] !== undefined || pathname in routeRoleMap) {
-    return pathname;
-  }
-  // Prefix match for nested routes (e.g., /employees/123). Longest match wins:
-  // with both '/attendance' and '/attendance/gate' in the map, first-match
-  // order would hand a nested gate route the broader register roles.
-  let best: string | null = null;
-  for (const route of Object.keys(routeRoleMap)) {
-    if (route === '/' || !pathname.startsWith(route + '/')) continue;
-    if (!best || route.length > best.length) best = route;
-  }
-  return best;
-}
+  roles?.includes("PARENT") ?? false;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for static files, API routes, _next
   if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('.')
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
 
   // Check for auth token in cookie
-  const token = request.cookies.get('auth-token')?.value;
+  const token = request.cookies.get("auth-token")?.value;
   const isIdentityRoute = identityRoutes.includes(pathname);
   const isPublicRoute = publicRoutes.includes(pathname) || isIdentityRoute;
-  const isChangePasswordRoute = pathname === '/change-password';
+  const isChangePasswordRoute = pathname === "/change-password";
   const mustChangePassword =
-    request.cookies.get('must-change-password')?.value === 'true';
+    request.cookies.get("must-change-password")?.value === "true";
   const userRoles = getUserRoles(request);
-  const isSuperAdmin = userRoles?.includes('super_admin') ?? false;
-  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isSuperAdmin = userRoles?.includes("super_admin") ?? false;
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
   // Open to everyone, logged in or not, and never redirected either way.
   if (isOpenRoute(pathname)) {
@@ -133,33 +95,43 @@ export function middleware(request: NextRequest) {
 
   // Unauthenticated user trying to access protected route
   if (!token && !isPublicRoute && !isChangePasswordRoute) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Authenticated user with must-change-password flag
   if (token && mustChangePassword && !isChangePasswordRoute && !isPublicRoute) {
-    return NextResponse.redirect(new URL('/change-password', request.url));
+    return NextResponse.redirect(new URL("/change-password", request.url));
   }
 
   // Authenticated user trying to access auth pages (except change-password) →
   // send platform operators to the console, tenant users to the dashboard.
   if (token && isPublicRoute && !isIdentityRoute) {
     if (mustChangePassword) {
-      return NextResponse.redirect(new URL('/change-password', request.url));
+      return NextResponse.redirect(new URL("/change-password", request.url));
     }
     return NextResponse.redirect(
-      new URL(isSuperAdmin ? '/admin' : isParentRole(userRoles) ? '/portal' : '/', request.url),
+      new URL(
+        isSuperAdmin ? "/admin" : isParentRole(userRoles) ? "/portal" : "/",
+        request.url,
+      ),
     );
   }
 
   // A parent has no school to administer. Keep them inside /portal rather than
   // letting them land on a dashboard whose every link is forbidden to them.
-  const isParent = userRoles?.includes('PARENT') ?? false;
-  const isPortalRoute = pathname === '/portal' || pathname.startsWith('/portal/');
-  if (token && isParent && !isPortalRoute && !isChangePasswordRoute && !isIdentityRoute) {
-    return NextResponse.redirect(new URL('/portal', request.url));
+  const isParent = userRoles?.includes("PARENT") ?? false;
+  const isPortalRoute =
+    pathname === "/portal" || pathname.startsWith("/portal/");
+  if (
+    token &&
+    isParent &&
+    !isPortalRoute &&
+    !isChangePasswordRoute &&
+    !isIdentityRoute
+  ) {
+    return NextResponse.redirect(new URL("/portal", request.url));
   }
 
   // Platform operators have no tenant context — keep them inside /admin so they
@@ -171,23 +143,18 @@ export function middleware(request: NextRequest) {
     !isChangePasswordRoute &&
     !isIdentityRoute
   ) {
-    return NextResponse.redirect(new URL('/admin', request.url));
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   // Route-level role guard
   if (token && !isPublicRoute && !isChangePasswordRoute) {
-    const routeKey = getRouteKey(pathname);
-    if (routeKey !== null) {
-      const allowedRoles = routeRoleMap[routeKey];
-      if (allowedRoles && userRoles) {
-        const hasAccess = allowedRoles.some((role) =>
-          userRoles.includes(role),
-        );
-        if (!hasAccess) {
-          const url = new URL('/', request.url);
-          url.searchParams.set('unauthorized', 'true');
-          return NextResponse.redirect(url);
-        }
+    const { roles: allowedRoles } = routeRolesFor(pathname);
+    if (allowedRoles && userRoles) {
+      const hasAccess = allowedRoles.some((role) => userRoles.includes(role));
+      if (!hasAccess) {
+        const url = new URL("/", request.url);
+        url.searchParams.set("unauthorized", "true");
+        return NextResponse.redirect(url);
       }
     }
   }
@@ -203,6 +170,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

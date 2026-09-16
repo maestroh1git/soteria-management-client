@@ -255,6 +255,9 @@ function RoleFormDialog({
         queryKey: ['permissions'],
         queryFn: getPermissions,
     });
+    // For the reporting line. A role cannot report to itself.
+    const { data: allRoles = [] } = useQuery({ queryKey: ['roles'], queryFn: getRoles });
+    const reportingOptions = allRoles.filter((r) => r.id !== role?.id);
 
     const form = useForm<CreateRoleValues>({
         resolver: zodResolver(createRoleSchema) as Resolver<CreateRoleValues>,
@@ -264,6 +267,9 @@ function RoleFormDialog({
                 description: role.description ?? '',
                 departmentId: role.departmentId ?? '',
                 roleType: role.roleType as RoleType,
+                baseSalaryRange: role.baseSalaryRange ?? undefined,
+                reportingTo: role.reportingTo ?? '',
+                isDottedLine: role.isDottedLine ?? false,
                 permissionIds: role.permissions?.map((p) => p.id) ?? [],
             }
             : {
@@ -271,6 +277,9 @@ function RoleFormDialog({
                 description: '',
                 departmentId: '',
                 roleType: RoleType.FULL_TIME,
+                baseSalaryRange: undefined,
+                reportingTo: '',
+                isDottedLine: false,
                 permissionIds: [],
             },
     });
@@ -363,6 +372,110 @@ function RoleFormDialog({
                                 )}
                             />
                         </div>
+
+                        {/*
+                            Salary band and reporting line. The API has accepted
+                            all three of these since the role module was written
+                            and nothing drew them, so an org chart the product
+                            supported could not be entered.
+                        */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="baseSalaryRange.min"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Salary band from (optional)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                placeholder="0"
+                                                {...field}
+                                                value={field.value ?? ''}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="baseSalaryRange.max"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>to</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                placeholder="0"
+                                                {...field}
+                                                value={field.value ?? ''}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="reportingTo"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Reports to (optional)</FormLabel>
+                                    <Select
+                                        onValueChange={(v) =>
+                                            field.onChange(v === 'none' ? '' : v)
+                                        }
+                                        value={field.value || 'none'}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Nobody" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="none">Nobody</SelectItem>
+                                            {reportingOptions.map((r) => (
+                                                <SelectItem key={r.id} value={r.id}>
+                                                    {r.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {form.watch('reportingTo') ? (
+                            <FormField
+                                control={form.control}
+                                name="isDottedLine"
+                                render={({ field }) => (
+                                    <FormItem className="flex items-start gap-2 space-y-0">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={!!field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <div>
+                                            <FormLabel className="font-normal">
+                                                Dotted line
+                                            </FormLabel>
+                                            <p className="text-xs text-muted-foreground">
+                                                An advisory reporting line rather than a
+                                                direct one.
+                                            </p>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        ) : null}
 
                         {/* Permissions */}
                         <FormField

@@ -271,8 +271,17 @@ export interface Role {
   departmentId: string | null;
   department?: Department;
   roleType: RoleType;
-  minSalary: number | null;
-  maxSalary: number | null;
+  /**
+   * The salary band, as the API actually stores it: a `base_salary_range` jsonb
+   * column. This type previously declared flat `minSalary` / `maxSalary`
+   * fields, which no endpoint has ever returned and nothing read — phantom
+   * properties that would have silently been `undefined` for anyone who used
+   * them.
+   */
+  baseSalaryRange: { min: number; max: number } | null;
+  /** The role this one reports to, and whether that line is advisory. */
+  reportingTo: string | null;
+  isDottedLine: boolean;
   permissions?: Permission[];
   createdAt: string;
   updatedAt: string;
