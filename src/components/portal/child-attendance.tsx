@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, Loader2, Phone } from 'lucide-react';
+import { Award, Loader2, Phone, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/empty-state';
 import { TermStrip } from '@/components/attendance/term-strip';
@@ -86,6 +86,15 @@ export function ChildAttendance({
                     <p className="text-balance text-xl font-semibold leading-snug">
                         {data.sentence}
                     </p>
+                    {data.formTeacher && (
+                        <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <UserRound className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                            <span>
+                                {data.className ? `${data.className} · ` : ''}
+                                taken by <strong className="font-medium text-foreground">{data.formTeacher}</strong>
+                            </span>
+                        </p>
+                    )}
                     <p className="mt-2 text-sm tabular-nums text-muted-foreground">
                         {data.attendanceRate}% attendance ·{' '}
                         {data.unauthorisedAbsences === 0

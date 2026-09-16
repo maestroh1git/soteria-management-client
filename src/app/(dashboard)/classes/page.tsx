@@ -16,6 +16,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { useEmployees } from '@/lib/hooks/use-employees';
 import {
     Dialog,
     DialogContent,
@@ -27,6 +28,8 @@ import {
 import {
     Select,
     SelectContent,
+    SelectGroup,
+    SelectLabel,
     SelectItem,
     SelectTrigger,
     SelectValue,
@@ -104,7 +107,40 @@ function ClassesPageInner() {
     const [editingArm, setEditingArm] = useState<ClassArm | null>(null);
 
     const [level, setLevel] = useState({ name: '', code: '', sortOrder: '' });
-    const [arm, setArm] = useState({ levelId: '', name: '', capacity: '' });
+    const [arm, setArm] = useState({
+        levelId: '',
+        name: '',
+        capacity: '',
+        formTeacherId: '',
+    });
+
+    // Only serving staff can hold a class. A former teacher left on an arm is
+    // how a register ends up with nobody able to take it.
+    const { data: staff = [] } = useEmployees({ status: 'ACTIVE' });
+
+    /*
+     * Not every employee is an educator, and a picker that offers the bursar
+     * beside the Head Teacher makes the school do the sorting.
+     *
+     * The school already says who teaches, in its own words: the Academics
+     * department holds Educator, Teaching Assistant, Unit Lead and Head
+     * Teacher, while Bursar and Administrative Officer sit elsewhere. Reading
+     * the department beats matching on role names — the names are the school's
+     * to rename, and the first school to use this asked for "Educator" rather
+     * than "Teacher".
+     *
+     * Everyone else is still listed, under their own heading. A school that
+     * structures its departments differently, or wants the librarian to hold a
+     * register, is not locked out by our guess about their org chart.
+     */
+    const isEducator = (e: (typeof staff)[number]) =>
+        e.role?.department?.name?.toLowerCase() === 'academics';
+    const educators = staff.filter(isEducator);
+    const others = staff.filter((e) => !isEducator(e));
+    const teacherName = (id: string) => {
+        const e = staff.find((x) => x.id === id);
+        return e ? `${e.firstName} ${e.lastName}` : null;
+    };
     const [session, setSession] = useState({
         name: '',
         startDate: '',
@@ -153,7 +189,7 @@ function ClassesPageInner() {
     };
     const openAddArm = () => {
         setEditingArm(null);
-        setArm({ levelId: '', name: '', capacity: '' });
+        setArm({ levelId: '', name: '', capacity: '', formTeacherId: '' });
         setArmOpen(true);
     };
     const openEditArm = (a: ClassArm) => {
@@ -162,6 +198,7 @@ function ClassesPageInner() {
             levelId: a.levelId,
             name: a.name,
             capacity: a.capacity != null ? String(a.capacity) : '',
+            formTeacherId: a.formTeacherId ?? '',
         });
         setArmOpen(true);
     };
@@ -269,6 +306,22 @@ function ClassesPageInner() {
                                                                     · {a.capacity} seats
                                                                 </span>
                                                             )}
+                                                            {/* A class with nobody on it is a register
+                                                                nobody can take, so say so here rather
+                                                                than leaving it to be discovered. */}
+                                                            <span
+                                                                className={
+                                                                    a.formTeacherId
+                                                                        ? 'text-muted-foreground'
+                                                                        : 'text-amber-600 dark:text-amber-400'
+                                                                }
+                                                            >
+                                                                ·{' '}
+                                                                {a.formTeacherId
+                                                                    ? (teacherName(a.formTeacherId) ??
+                                                                      'form teacher set')
+                                                                    : 'no form teacher'}
+                                                            </span>
                                                             <ArrowRight className="h-3 w-3" />
                                                         </Button>
                                                     </Link>
@@ -578,6 +631,53 @@ function ClassesPageInner() {
                                 Enrolment refuses a full class unless you say otherwise.
                             </p>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="classes-page-form-teacher">
+                                Form teacher (optional)
+                            </Label>
+                            <Select
+                                value={arm.formTeacherId || 'none'}
+                                onValueChange={(v) =>
+                                    setArm({
+                                        ...arm,
+                                        formTeacherId: v === 'none' ? '' : v,
+                                    })
+                                }
+                            >
+                                <SelectTrigger id="classes-page-form-teacher">
+                                    <SelectValue placeholder="Nobody yet" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Nobody yet</SelectItem>
+                                    {educators.length > 0 && (
+                                        <SelectGroup>
+                                            <SelectLabel>Academics</SelectLabel>
+                                            {educators.map((e) => (
+                                                <SelectItem key={e.id} value={e.id}>
+                                                    {e.firstName} {e.lastName}
+                                                    {e.role?.name ? ` — ${e.role.name}` : ''}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    )}
+                                    {others.length > 0 && (
+                                        <SelectGroup>
+                                            <SelectLabel>Other staff</SelectLabel>
+                                            {others.map((e) => (
+                                                <SelectItem key={e.id} value={e.id}>
+                                                    {e.firstName} {e.lastName}
+                                                    {e.role?.name ? ` — ${e.role.name}` : ''}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                Whoever takes this class&apos;s register. They see it on
+                                My Classes when they sign in, and only they can mark it.
+                            </p>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button
@@ -600,19 +700,32 @@ function ClassesPageInner() {
                                 const capacity = arm.capacity
                                     ? Number(arm.capacity)
                                     : undefined;
+                                // '' clears it server-side; undefined would leave
+                                // whoever is on the arm already.
+                                const formTeacherId = arm.formTeacherId || '';
                                 if (editingArm) {
                                     await updateArm.mutateAsync({
                                         id: editingArm.id,
-                                        dto: { name: arm.name.trim(), capacity },
+                                        dto: {
+                                            name: arm.name.trim(),
+                                            capacity,
+                                            formTeacherId,
+                                        },
                                     });
                                 } else {
                                     await createArm.mutateAsync({
                                         levelId: arm.levelId,
                                         name: arm.name.trim(),
                                         capacity,
+                                        formTeacherId: formTeacherId || undefined,
                                     });
                                 }
-                                setArm({ levelId: '', name: '', capacity: '' });
+                                setArm({
+                                    levelId: '',
+                                    name: '',
+                                    capacity: '',
+                                    formTeacherId: '',
+                                });
                                 setArmOpen(false);
                                 setEditingArm(null);
                             }}

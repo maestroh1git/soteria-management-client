@@ -82,6 +82,11 @@ export default function PortalHomePage() {
                                                         ? ` · ${child.className}`
                                                         : ''}
                                                 </p>
+                                                {child.formTeacher && (
+                                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                                        Taken by {child.formTeacher}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 {settled ? (

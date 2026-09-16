@@ -5,6 +5,8 @@ export interface PortalChild {
     name: string;
     admissionNumber: string;
     className: string | null;
+    /** Who takes this child's class. Null where the school has not said. */
+    formTeacher: string | null;
     status: string;
     /** Owed across every issued invoice. A string, like every amount. */
     outstanding: string;
@@ -55,6 +57,8 @@ export interface ParentAttendance {
     studentId: string;
     termId: string;
     termName: string;
+    formTeacher: string | null;
+    className: string | null;
     teachingDays: number;
     inSchool: number;
     sentence: string;
