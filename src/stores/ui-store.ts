@@ -37,6 +37,10 @@ export const useUIStore = create<UIState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         theme: state.theme,
       }),
+      // Same reason as the auth store: a collapsed rail read from localStorage
+      // during import renders `w-[68px]` against the server's `w-64`, and the
+      // group labels disappear. See the note there; `StoreHydration` replays it.
+      skipHydration: true,
     },
   ),
 );

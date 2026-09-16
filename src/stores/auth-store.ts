@@ -108,6 +108,20 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      /**
+       * The server has no localStorage, so it renders the signed-out defaults.
+       * Left to itself `persist` reads localStorage while the store module is
+       * first imported — i.e. BEFORE React hydrates — so the client's first
+       * render already knows the user and the server's does not. The sidebar
+       * renders thirty-five nav links against the server's two, and React throws
+       * away the whole server tree (minified error #418).
+       *
+       * So: do not touch storage during import. `StoreHydration` replays it in
+       * an effect, once the first render has matched the server. Storage always
+       * mirrors state — `persist` writes on every `set`, `setState` included —
+       * so replaying it later can never resurrect a session someone just ended.
+       */
+      skipHydration: true,
     },
   ),
 );
