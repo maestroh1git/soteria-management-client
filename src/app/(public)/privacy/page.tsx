@@ -125,7 +125,7 @@ export default function PrivacyPolicyPage() {
                 <ul>
                     <li>
                         <strong>Staff at your child&apos;s school</strong>, according to
-                        their role. A teacher does not see payroll; a payroll officer
+                        their role. An educator does not see payroll; a payroll officer
                         does not see medical records.
                     </li>
                     <li>

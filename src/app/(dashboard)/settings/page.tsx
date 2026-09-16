@@ -127,7 +127,32 @@ const ROLE_LABELS: Record<string, string> = {
     [SystemRole.APPROVER]: 'Approver',
     [SystemRole.VIEWER]: 'Viewer',
     [SystemRole.EMPLOYEE]: 'Employee',
+    // Namespaced roles. Every one of these was missing, so they rendered raw —
+    // a user's role read "academic.teacher" — and, worse, none of them appeared
+    // in ASSIGNABLE_ROLES, so no school could actually grant one. The register
+    // and the gate were unreachable by anyone but an owner or an admin.
+    //
+    // "Educator" rather than "Teacher": that is the word this product uses, and
+    // the word the first school asked for. The stored value stays
+    // `academic.teacher` — it lives in users.system_roles rows and renaming it
+    // is a data migration, not a label change.
+    [SystemRole.ACADEMIC_TEACHER]: 'Educator',
+    [SystemRole.ATTENDANCE_OFFICER]: 'Attendance Officer',
+    [SystemRole.ADMISSIONS_REGISTRAR]: 'Admissions Registrar',
+    [SystemRole.ADMISSIONS_OFFICER]: 'Admissions Officer',
+    // Shown, never offered: a parent login is created through the guardian
+    // invite, which links a guardian record. Granting it to a staff account
+    // would make a portal account with no children behind it.
+    [SystemRole.PARENT]: 'Parent',
 };
+
+/** Roles that only mean something in a school. */
+const SCHOOL_ROLES = [
+    SystemRole.ACADEMIC_TEACHER,
+    SystemRole.ATTENDANCE_OFFICER,
+    SystemRole.ADMISSIONS_REGISTRAR,
+    SystemRole.ADMISSIONS_OFFICER,
+];
 
 const ASSIGNABLE_ROLES = [
     SystemRole.ADMIN,
@@ -139,7 +164,7 @@ const ASSIGNABLE_ROLES = [
 ];
 
 export default function SettingsPage() {
-    const { hasRole } = useAuth();
+    const { hasRole, tenantOrgType } = useAuth();
     const canManageTeam = hasRole(['tenant_owner', 'ADMIN']);
     const isTenantOwner = hasRole(['tenant_owner']);
 
@@ -363,9 +388,14 @@ export default function SettingsPage() {
         updateTenantMutation.mutate(payload);
     });
 
+    // A hospital has no educators, so the school roles only appear for a school.
+    const assignable =
+        tenantOrgType === 'SCHOOL'
+            ? [...ASSIGNABLE_ROLES, ...SCHOOL_ROLES]
+            : ASSIGNABLE_ROLES;
     const allRolesForAssignment = isTenantOwner
-        ? [SystemRole.TENANT_OWNER, ...ASSIGNABLE_ROLES]
-        : ASSIGNABLE_ROLES;
+        ? [SystemRole.TENANT_OWNER, ...assignable]
+        : assignable;
 
     return (
         <div className="space-y-6">

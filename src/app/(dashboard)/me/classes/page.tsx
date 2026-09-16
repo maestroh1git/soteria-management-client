@@ -31,8 +31,8 @@ export default function MyClassesPage() {
     if (classes.length === 0) {
         return (
             <EmptyState
-                title="You are not the form teacher of a class"
-                description="If that looks wrong, ask the school office to set you as the form teacher on your class."
+                title="You are not the educator for a class"
+                description="If that looks wrong, ask the school office to set you as the educator on your class."
             />
         );
     }

@@ -143,4 +143,15 @@ export enum SystemRole {
   APPROVER = 'APPROVER',
   VIEWER = 'VIEWER',
   EMPLOYEE = 'EMPLOYEE',
+  PARENT = 'PARENT',
+
+  // The namespaced roles the API has had since Phase 3. They were absent here,
+  // which is why no school could grant one: settings builds its picker from
+  // this enum, so a role missing here is a role that does not exist as far as
+  // anyone using the product is concerned. Values must match
+  // `SystemRole` in the API exactly — RolesGuard compares case-sensitively.
+  ADMISSIONS_REGISTRAR = 'admissions.registrar',
+  ADMISSIONS_OFFICER = 'admissions.officer',
+  ACADEMIC_TEACHER = 'academic.teacher',
+  ATTENDANCE_OFFICER = 'academic.attendance_officer',
 }

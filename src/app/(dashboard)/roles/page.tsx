@@ -293,7 +293,7 @@ function RoleFormDialog({
                                 <FormItem>
                                     <FormLabel>Name *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Senior Teacher" {...field} />
+                                        <Input placeholder="e.g. Senior Educator" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
