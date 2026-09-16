@@ -319,8 +319,8 @@ function ClassesPageInner() {
                                                                 ·{' '}
                                                                 {a.formTeacherId
                                                                     ? (teacherName(a.formTeacherId) ??
-                                                                      'form teacher set')
-                                                                    : 'no form teacher'}
+                                                                      'educator set')
+                                                                    : 'no educator'}
                                                             </span>
                                                             <ArrowRight className="h-3 w-3" />
                                                         </Button>
@@ -633,7 +633,7 @@ function ClassesPageInner() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="classes-page-form-teacher">
-                                Form teacher (optional)
+                                Educator (optional)
                             </Label>
                             <Select
                                 value={arm.formTeacherId || 'none'}

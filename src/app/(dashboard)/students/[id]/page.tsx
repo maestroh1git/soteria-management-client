@@ -363,7 +363,7 @@ export default function StudentDetailPage({
 
                                     <Editable
                                         label="Allergies"
-                                        hint="What happens, and what to do. A teacher reads this, not a query."
+                                        hint="What happens, and what to do. An educator reads this, not a query."
                                         value={value('allergies')}
                                         onChange={(v) => set('allergies', v)}
                                     />
