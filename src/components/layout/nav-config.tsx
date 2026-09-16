@@ -70,7 +70,14 @@ export const navigation: NavGroup[] = [
             // A form teacher's landing page. Beside My Pay rather than in the
             // admin sidebar: before this, a teacher signing in got the payroll
             // dashboard, which is nobody's idea of a teacher's home page.
-            { title: 'My Classes', href: '/me/classes', icon: School, orgTypes: ['SCHOOL'], roles: ['tenant_owner', 'ADMIN', 'academic.teacher'] },
+            //
+            // Deliberately ungated, like the rest of this group. Being an
+            // Educator is a job role on the employee record and does not grant
+            // the `academic.teacher` system role, so gating on that hid a
+            // teacher's own class from them until somebody remembered a second,
+            // invisible step. The page resolves from the account and says
+            // plainly when you are not a form teacher.
+            { title: 'My Classes', href: '/me/classes', icon: School, orgTypes: ['SCHOOL'] },
             { title: 'My Pay', href: '/me', icon: Wallet },
             { title: 'My Leave', href: '/me/leave', icon: CalendarDays },
             { title: 'My Profile', href: '/me/profile', icon: UserCircle },
