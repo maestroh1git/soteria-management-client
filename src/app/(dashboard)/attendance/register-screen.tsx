@@ -309,20 +309,26 @@ export function RegisterScreen({
                         draft.status === 'ABSENT' || draft.status === 'EXCUSED';
                     return (
                         <li key={p.studentId} className="px-3 py-2.5">
-                            <div className="flex items-center gap-3">
-                                <span
-                                    aria-hidden="true"
-                                    className="grid h-9 w-9 flex-none place-items-center rounded-lg border bg-muted text-xs font-semibold text-muted-foreground"
-                                >
-                                    {p.lastName.slice(0, 2).toUpperCase()}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-medium">
-                                        {p.lastName}, {p.firstName}
-                                    </p>
-                                    <p className="truncate text-xs tabular-nums text-muted-foreground">
-                                        {p.admissionNumber}
-                                    </p>
+                            {/* Stacked on a phone. Side by side, a four-way
+                                control leaves the name about 90px, and
+                                "Nwachuk…" is not a pupil a teacher can tell
+                                apart from another Nwachukwu. */}
+                            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                    <span
+                                        aria-hidden="true"
+                                        className="grid h-9 w-9 flex-none place-items-center rounded-lg border bg-muted text-xs font-semibold text-muted-foreground"
+                                    >
+                                        {p.lastName.slice(0, 2).toUpperCase()}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium">
+                                            {p.lastName}, {p.firstName}
+                                        </p>
+                                        <p className="truncate text-xs tabular-nums text-muted-foreground">
+                                            {p.admissionNumber}
+                                        </p>
+                                    </div>
                                 </div>
                                 <AttendanceStatusControl
                                     pupilName={`${p.lastName}, ${p.firstName}`}
