@@ -130,6 +130,13 @@ export function MonthGrid({
                                 onKeyDown={(e) => onKeyDown(e, d.calendarDate)}
                                 className={cn(
                                     'relative flex h-10 items-center justify-center rounded-md text-sm tabular-nums transition-colors',
+                                    /* Arrowing upwards focuses a cell above the
+                                       viewport, and the browser scrolls it flush
+                                       to the top of the scrollport — which is
+                                       exactly where the sticky term bar is
+                                       painted. Without this the focused day, and
+                                       its ring, end up behind it. */
+                                    'scroll-mt-24',
                                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                                     DAY_CELL[d.dayType],
                                     isToday && 'font-bold underline underline-offset-4',

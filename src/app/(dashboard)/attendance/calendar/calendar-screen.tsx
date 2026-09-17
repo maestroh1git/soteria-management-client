@@ -28,7 +28,7 @@ import {
     useSetCalendarDays,
 } from '@/lib/hooks/use-attendance';
 import { DAY_TYPE_LABELS, type DayType } from '@/lib/api/attendance';
-import { shiftDate } from '@/lib/utils/dates';
+import { shiftDate, toInputDate } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils';
 import { DAY_CELL, MonthGrid } from './month-grid';
 
@@ -37,7 +37,11 @@ const DAY_TYPES = Object.keys(DAY_TYPE_LABELS) as DayType[];
 /** Today, or null on the server. A session does not outlive a date change
  *  often enough to subscribe to one. */
 const NEVER_CHANGES = () => () => {};
-const todaySnapshot = () => new Date().toISOString().slice(0, 10);
+/* `toInputDate` formats in LOCAL time. `toISOString().slice(0, 10)` is the UTC
+   date, which in WAT is yesterday until 01:00 — the underline would sit on the
+   wrong day, and on nothing at all for the day that is actually today. A
+   calendarDate is the school's local date, so today has to be read the same way. */
+const todaySnapshot = () => toInputDate(new Date());
 
 /** Arrow keys move a week or a day, the way a calendar reads. */
 const ARROW_STEP: Record<string, number> = {
@@ -123,10 +127,22 @@ export function CalendarScreen({
         [selected, byDate],
     );
 
+    /*
+     * The selection as it stood when the anchor was last set.
+     *
+     * A shift-click REPLACES the anchor's run rather than adding to it, so
+     * overshooting to the 28th and shift-clicking back to the 25th gives you
+     * 21–25, not 21–28 with three days you thought you had dropped still ringed
+     * and about to be marked. Rebuilding from this base is what makes the range
+     * shrink; unioning into the live selection only ever grows it.
+     */
+    const base = useRef<Set<string>>(new Set());
+
     const clear = useCallback(() => {
         setSelected(new Set());
         setAnchor(null);
         setNote('');
+        base.current = new Set();
     }, []);
 
     useEffect(() => {
@@ -135,23 +151,25 @@ export function CalendarScreen({
 
     const pick = useCallback(
         (date: string, extend: boolean) => {
-            setSelected((prev) => {
-                const next = new Set(prev);
-                const from = extend && anchor ? order.indexOf(anchor) : -1;
-                const to = order.indexOf(date);
-                if (from >= 0 && to >= 0) {
-                    const [lo, hi] = from < to ? [from, to] : [to, from];
-                    for (let i = lo; i <= hi; i++) next.add(order[i]);
-                    return next;
-                }
+            const from = extend && anchor ? order.indexOf(anchor) : -1;
+            const to = order.indexOf(date);
+            if (from >= 0 && to >= 0) {
+                const next = new Set(base.current);
+                const [lo, hi] = from < to ? [from, to] : [to, from];
+                for (let i = lo; i <= hi; i++) next.add(order[i]);
+                setSelected(next);
+            } else {
+                const next = new Set(selected);
                 if (next.has(date)) next.delete(date);
                 else next.add(date);
-                return next;
-            });
+                // A plain click is the new anchor, so it is also the new base.
+                base.current = next;
+                setSelected(next);
+            }
             if (!extend) setAnchor(date);
             setFocusDate(date);
         },
-        [anchor, order],
+        [anchor, order, selected],
     );
 
     const onCellKeyDown = useCallback(

@@ -22,6 +22,7 @@ import {
     type SubmitResult,
 } from '../api/attendance';
 import { shiftDate } from '../utils/dates';
+import { getApiErrorMessage } from '../utils/api-error';
 
 /**
  * The register is the one query in this app that must never serve a stale
@@ -180,8 +181,18 @@ export function useSetCalendarDays() {
         }) => {
             let updated = 0;
             for (const [from, to] of contiguousRuns(dates)) {
-                const r = await setCalendarRange({ termId, from, to, dayType, note });
-                updated += r.updated;
+                try {
+                    const r = await setCalendarRange({ termId, from, to, dayType, note });
+                    updated += r.updated;
+                } catch (e) {
+                    // Every run before this one is already written. Carry the
+                    // count out with the error so the toast can say what landed
+                    // instead of implying nothing did.
+                    if (e && typeof e === 'object') {
+                        (e as { partialUpdated?: number }).partialUpdated = updated;
+                    }
+                    throw e;
+                }
             }
             return { updated };
         },
@@ -189,6 +200,20 @@ export function useSetCalendarDays() {
             toast.success(
                 r.updated === 1 ? '1 day updated' : `${r.updated} days updated`,
             );
+        },
+        onError: (e) => {
+            const done = (e as { partialUpdated?: number }).partialUpdated ?? 0;
+            const why = getApiErrorMessage(e, 'Those days could not be updated.');
+            toast.error(
+                done > 0
+                    ? `${done === 1 ? '1 day was' : `${done} days were`} updated before this failed: ${why}`
+                    : why,
+            );
+        },
+        // Both paths. A run that landed before the failure has changed the
+        // calendar, and leaving the grid painting the old kinds is how a school
+        // ends up taking a register on a day it thinks is still teaching.
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ['attendance'] });
         },
     });
