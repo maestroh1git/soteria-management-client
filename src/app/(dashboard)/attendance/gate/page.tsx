@@ -258,7 +258,7 @@ export default function GatePage() {
                 <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     Today&apos;s movements
                 </h2>
-                {departuresFailed || departures.length === 0 ? (
+                {departures.length === 0 ? (
                     <EmptyState
                         isError={departuresFailed}
                         subject="today’s movements"

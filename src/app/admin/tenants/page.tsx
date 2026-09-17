@@ -128,7 +128,7 @@ export default function AdminTenantsPage() {
             ))}
           </tbody>
         </table>
-        {(isError || filtered.length === 0) && (
+        {filtered.length === 0 && (
           <EmptyState
               isError={isError}
               subject="the tenants"

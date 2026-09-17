@@ -147,7 +147,7 @@ export default function EventsPage() {
 
             {isLoading ? (
                 <LoadingSkeleton rows={6} />
-            ) : isError || events.length === 0 ? (
+            ) : events.length === 0 ? (
                 <EmptyState
                     isError={isError}
                     subject="the events"

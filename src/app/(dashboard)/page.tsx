@@ -266,7 +266,9 @@ export default function DashboardPage() {
                 false about itself — and `hasNoData` above cannot catch it,
                 because it tests `totalEmployees === 0` on data that is
                 undefined when the request failed. */}
-            {seesPayroll && (summaryFailed || loansFailed) ? (
+            {seesPayroll &&
+            ((summaryFailed && !monthlySummary) ||
+                (loansFailed && !loanPortfolio)) ? (
                 <EmptyState
                     isError
                     subject="your payroll figures"

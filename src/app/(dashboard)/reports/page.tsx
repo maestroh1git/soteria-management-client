@@ -151,7 +151,7 @@ export default function ReportsPage() {
 
                     {summaryLoading ? (
                         <LoadingSkeleton variant="card" />
-                    ) : summaryFailed || !summary ? (
+                    ) : !summary ? (
                         <EmptyState
                             isError={summaryFailed}
                             subject="the payroll summary" title="No data" description="No payroll data for this period." />
@@ -241,7 +241,7 @@ export default function ReportsPage() {
 
                     {taxLoading ? (
                         <LoadingSkeleton variant="card" />
-                    ) : taxFailed || !taxSummary ? (
+                    ) : !taxSummary ? (
                         <EmptyState
                             isError={taxFailed}
                             subject="the tax summary" title="No data" description="No tax data for this year." />
@@ -289,7 +289,7 @@ export default function ReportsPage() {
                 <TabsContent value="loans" className="space-y-6">
                     {loanLoading ? (
                         <LoadingSkeleton variant="card" />
-                    ) : loanFailed || !loanPortfolio ? (
+                    ) : !loanPortfolio ? (
                         <EmptyState
                             isError={loanFailed}
                             subject="the loan portfolio" title="No data" description="No loan data available." />
@@ -399,7 +399,7 @@ export default function ReportsPage() {
 
                     {deptLoading ? (
                         <LoadingSkeleton rows={5} />
-                    ) : deptFailed || !deptCost?.departments.length ? (
+                    ) : !deptCost?.departments.length ? (
                         <EmptyState
                             isError={deptFailed}
                             subject="the department costs" title="No data" description="No department cost data for this period." />

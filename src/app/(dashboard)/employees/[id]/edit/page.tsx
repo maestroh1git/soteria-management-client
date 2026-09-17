@@ -23,7 +23,7 @@ export default function EditEmployeePage({
     const updateMutation = useUpdateEmployee();
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
-    if (isError || !employee)
+    if (!employee)
         return (
             <EmptyState
                 isError={isError}

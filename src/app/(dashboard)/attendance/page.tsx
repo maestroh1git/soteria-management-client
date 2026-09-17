@@ -56,7 +56,7 @@ export default function AttendancePage() {
               name: `${a.level?.name ?? ''} ${a.name}`.trim(),
           }));
 
-    if (mineFailed || armsFailed || options.length === 0) {
+    if (options.length === 0) {
         return (
             <EmptyState
                 isError={mineFailed || armsFailed}

@@ -201,7 +201,7 @@ export default function LoansPage() {
             {/* Table */}
             {isLoading ? (
                 <LoadingSkeleton rows={5} />
-            ) : isError || !allLoans.length ? (
+            ) : !allLoans.length ? (
                 <EmptyState
                     isError={isError}
                     subject="the loans"

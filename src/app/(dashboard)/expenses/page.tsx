@@ -130,7 +130,7 @@ export default function ExpensesPage() {
                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> Loading…
                 </p>
-            ) : isError || expenses.length === 0 ? (
+            ) : expenses.length === 0 ? (
                 <EmptyState
                     isError={isError}
                     subject="the expenses"

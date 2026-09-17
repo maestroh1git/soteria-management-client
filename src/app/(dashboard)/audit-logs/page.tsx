@@ -216,7 +216,7 @@ function LogTable({ filters }: { filters: AuditFilters }) {
     );
   }
 
-  if (isError || !data?.items.length) {
+  if (!data?.items.length) {
     return (
       <EmptyState
         isError={isError}

@@ -58,7 +58,7 @@ export function ChildAttendance({
         statement about the school, and saying it to a parent because our own
         request failed is a lie told to the person least able to check it.
     */
-    if (isError) {
+    if (isError && !data) {
         return (
             <EmptyState
                 isError

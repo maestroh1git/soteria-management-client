@@ -165,7 +165,7 @@ export default function ClassRegisterPage({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {isError || students.length === 0 ? (
+                    {students.length === 0 ? (
                         <EmptyState
                             isError={isError}
                             subject="this class’s roll"

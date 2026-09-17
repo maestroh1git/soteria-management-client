@@ -18,7 +18,7 @@ export default function ChildStatementPage({
     params: Promise<{ studentId: string }>;
 }) {
     const { studentId } = use(params);
-    const { data, isLoading, isError, error } = useChildStatement(studentId);
+    const { data, isLoading, error } = useChildStatement(studentId);
 
     if (isLoading) {
         return (
@@ -30,14 +30,18 @@ export default function ChildStatementPage({
 
     // A parent who edits the id in the address bar lands here. The server says
     // "no such child on your account" for somebody else's child and for one
-    // that does not exist, and so does this.
+    // that does not exist, and so does this — but only when the server actually
+    // declined. Telling a parent their child is not on their account because our
+    // request timed out reads as "the school has removed my child", to the
+    // person least able to check.
     //
-    // Only for a refusal, though. Telling a parent their child is not on their
-    // account because our request timed out reads as "the school has removed my
-    // child", to the person least able to check — so anything that is not the
-    // server declining is reported as the failure it is.
-    const refused = isApiError(error) && error.statusCode < 500;
-    if ((isError && !refused) || (!isError && !data)) {
+    // 403 and 404 are the server declining. A 401 is an expired session, and a
+    // 5xx or a dropped connection is our problem; the interceptor reports a
+    // request that never landed as 500, so this lands on the honest side by
+    // default.
+    const refused =
+        isApiError(error) && (error.statusCode === 403 || error.statusCode === 404);
+    if (!data && !refused) {
         return (
             <div className="space-y-4">
                 <BackLink />
@@ -50,7 +54,9 @@ export default function ChildStatementPage({
         );
     }
 
-    if (isError || !data) {
+    // Reached only when the server refused. Stale data from a failed refetch
+    // falls through to the statement below, which is better than either message.
+    if (!data) {
         return (
             <div className="space-y-4">
                 <BackLink />

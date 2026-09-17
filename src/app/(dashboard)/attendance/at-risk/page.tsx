@@ -77,7 +77,7 @@ export default function AtRiskPage() {
                 <div className="flex justify-center py-16">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-            ) : isError || !data || data.items.length === 0 ? (
+            ) : !data || data.items.length === 0 ? (
                 <EmptyState
                     isError={isError}
                     subject="the attendance figures"

@@ -121,7 +121,7 @@ export function StudentDocuments({
                 </div>
             )}
 
-            {isError || !documents?.length ? (
+            {!documents?.length ? (
                 <EmptyState
                     isError={isError}
                     subject="this pupil’s documents"

@@ -175,7 +175,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" /> Loading…
                     </div>
-                ) : isError || assigned.length === 0 ? (
+                ) : assigned.length === 0 ? (
                     <EmptyState
                         isError={isError}
                         subject="this employee’s salary components"

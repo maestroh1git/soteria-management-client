@@ -28,7 +28,7 @@ export default function MyClassesPage() {
 
     const classes = data?.classes ?? [];
 
-    if (isError || classes.length === 0) {
+    if (classes.length === 0) {
         return (
             <EmptyState
                 isError={isError}

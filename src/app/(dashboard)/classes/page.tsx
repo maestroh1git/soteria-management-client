@@ -255,7 +255,7 @@ function ClassesPageInner() {
 
                     {isLoading ? (
                         <p className="text-sm text-muted-foreground">Loading…</p>
-                    ) : isError || levels.length === 0 ? (
+                    ) : levels.length === 0 ? (
                         <EmptyState
                             isError={isError}
                             subject="the class levels"
@@ -369,7 +369,7 @@ function ClassesPageInner() {
                             )}
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {sessionsFailed || sessions.length === 0 ? (
+                            {sessions.length === 0 ? (
                                 <EmptyState
                                     isError={sessionsFailed}
                                     subject="the sessions"

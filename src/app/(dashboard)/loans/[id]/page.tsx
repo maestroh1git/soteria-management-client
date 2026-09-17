@@ -106,7 +106,7 @@ export default function LoanDetailPage() {
     };
 
     if (isLoading) return <LoadingSkeleton rows={6} />;
-    if (isError || !loan)
+    if (!loan)
         return (
             <EmptyState
                 isError={isError}
@@ -279,7 +279,7 @@ export default function LoanDetailPage() {
                 <TabsContent value="repayments">
                 {repaymentsLoading ? (
                     <LoadingSkeleton rows={4} />
-                ) : repaymentsFailed || !repayments?.length ? (
+                ) : !repayments?.length ? (
                     <EmptyState
                         isError={repaymentsFailed}
                         subject="the repayments"
@@ -340,7 +340,7 @@ export default function LoanDetailPage() {
                         <CardContent className="pt-6">
                             {historyLoading ? (
                                 <LoadingSkeleton rows={5} />
-                            ) : historyFailed || history.length === 0 ? (
+                            ) : history.length === 0 ? (
                                 <EmptyState
                                     isError={historyFailed}
                                     subject="this loan’s history" title="No history" description="No audit events recorded for this loan yet." />

@@ -285,7 +285,7 @@ export default function PayslipsPage() {
                     {/* Table */}
                     {isLoading ? (
                         <LoadingSkeleton rows={5} />
-                    ) : isError || !filtered.length ? (
+                    ) : !filtered.length ? (
                         <EmptyState
                             isError={isError}
                             subject="the payslips"

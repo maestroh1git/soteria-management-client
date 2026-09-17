@@ -187,7 +187,7 @@ export default function PayrollPage() {
             {/* Table */}
             {isLoading ? (
                 <LoadingSkeleton rows={5} />
-            ) : isError || !periods?.length ? (
+            ) : !periods?.length ? (
                 <EmptyState
                     isError={isError}
                     subject="the pay periods"

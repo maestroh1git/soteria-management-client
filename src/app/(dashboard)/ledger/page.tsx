@@ -133,7 +133,7 @@ export default function LedgerPage() {
                                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Loader2 className="h-4 w-4 animate-spin" /> Loading…
                                 </p>
-                            ) : isError || !trial?.rows.length ? (
+                            ) : !trial?.rows.length ? (
                                 <EmptyState
                                     isError={isError}
                                     subject="the trial balance"
@@ -197,7 +197,7 @@ export default function LedgerPage() {
                         </SelectContent>
                     </Select>
 
-                    {entriesFailed || entries.length === 0 ? (
+                    {entries.length === 0 ? (
                         <EmptyState
                             isError={entriesFailed}
                             subject="the journal entries"

@@ -242,7 +242,7 @@ export default function FeesPage() {
                         <div className="flex justify-center py-12">
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
-                    ) : isError || !priceList?.levels.length || !priceList?.items.length ? (
+                    ) : !priceList?.levels.length || !priceList?.items.length ? (
                         <EmptyState
                             isError={isError}
                             subject="the price list"
@@ -342,7 +342,7 @@ export default function FeesPage() {
                         </Button>
                     </div>
 
-                    {itemsFailed || !items?.length ? (
+                    {!items?.length ? (
                         <EmptyState
                             isError={itemsFailed}
                             subject="the fee items"

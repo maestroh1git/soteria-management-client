@@ -192,7 +192,7 @@ export default function AdmissionsPage() {
 
             {isLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
-            ) : isError || applications.length === 0 ? (
+            ) : applications.length === 0 ? (
                 <EmptyState
                     isError={isError}
                     subject="the applications"

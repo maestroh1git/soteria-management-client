@@ -68,7 +68,7 @@ export default function ArrearsPage() {
                         <div className="flex justify-center py-12">
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
-                    ) : isError || !debtors?.rows.length ? (
+                    ) : !debtors?.rows.length ? (
                         <EmptyState
                             isError={isError}
                             subject="the arrears"
@@ -233,7 +233,7 @@ export default function ArrearsPage() {
 
                 {/* ── By term ──────────────────────────────────────────── */}
                 <TabsContent value="terms" className="space-y-4 pt-4">
-                    {byTermFailed || !byTerm?.length ? (
+                    {!byTerm?.length ? (
                         <EmptyState
                             isError={byTermFailed}
                             subject="collection by term"
@@ -314,7 +314,7 @@ export default function ArrearsPage() {
 
                 {/* ── Net position ─────────────────────────────────────── */}
                 <TabsContent value="net" className="space-y-4 pt-4">
-                    {incomeFailed || !income ? (
+                    {!income ? (
                         <EmptyState
                             isError={incomeFailed}
                             subject="the net position"

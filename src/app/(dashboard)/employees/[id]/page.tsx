@@ -48,7 +48,7 @@ export default function EmployeeDetailPage({
     } = useEntityHistory('Employee', id);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
-    if (isError || !employee)
+    if (!employee)
         return (
             <EmptyState
                 isError={isError}
@@ -194,7 +194,7 @@ export default function EmployeeDetailPage({
                         <CardContent>
                             {historyLoading ? (
                                 <LoadingSkeleton rows={5} />
-                            ) : historyFailed || history.length === 0 ? (
+                            ) : history.length === 0 ? (
                                 <EmptyState
                                     isError={historyFailed}
                                     subject="this employee’s history"

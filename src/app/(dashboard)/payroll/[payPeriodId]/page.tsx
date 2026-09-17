@@ -259,7 +259,7 @@ export default function PayrollWorkspacePage() {
     };
 
     if (periodLoading) return <LoadingSkeleton rows={6} />;
-    if (periodFailed || !period)
+    if (!period)
         return (
             <EmptyState
                 isError={periodFailed}
@@ -454,7 +454,7 @@ export default function PayrollWorkspacePage() {
             {/* Salaries Table */}
             {salariesLoading ? (
                 <LoadingSkeleton rows={5} />
-            ) : salariesFailed || !salaries.length ? (
+            ) : !salaries.length ? (
                 <EmptyState
                     isError={salariesFailed}
                     subject="the salaries"

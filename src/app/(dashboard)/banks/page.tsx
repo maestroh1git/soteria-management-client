@@ -113,7 +113,7 @@ export default function BanksPage() {
             {/* List */}
             {isLoading ? (
                 <LoadingSkeleton rows={6} />
-            ) : isError || filtered.length === 0 ? (
+            ) : filtered.length === 0 ? (
                 <EmptyState
                     isError={isError}
                     subject="the bank list"

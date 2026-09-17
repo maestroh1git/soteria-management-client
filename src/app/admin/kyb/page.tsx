@@ -43,7 +43,7 @@ export default function KybQueuePage() {
         </p>
       </div>
 
-      {isError || queue.length === 0 ? (
+      {queue.length === 0 ? (
         <EmptyState
             isError={isError}
             subject="the review queue"
