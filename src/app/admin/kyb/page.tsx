@@ -15,7 +15,7 @@ import type { Tenant } from '@/lib/types/api';
 import { formatDate } from '@/lib/utils/dates';
 
 export default function KybQueuePage() {
-  const { data: tenants = [], isLoading } = useTenants();
+  const { data: tenants = [], isLoading, isError } = useTenants();
   const kybMutation = useUpdateKybStatus();
   const [pending, setPending] = useState<{
     tenant: Tenant;
@@ -43,8 +43,10 @@ export default function KybQueuePage() {
         </p>
       </div>
 
-      {queue.length === 0 ? (
+      {isError || queue.length === 0 ? (
         <EmptyState
+            isError={isError}
+            subject="the review queue"
           icon={ClipboardCheck}
           title="Queue is clear"
           description="No tenants are currently awaiting KYB review."

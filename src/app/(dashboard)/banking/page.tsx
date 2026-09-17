@@ -21,7 +21,7 @@ const money = (v: string) => {
  * Bank statements, and how far through reconciling each one is.
  */
 export default function BankingPage() {
-    const { data: statements, isLoading } = useStatements();
+    const { data: statements, isLoading, isError } = useStatements();
     const [importOpen, setImportOpen] = useState(false);
 
     return (
@@ -45,8 +45,10 @@ export default function BankingPage() {
                 <div className="flex justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-            ) : !statements?.length ? (
+            ) : isError || !statements?.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the statements"
                     title="No statements yet"
                     description="Paste a month of bank lines and the system will tell you where the books and the bank disagree."
                 />

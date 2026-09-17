@@ -64,7 +64,7 @@ export default function GatePage() {
     const { data: students } = useStudents({ search: search || undefined, limit: 10 });
     const { data: collectors = [], isLoading: loadingCollectors } =
         useCollectors(studentId ?? undefined);
-    const { data: departures = [] } = useDepartures();
+    const { data: departures = [], isError: departuresFailed } = useDepartures();
     const record = useRecordDeparture();
     const recordBack = useRecordReturn();
 
@@ -258,8 +258,10 @@ export default function GatePage() {
                 <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     Today&apos;s movements
                 </h2>
-                {departures.length === 0 ? (
+                {departuresFailed || departures.length === 0 ? (
                     <EmptyState
+                        isError={departuresFailed}
+                        subject="today’s movements"
                         title="Nobody has left today"
                         description="Sign-outs and returns appear here as they happen."
                     />

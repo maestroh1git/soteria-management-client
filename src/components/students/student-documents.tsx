@@ -51,7 +51,7 @@ export function StudentDocuments({
     studentId: string;
     canEdit: boolean;
 }) {
-    const { data: documents, isLoading } = useStudentDocuments(studentId);
+    const { data: documents, isLoading, isError } = useStudentDocuments(studentId);
     const attach = useAttachStudentDocument(studentId);
     const remove = useRemoveStudentDocument(studentId);
     const fileInput = useRef<HTMLInputElement>(null);
@@ -121,8 +121,10 @@ export function StudentDocuments({
                 </div>
             )}
 
-            {!documents?.length ? (
+            {isError || !documents?.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="this pupil’s documents"
                     title="No documents"
                     description="Birth certificate, immunisation record, previous school report."
                 />

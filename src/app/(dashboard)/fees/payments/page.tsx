@@ -61,7 +61,7 @@ const METHODS = [
  */
 export default function PaymentsPage() {
     const [recordOpen, setRecordOpen] = useState(false);
-    const { data: payments, isLoading } = usePayments();
+    const { data: payments, isLoading, isError } = usePayments();
     const voidPayment = useVoidPayment();
     const [voidTarget, setVoidTarget] = useState<string | null>(null);
     const [voidReason, setVoidReason] = useState('');
@@ -85,8 +85,10 @@ export default function PaymentsPage() {
                 <div className="flex justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-            ) : !payments?.length ? (
+            ) : isError || !payments?.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the receipts"
                     title="No receipts yet"
                     description="Record a payment when money arrives — cash at the gate, or a transfer off the statement."
                 />

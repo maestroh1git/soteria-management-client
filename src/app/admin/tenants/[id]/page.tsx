@@ -41,6 +41,8 @@ export default function TenantDetailPage({
   if (isError || !tenant) {
     return (
       <EmptyState
+          isError={isError}
+          subject="this tenant"
         icon={ShieldX}
         title="Tenant not found"
         description="This tenant may have been removed, or you don't have access."

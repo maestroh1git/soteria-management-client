@@ -198,7 +198,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
 // ── Log table ─────────────────────────────────────────────────────────────────
 
 function LogTable({ filters }: { filters: AuditFilters }) {
-  const { data, isLoading } = useAuditLogs(filters);
+  const { data, isLoading, isError } = useAuditLogs(filters);
 
   if (isLoading) {
     return (
@@ -216,9 +216,11 @@ function LogTable({ filters }: { filters: AuditFilters }) {
     );
   }
 
-  if (!data?.items.length) {
+  if (isError || !data?.items.length) {
     return (
       <EmptyState
+        isError={isError}
+        subject="the audit log"
         title="No audit logs found"
         description="Try adjusting your filters or date range."
         icon={Search}

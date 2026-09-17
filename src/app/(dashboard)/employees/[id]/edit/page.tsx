@@ -19,11 +19,18 @@ export default function EditEmployeePage({
 }) {
     const { id } = use(params);
     const router = useRouter();
-    const { data: employee, isLoading } = useEmployee(id);
+    const { data: employee, isLoading, isError } = useEmployee(id);
     const updateMutation = useUpdateEmployee();
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
-    if (!employee) return <EmptyState title="Employee not found" />;
+    if (isError || !employee)
+        return (
+            <EmptyState
+                isError={isError}
+                subject="this employee"
+                title="Employee not found"
+            />
+        );
 
     const initialValues: Partial<CreateEmployeeValues> = {
         employeeNumber: employee.employeeNumber,

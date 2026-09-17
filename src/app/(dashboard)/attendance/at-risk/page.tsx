@@ -31,7 +31,7 @@ export default function AtRiskPage() {
     const [threshold, setThreshold] = useState(85);
     const activeTerm = termId ?? terms.find((t) => t.isCurrent)?.id ?? terms[0]?.id;
 
-    const { data, isLoading } = useAtRisk({ termId: activeTerm, threshold });
+    const { data, isLoading, isError } = useAtRisk({ termId: activeTerm, threshold });
 
     return (
         <div className="space-y-6">
@@ -77,8 +77,10 @@ export default function AtRiskPage() {
                 <div className="flex justify-center py-16">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-            ) : !data || data.items.length === 0 ? (
+            ) : isError || !data || data.items.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the attendance figures"
                     title="Nobody is below this threshold"
                     description="Every pupil with a register this term is attending above the level you set."
                 />

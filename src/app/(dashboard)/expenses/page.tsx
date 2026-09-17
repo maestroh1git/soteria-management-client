@@ -88,7 +88,7 @@ export default function ExpensesPage() {
     const [raising, setRaising] = useState(false);
     const [paying, setPaying] = useState<Expense | null>(null);
 
-    const { data: expenses = [], isLoading } = useExpenses(status);
+    const { data: expenses = [], isLoading, isError } = useExpenses(status);
     const { data: accounts = [] } = useAccounts();
 
     const expenseAccounts = accounts.filter((a) => a.type === 'EXPENSE');
@@ -130,8 +130,10 @@ export default function ExpensesPage() {
                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> Loading…
                 </p>
-            ) : expenses.length === 0 ? (
+            ) : isError || expenses.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the expenses"
                     title="No expenses"
                     description="Raise one when the school spends money on something other than salaries."
                 />

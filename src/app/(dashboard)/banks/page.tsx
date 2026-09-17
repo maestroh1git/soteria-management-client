@@ -32,7 +32,7 @@ export default function BanksPage() {
     const { hasRole } = useAuth();
     const canManage = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
 
-    const { data: banks = [], isLoading } = useBanks();
+    const { data: banks = [], isLoading, isError } = useBanks();
     const create = useCreateBank();
     const update = useUpdateBank();
     const remove = useDeleteBank();
@@ -113,8 +113,10 @@ export default function BanksPage() {
             {/* List */}
             {isLoading ? (
                 <LoadingSkeleton rows={6} />
-            ) : filtered.length === 0 ? (
+            ) : isError || filtered.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the bank list"
                     title="No banks match"
                     description="Try a different name or NIBSS code."
                 />

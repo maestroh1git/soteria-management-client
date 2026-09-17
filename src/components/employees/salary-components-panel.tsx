@@ -70,7 +70,11 @@ function isPercentage(calc?: CalculationType) {
  * was paid.
  */
 export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
-    const { data: assigned = [], isLoading } = useEmployeeSalaryComponents(
+    const {
+        data: assigned = [],
+        isLoading,
+        isError,
+    } = useEmployeeSalaryComponents(
         employeeId,
         false,
         true,
@@ -171,8 +175,10 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" /> Loading…
                     </div>
-                ) : assigned.length === 0 ? (
+                ) : isError || assigned.length === 0 ? (
                     <EmptyState
+                        isError={isError}
+                        subject="this employee’s salary components"
                         title="No salary components"
                         description="No salary components have been assigned yet."
                     />

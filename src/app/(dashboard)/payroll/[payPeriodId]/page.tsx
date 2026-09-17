@@ -92,8 +92,16 @@ export default function PayrollWorkspacePage() {
     const filters: SalaryFilters = { payPeriodId, status: statusFilter, page, limit: 20 };
 
     // Queries
-    const { data: period, isLoading: periodLoading } = usePayPeriod(payPeriodId);
-    const { data: salariesResponse, isLoading: salariesLoading } = useSalaries(filters);
+    const {
+        data: period,
+        isLoading: periodLoading,
+        isError: periodFailed,
+    } = usePayPeriod(payPeriodId);
+    const {
+        data: salariesResponse,
+        isLoading: salariesLoading,
+        isError: salariesFailed,
+    } = useSalaries(filters);
     // Period-wide status breakdown — the summary tiles below are computed from
     // this, not from the paginated page, so they are correct past 20 employees.
     const { data: statusSummary } = useSalaryStatusSummary(payPeriodId);
@@ -251,7 +259,15 @@ export default function PayrollWorkspacePage() {
     };
 
     if (periodLoading) return <LoadingSkeleton rows={6} />;
-    if (!period) return <EmptyState title="Pay period not found" description="The requested pay period does not exist." />;
+    if (periodFailed || !period)
+        return (
+            <EmptyState
+                isError={periodFailed}
+                subject="this pay period"
+                title="Pay period not found"
+                description="The requested pay period does not exist."
+            />
+        );
 
     return (
         <div className="space-y-6">
@@ -438,8 +454,10 @@ export default function PayrollWorkspacePage() {
             {/* Salaries Table */}
             {salariesLoading ? (
                 <LoadingSkeleton rows={5} />
-            ) : !salaries.length ? (
+            ) : salariesFailed || !salaries.length ? (
                 <EmptyState
+                    isError={salariesFailed}
+                    subject="the salaries"
                     title="No salaries"
                     description={
                         period.status === PayPeriodStatus.OPEN

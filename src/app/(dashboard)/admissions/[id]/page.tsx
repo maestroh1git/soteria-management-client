@@ -98,7 +98,7 @@ export default function ApplicationDetailPage({
     const { hasRole } = useAuth();
     const canDecide = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
 
-    const { data: application, isLoading } = useApplication(id);
+    const { data: application, isLoading, isError } = useApplication(id);
     const transition = useTransitionApplication(id);
     const { data: arms = [] } = useClassArms();
 
@@ -110,7 +110,11 @@ export default function ApplicationDetailPage({
     const [enrolOpen, setEnrolOpen] = useState(false);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
-    if (!application) return <EmptyState title="Application not found" />;
+    if (!application) return <EmptyState
+                isError={isError}
+                subject="this application"
+                title="Application not found"
+            />;
 
     const needs = pending ? ACTION[pending]?.needs : undefined;
 

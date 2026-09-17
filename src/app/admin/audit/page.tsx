@@ -72,7 +72,7 @@ function formatTs(ts: string) {
 export default function PlatformAuditPage() {
   const [filters, setFilters] = useState<PlatformAuditFilters>(DEFAULT_FILTERS);
   const { data: tenants = [] } = useTenants();
-  const { data, isLoading } = usePlatformAuditLogs(filters);
+  const { data, isLoading, isError } = usePlatformAuditLogs(filters);
 
   const tenantName = useMemo(() => {
     const map = new Map(tenants.map((t) => [t.id, t.name]));
@@ -187,8 +187,10 @@ export default function PlatformAuditPage() {
       {/* Table */}
       {isLoading ? (
         <LoadingSkeleton variant="table" />
-      ) : !data?.items.length ? (
+      ) : isError || !data?.items.length ? (
         <EmptyState
+            isError={isError}
+            subject="the audit events"
           icon={Search}
           title="No audit events found"
           description="Try adjusting your filters or date range."

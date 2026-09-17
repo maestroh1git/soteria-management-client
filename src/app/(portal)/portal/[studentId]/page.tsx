@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChildAttendance } from '@/components/portal/child-attendance';
 import { EmptyState } from '@/components/common/empty-state';
 import { useChildStatement } from '@/lib/hooks/use-portal';
+import { isApiError } from '@/lib/utils/api-error';
 
 const money = (v: string | number) =>
     Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
@@ -17,7 +18,7 @@ export default function ChildStatementPage({
     params: Promise<{ studentId: string }>;
 }) {
     const { studentId } = use(params);
-    const { data, isLoading, isError } = useChildStatement(studentId);
+    const { data, isLoading, isError, error } = useChildStatement(studentId);
 
     if (isLoading) {
         return (
@@ -30,6 +31,25 @@ export default function ChildStatementPage({
     // A parent who edits the id in the address bar lands here. The server says
     // "no such child on your account" for somebody else's child and for one
     // that does not exist, and so does this.
+    //
+    // Only for a refusal, though. Telling a parent their child is not on their
+    // account because our request timed out reads as "the school has removed my
+    // child", to the person least able to check — so anything that is not the
+    // server declining is reported as the failure it is.
+    const refused = isApiError(error) && error.statusCode < 500;
+    if ((isError && !refused) || (!isError && !data)) {
+        return (
+            <div className="space-y-4">
+                <BackLink />
+                <EmptyState
+                    isError
+                    subject="your child's statement"
+                    title="We couldn't load that child"
+                />
+            </div>
+        );
+    }
+
     if (isError || !data) {
         return (
             <div className="space-y-4">

@@ -53,7 +53,22 @@ export function ChildAttendance({
         );
     }
 
-    if (isError || !data) {
+    /*
+        Split deliberately. "The school has not started taking a register" is a
+        statement about the school, and saying it to a parent because our own
+        request failed is a lie told to the person least able to check it.
+    */
+    if (isError) {
+        return (
+            <EmptyState
+                isError
+                subject="your child's attendance"
+                title="No attendance to show yet"
+            />
+        );
+    }
+
+    if (!data) {
         return (
             <EmptyState
                 title="No attendance to show yet"

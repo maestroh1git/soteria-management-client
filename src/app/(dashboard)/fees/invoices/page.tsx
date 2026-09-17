@@ -93,7 +93,7 @@ export default function InvoicesPage() {
 
     const { data: terms } = useTerms(sessionId);
     const [page, setPage] = useState(1);
-    const { data: invoicePage, isLoading } = useInvoices({
+    const { data: invoicePage, isLoading, isError } = useInvoices({
         termId,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
         page,
@@ -210,8 +210,10 @@ export default function InvoicesPage() {
                 <div className="flex justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-            ) : !invoices?.length ? (
+            ) : isError || !invoices?.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the invoices"
                     title="Nothing billed yet"
                     description="Run the term to create drafts. Nothing is owed until you issue them."
                 />

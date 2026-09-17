@@ -66,7 +66,7 @@ export default function LoansPage() {
     const [showLoanForm, setShowLoanForm] = useState(false);
     const [showAdvanceForm, setShowAdvanceForm] = useState(false);
 
-    const { data: loans, isLoading } = useLoans(filters);
+    const { data: loans, isLoading, isError } = useLoans(filters);
     const applyLoanMutation = useApplyForLoan();
     const applyAdvanceMutation = useApplyForAdvance();
 
@@ -201,8 +201,10 @@ export default function LoansPage() {
             {/* Table */}
             {isLoading ? (
                 <LoadingSkeleton rows={5} />
-            ) : !allLoans.length ? (
+            ) : isError || !allLoans.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the loans"
                     title="No loans"
                     description="Create a loan or salary advance to get started."
                     actionLabel="New Loan"
