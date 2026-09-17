@@ -17,6 +17,8 @@ export function isApiError(err: unknown): err is ApiError {
  *   of the raw throttler text.
  * - Validation errors (S11 password policy, etc.) surface their per-field
  *   `details` so the user sees exactly what failed.
+ * - Anything that is not an ApiError falls back to the caller's own wording,
+ *   because a raw Error's message is written for a developer, not a user.
  */
 export function getApiErrorMessage(
   err: unknown,
@@ -35,10 +37,10 @@ export function getApiErrorMessage(
     if (msg) return msg;
   }
 
-  if (err && typeof err === 'object' && 'message' in err) {
-    const msg = (err as { message: unknown }).message;
-    if (msg) return String(msg);
-  }
-
+  // Deliberately no generic `err.message` branch. Anything that did not come
+  // through the interceptor has not been written for a user to read: this
+  // branch used to forward axios's own "Request failed with status code 401"
+  // straight to the login form, pre-empting the caller's fallback. If we did
+  // not normalize it, we do not know it is fit to show.
   return fallback;
 }

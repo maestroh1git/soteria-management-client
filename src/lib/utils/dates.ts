@@ -84,3 +84,17 @@ export function formatMonthYear(month: number, year: number): string {
   const date = new Date(year, month - 1, 1);
   return format(date, 'MMMM yyyy');
 }
+
+/**
+ * Shift a calendar date by whole days.
+ *
+ * Deliberately UTC arithmetic on the string: a calendar date is a fact, not an
+ * instant, and local-time arithmetic across a DST boundary silently loses or
+ * repeats a day. Mirrors `SchoolCalendarService.eachDate` on the server.
+ * @example shiftDate('2026-09-30', 1) → "2026-10-01"
+ */
+export function shiftDate(dateStr: string, days: number): string {
+  return new Date(Date.parse(`${dateStr}T00:00:00Z`) + days * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}

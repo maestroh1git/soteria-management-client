@@ -21,6 +21,8 @@ import {
     updateSchoolDay,
     type SubmitResult,
 } from '../api/attendance';
+import { shiftDate } from '../utils/dates';
+import { getApiErrorMessage } from '../utils/api-error';
 
 /**
  * The register is the one query in this app that must never serve a stale
@@ -146,12 +148,72 @@ export function useUpdateSchoolDay() {
     });
 }
 
-export function useSetCalendarRange() {
+/**
+ * Split dates into contiguous runs, as `[from, to]` pairs.
+ *
+ * The endpoint speaks ranges; a calendar selection need not be one. A school
+ * marking every Friday of a term is one intent, not eight.
+ */
+function contiguousRuns(dates: string[]): Array<[string, string]> {
+    const runs: Array<[string, string]> = [];
+    for (const date of [...new Set(dates)].sort()) {
+        const last = runs[runs.length - 1];
+        if (last && shiftDate(last[1], 1) === date) last[1] = date;
+        else runs.push([date, date]);
+    }
+    return runs;
+}
+
+/** Apply a day type to a set of dates — one toast for the lot, not one each. */
+export function useSetCalendarDays() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: setCalendarRange,
+        mutationFn: async ({
+            termId,
+            dates,
+            dayType,
+            note,
+        }: {
+            termId: string;
+            dates: string[];
+            dayType: Parameters<typeof setCalendarRange>[0]['dayType'];
+            note?: string;
+        }) => {
+            let updated = 0;
+            for (const [from, to] of contiguousRuns(dates)) {
+                try {
+                    const r = await setCalendarRange({ termId, from, to, dayType, note });
+                    updated += r.updated;
+                } catch (e) {
+                    // Every run before this one is already written. Carry the
+                    // count out with the error so the toast can say what landed
+                    // instead of implying nothing did.
+                    if (e && typeof e === 'object') {
+                        (e as { partialUpdated?: number }).partialUpdated = updated;
+                    }
+                    throw e;
+                }
+            }
+            return { updated };
+        },
         onSuccess: (r) => {
-            toast.success(`${r.updated} days updated`);
+            toast.success(
+                r.updated === 1 ? '1 day updated' : `${r.updated} days updated`,
+            );
+        },
+        onError: (e) => {
+            const done = (e as { partialUpdated?: number }).partialUpdated ?? 0;
+            const why = getApiErrorMessage(e, 'Those days could not be updated.');
+            toast.error(
+                done > 0
+                    ? `${done === 1 ? '1 day was' : `${done} days were`} updated before this failed: ${why}`
+                    : why,
+            );
+        },
+        // Both paths. A run that landed before the failure has changed the
+        // calendar, and leaving the grid painting the old kinds is how a school
+        // ends up taking a register on a day it thinks is still teaching.
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ['attendance'] });
         },
     });
