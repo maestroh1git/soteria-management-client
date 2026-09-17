@@ -9,7 +9,7 @@ import axios from 'axios';
  * these routes use a plain axios instance. It is a small duplication that
  * keeps an unauthenticated visitor out of the authenticated app's plumbing.
  */
-const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const base = process.env.NEXT_PUBLIC_API_URL || '/api';
 const publicApi = axios.create({ baseURL: base });
 
 export interface PublicSchool {

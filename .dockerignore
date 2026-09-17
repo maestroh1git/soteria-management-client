@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.DS_Store
+*.log
+npm-debug.log*
+# Exclude local env files so the build uses the NEXT_PUBLIC_API_URL build arg,
+# not a stale localhost value baked into the client bundle.
+.env
+.env.*
+coverage
+*.md
+.cursor
+.gemini
+.claude
