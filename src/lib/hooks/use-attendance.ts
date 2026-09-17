@@ -21,6 +21,7 @@ import {
     updateSchoolDay,
     type SubmitResult,
 } from '../api/attendance';
+import { shiftDate } from '../utils/dates';
 
 /**
  * The register is the one query in this app that must never serve a stale
@@ -146,12 +147,48 @@ export function useUpdateSchoolDay() {
     });
 }
 
-export function useSetCalendarRange() {
+/**
+ * Split dates into contiguous runs, as `[from, to]` pairs.
+ *
+ * The endpoint speaks ranges; a calendar selection need not be one. A school
+ * marking every Friday of a term is one intent, not eight.
+ */
+function contiguousRuns(dates: string[]): Array<[string, string]> {
+    const runs: Array<[string, string]> = [];
+    for (const date of [...new Set(dates)].sort()) {
+        const last = runs[runs.length - 1];
+        if (last && shiftDate(last[1], 1) === date) last[1] = date;
+        else runs.push([date, date]);
+    }
+    return runs;
+}
+
+/** Apply a day type to a set of dates — one toast for the lot, not one each. */
+export function useSetCalendarDays() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: setCalendarRange,
+        mutationFn: async ({
+            termId,
+            dates,
+            dayType,
+            note,
+        }: {
+            termId: string;
+            dates: string[];
+            dayType: Parameters<typeof setCalendarRange>[0]['dayType'];
+            note?: string;
+        }) => {
+            let updated = 0;
+            for (const [from, to] of contiguousRuns(dates)) {
+                const r = await setCalendarRange({ termId, from, to, dayType, note });
+                updated += r.updated;
+            }
+            return { updated };
+        },
         onSuccess: (r) => {
-            toast.success(`${r.updated} days updated`);
+            toast.success(
+                r.updated === 1 ? '1 day updated' : `${r.updated} days updated`,
+            );
             qc.invalidateQueries({ queryKey: ['attendance'] });
         },
     });
