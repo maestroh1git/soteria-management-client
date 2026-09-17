@@ -99,7 +99,11 @@ export default function DashboardPage() {
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const { data: yearEnd, isLoading: loadingYearEnd } = useYearEndReport(currentYear, seesPayroll);
+    const {
+        data: yearEnd,
+        isLoading: loadingYearEnd,
+        isError: yearEndFailed,
+    } = useYearEndReport(currentYear, seesPayroll);
 
     /**
      * Which month this dashboard is reporting on.
@@ -129,10 +133,26 @@ export default function DashboardPage() {
             : latestMonthWithData;
     const showingEarlierMonth = displayMonth !== currentMonth;
 
-    const { data: monthlySummary, isLoading: loadingSummary } = useMonthlySummary(displayMonth, currentYear, seesPayroll);
-    const { data: loanPortfolio, isLoading: loadingLoans } = useLoanPortfolio(seesPayroll);
-    const { data: departmentCost, isLoading: loadingDept } = useDepartmentCost(displayMonth, currentYear, seesPayroll);
-    const { data: recentSalaries, isLoading: loadingRecent } = useRecentSalaries(5, seesPayroll);
+    const {
+        data: monthlySummary,
+        isLoading: loadingSummary,
+        isError: summaryFailed,
+    } = useMonthlySummary(displayMonth, currentYear, seesPayroll);
+    const {
+        data: loanPortfolio,
+        isLoading: loadingLoans,
+        isError: loansFailed,
+    } = useLoanPortfolio(seesPayroll);
+    const {
+        data: departmentCost,
+        isLoading: loadingDept,
+        isError: deptFailed,
+    } = useDepartmentCost(displayMonth, currentYear, seesPayroll);
+    const {
+        data: recentSalaries,
+        isLoading: loadingRecent,
+        isError: recentFailed,
+    } = useRecentSalaries(5, seesPayroll);
 
     const isLoading =
         seesPayroll &&
@@ -238,8 +258,24 @@ export default function DashboardPage() {
             {/* Onboarding checklist (self-hides once complete/dismissed) */}
             <GettingStartedCard />
 
-            {/* Payroll and loans — only for the roles the reports allow. */}
-            {seesPayroll && (
+            {/* Payroll and loans — only for the roles the reports allow.
+
+                When the figures cannot be fetched we say so rather than
+                printing them. `?? 0` below turns a failed request into
+                "Total Employees: 0", which is a school being told something
+                false about itself — and `hasNoData` above cannot catch it,
+                because it tests `totalEmployees === 0` on data that is
+                undefined when the request failed. */}
+            {seesPayroll &&
+            ((summaryFailed && !monthlySummary) ||
+                (loansFailed && !loanPortfolio)) ? (
+                <EmptyState
+                    isError
+                    subject="your payroll figures"
+                    icon={BarChart3}
+                    title="No approved payroll yet"
+                />
+            ) : seesPayroll ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Total Employees"
@@ -267,7 +303,7 @@ export default function DashboardPage() {
                 />
             </div>
 
-            )}
+            ) : null}
 
             {/* Today's attendance, and — louder — the registers nobody has
                 taken. Hides itself for a tenant with no classes. */}
@@ -326,7 +362,9 @@ export default function DashboardPage() {
                             </ResponsiveContainer>
                         ) : (
                             <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
-                                No payroll trend data available
+                                {yearEndFailed
+                                    ? "We couldn't load the payroll trend"
+                                    : 'No payroll trend data available'}
                             </div>
                         )}
                     </CardContent>
@@ -366,7 +404,9 @@ export default function DashboardPage() {
                             </ResponsiveContainer>
                         ) : (
                             <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
-                                No department cost data available
+                                {deptFailed
+                                    ? "We couldn't load the department costs"
+                                    : 'No department cost data available'}
                             </div>
                         )}
                     </CardContent>
@@ -440,7 +480,9 @@ export default function DashboardPage() {
                         </Table>
                     ) : (
                         <div className="text-center py-8 text-sm text-muted-foreground">
-                            No recent payroll activity
+                            {recentFailed
+                                ? "We couldn't load recent payroll activity"
+                                : 'No recent payroll activity'}
                         </div>
                     )}
                 </CardContent>

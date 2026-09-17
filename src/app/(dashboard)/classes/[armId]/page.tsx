@@ -55,7 +55,11 @@ export default function ClassRegisterPage({
     const arm = arms.find((a) => a.id === armId);
     // A class register, bounded by the size of a class. 200 is the server's
     // cap and far above any real arm.
-    const { data: armPage, isLoading } = useStudents({ classArmId: armId, limit: 200 });
+    const {
+        data: armPage,
+        isLoading,
+        isError,
+    } = useStudents({ classArmId: armId, limit: 200 });
     const students = armPage?.items ?? [];
     const { data: alerts = [] } = useMedicalAlerts(armId);
     const { data: occupancy } = useArmOccupancy(armId);
@@ -163,6 +167,8 @@ export default function ClassRegisterPage({
                 <CardContent>
                     {students.length === 0 ? (
                         <EmptyState
+                            isError={isError}
+                            subject="this class’s roll"
                             title="Nobody in this class yet"
                             description="Children are placed here when they are admitted, or by importing a roll."
                         />

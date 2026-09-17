@@ -40,7 +40,11 @@ export default function StudentsPage() {
     const [status, setStatus] = useState('all');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const { data: rollPage, isLoading } = useStudents({ status, search, page });
+    const {
+        data: rollPage,
+        isLoading,
+        isError,
+    } = useStudents({ status, search, page });
     const students = rollPage?.items ?? [];
 
     // A filter or search change with the reader on page 5 shows an empty table
@@ -168,7 +172,13 @@ export default function StudentsPage() {
                 </Select>
             </div>
 
-            <DataTable columns={columns} data={students} loading={isLoading} />
+            <DataTable
+                columns={columns}
+                data={students}
+                loading={isLoading}
+                isError={isError}
+                errorSubject="the roll"
+            />
 
             {(rollPage?.totalPages ?? 1) > 1 && (
                 <div className="flex items-center justify-between border-t pt-3 text-sm">

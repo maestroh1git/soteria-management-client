@@ -54,7 +54,7 @@ export default function PayrollPage() {
     const [filters, setFilters] = useState<PayPeriodFilters>({});
     const [showCreate, setShowCreate] = useState(false);
 
-    const { data: periods, isLoading } = usePayPeriods(filters);
+    const { data: periods, isLoading, isError } = usePayPeriods(filters);
     const { data: currentPeriod } = useCurrentPayPeriod();
     const createMutation = useCreatePayPeriod();
 
@@ -189,6 +189,8 @@ export default function PayrollPage() {
                 <LoadingSkeleton rows={5} />
             ) : !periods?.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the pay periods"
                     title="No pay periods"
                     description="Create a pay period to get started with payroll."
                     actionLabel="Create Pay Period"

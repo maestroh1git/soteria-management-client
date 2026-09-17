@@ -78,7 +78,7 @@ const EMPTY: FormState = {
 };
 
 export default function EventsPage() {
-    const { data: events = [], isLoading } = useEvents();
+    const { data: events = [], isLoading, isError } = useEvents();
     const create = useCreateEvent();
     const update = useUpdateEvent();
     const remove = useDeleteEvent();
@@ -149,6 +149,8 @@ export default function EventsPage() {
                 <LoadingSkeleton rows={6} />
             ) : events.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the events"
                     icon={CalendarDays}
                     title="No events yet"
                     description="Create a meeting, holiday, deadline or announcement for everyone to see on the dashboard."

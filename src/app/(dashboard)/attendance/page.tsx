@@ -27,8 +27,16 @@ const today = () => new Date().toISOString().slice(0, 10);
  * and the school office get the full list.
  */
 export default function AttendancePage() {
-    const { data: mine, isLoading: loadingMine } = useMyClasses();
-    const { data: arms = [], isLoading: loadingArms } = useClassArms();
+    const {
+        data: mine,
+        isLoading: loadingMine,
+        isError: mineFailed,
+    } = useMyClasses();
+    const {
+        data: arms = [],
+        isLoading: loadingArms,
+        isError: armsFailed,
+    } = useClassArms();
     const [date, setDate] = useState(today());
     const [chosen, setChosen] = useState<string | null>(null);
 
@@ -51,6 +59,8 @@ export default function AttendancePage() {
     if (options.length === 0) {
         return (
             <EmptyState
+                isError={mineFailed || armsFailed}
+                subject="your classes"
                 title="No classes to take a register for"
                 description="Create a class and enrol pupils in it first."
             />

@@ -40,11 +40,22 @@ export default function EmployeeDetailPage({
     const canManageSalary = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
     // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
     const canManageEmployee = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
-    const { data: employee, isLoading } = useEmployee(id);
-    const { data: history = [], isLoading: historyLoading } = useEntityHistory('Employee', id);
+    const { data: employee, isLoading, isError } = useEmployee(id);
+    const {
+        data: history = [],
+        isLoading: historyLoading,
+        isError: historyFailed,
+    } = useEntityHistory('Employee', id);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
-    if (!employee) return <EmptyState title="Employee not found" />;
+    if (!employee)
+        return (
+            <EmptyState
+                isError={isError}
+                subject="this employee"
+                title="Employee not found"
+            />
+        );
 
     return (
         <div className="space-y-6">
@@ -184,7 +195,12 @@ export default function EmployeeDetailPage({
                             {historyLoading ? (
                                 <LoadingSkeleton rows={5} />
                             ) : history.length === 0 ? (
-                                <EmptyState title="No history" description="No audit events recorded for this employee yet." />
+                                <EmptyState
+                                    isError={historyFailed}
+                                    subject="this employee’s history"
+                                    title="No history"
+                                    description="No audit events recorded for this employee yet."
+                                />
                             ) : (
                                 <ol className="relative border-l border-border ml-3 space-y-6">
                                     {history.map((log) => (

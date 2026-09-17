@@ -59,9 +59,17 @@ export default function LoanDetailPage() {
     const loanId = params.id as string;
     const user = useAuthStore((s) => s.user);
 
-    const { data: loan, isLoading } = useLoan(loanId);
-    const { data: repayments, isLoading: repaymentsLoading } = useLoanRepayments(loanId);
-    const { data: history = [], isLoading: historyLoading } = useEntityHistory('Loan', loanId);
+    const { data: loan, isLoading, isError } = useLoan(loanId);
+    const {
+        data: repayments,
+        isLoading: repaymentsLoading,
+        isError: repaymentsFailed,
+    } = useLoanRepayments(loanId);
+    const {
+        data: history = [],
+        isLoading: historyLoading,
+        isError: historyFailed,
+    } = useEntityHistory('Loan', loanId);
 
     const approveMutation = useApproveLoan();
     const rejectMutation = useRejectLoan();
@@ -98,7 +106,15 @@ export default function LoanDetailPage() {
     };
 
     if (isLoading) return <LoadingSkeleton rows={6} />;
-    if (!loan) return <EmptyState title="Loan not found" description="The requested loan does not exist." />;
+    if (!loan)
+        return (
+            <EmptyState
+                isError={isError}
+                subject="this loan"
+                title="Loan not found"
+                description="The requested loan does not exist."
+            />
+        );
 
     const progress = loan.amount > 0
         ? ((Number(loan.amount) - Number(loan.outstandingBalance)) / Number(loan.amount)) * 100
@@ -265,6 +281,8 @@ export default function LoanDetailPage() {
                     <LoadingSkeleton rows={4} />
                 ) : !repayments?.length ? (
                     <EmptyState
+                        isError={repaymentsFailed}
+                        subject="the repayments"
                         title="No repayments"
                         description="Repayment records will appear here once the loan is active."
                     />
@@ -323,7 +341,9 @@ export default function LoanDetailPage() {
                             {historyLoading ? (
                                 <LoadingSkeleton rows={5} />
                             ) : history.length === 0 ? (
-                                <EmptyState title="No history" description="No audit events recorded for this loan yet." />
+                                <EmptyState
+                                    isError={historyFailed}
+                                    subject="this loan’s history" title="No history" description="No audit events recorded for this loan yet." />
                             ) : (
                                 <ol className="relative border-l border-border ml-3 space-y-6">
                                     {history.map((log) => (

@@ -57,7 +57,7 @@ export default function BudgetsPage() {
     const canManage = hasRole(['tenant_owner', 'ADMIN', 'FINANCE_ADMIN']);
 
     const [creating, setCreating] = useState(false);
-    const { data: variance = [], isLoading } = useBudgetVariance();
+    const { data: variance = [], isLoading, isError } = useBudgetVariance();
     const { data: accounts = [] } = useAccounts();
     const { data: departments = [] } = useDepartmentsList();
     const remove = useDeleteBudget();
@@ -105,6 +105,8 @@ export default function BudgetsPage() {
                 </p>
             ) : variance.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the budgets"
                     title="No budgets set"
                     description="A budget is an amount for one category over a period — a session, a term, a year. Spending is counted from the ledger."
                 />

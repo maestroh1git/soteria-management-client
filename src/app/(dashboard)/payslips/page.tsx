@@ -67,7 +67,11 @@ export default function PayslipsPage() {
     const [showBulkSend, setShowBulkSend] = useState(false);
 
     const { data: periods } = usePayPeriods();
-    const { data: payslips, isLoading } = usePayslipsByPayPeriod(selectedPeriod);
+    const {
+        data: payslips,
+        isLoading,
+        isError,
+    } = usePayslipsByPayPeriod(selectedPeriod);
 
     // Land on a real pay period rather than an empty page: the most recent
     // CLOSED one (where payslips actually exist), falling back to the most
@@ -283,6 +287,8 @@ export default function PayslipsPage() {
                         <LoadingSkeleton rows={5} />
                     ) : !filtered.length ? (
                         <EmptyState
+                            isError={isError}
+                            subject="the payslips"
                             title="No payslips"
                             description="Generate payslips for this pay period to see them here."
                             actionLabel="Generate All"

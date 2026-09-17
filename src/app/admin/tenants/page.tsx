@@ -24,7 +24,7 @@ type StatusFilter = 'all' | 'active' | 'suspended';
 type KybFilter = 'all' | KybStatus;
 
 export default function AdminTenantsPage() {
-  const { data: tenants = [], isLoading } = useTenants();
+  const { data: tenants = [], isLoading, isError } = useTenants();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [kyb, setKyb] = useState<KybFilter>('all');
@@ -130,6 +130,8 @@ export default function AdminTenantsPage() {
         </table>
         {filtered.length === 0 && (
           <EmptyState
+              isError={isError}
+              subject="the tenants"
             icon={Building2}
             title="No tenants match"
             description="Try adjusting your search or filters."

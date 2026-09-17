@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type LucideIcon, FileX } from 'lucide-react';
+import { type LucideIcon, AlertTriangle, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
@@ -11,6 +11,21 @@ interface EmptyStateProps {
     actionLabel?: string;
     onAction?: () => void;
     className?: string;
+    /**
+     * The request failed. Render that instead of the emptiness.
+     *
+     * A list that could not be fetched is not an empty list. "No invoices yet"
+     * on a failed request tells a school something false about its own books,
+     * and a signed-out session renders exactly that on every page at once —
+     * which is how this was first found, on the awards feed.
+     */
+    isError?: boolean;
+    /**
+     * What could not be loaded, for the error wording: `subject="the invoices"`
+     * reads as "We couldn't load the invoices". Worth setting where a page
+     * shows several lists and "this" would not say which.
+     */
+    subject?: string;
 }
 
 export function EmptyState({
@@ -20,7 +35,19 @@ export function EmptyState({
     actionLabel,
     onAction,
     className,
+    isError,
+    subject,
 }: EmptyStateProps) {
+    if (isError) {
+        Icon = AlertTriangle;
+        title = `We couldn't load ${subject ?? 'this'}`;
+        description =
+            'Please try again in a moment. If it keeps happening, you may have been signed out.';
+        // Deliberately no action. "Add the first one" is advice we cannot give
+        // when we do not know whether there is a first one.
+        actionLabel = undefined;
+    }
+
     return (
         <div
             className={cn(

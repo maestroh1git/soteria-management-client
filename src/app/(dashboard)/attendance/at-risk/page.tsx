@@ -31,7 +31,7 @@ export default function AtRiskPage() {
     const [threshold, setThreshold] = useState(85);
     const activeTerm = termId ?? terms.find((t) => t.isCurrent)?.id ?? terms[0]?.id;
 
-    const { data, isLoading } = useAtRisk({ termId: activeTerm, threshold });
+    const { data, isLoading, isError } = useAtRisk({ termId: activeTerm, threshold });
 
     return (
         <div className="space-y-6">
@@ -79,6 +79,8 @@ export default function AtRiskPage() {
                 </div>
             ) : !data || data.items.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the attendance figures"
                     title="Nobody is below this threshold"
                     description="Every pupil with a register this term is attending above the level you set."
                 />

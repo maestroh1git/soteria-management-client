@@ -80,9 +80,9 @@ function ClassesPageInner() {
     const tab = searchParams.get('tab') === 'session' ? 'session' : 'classes';
     const setTab = (v: string) => router.replace(`/classes?tab=${v}`);
 
-    const { data: levels = [], isLoading } = useClassLevels();
+    const { data: levels = [], isLoading, isError } = useClassLevels();
     const { data: arms = [] } = useClassArms();
-    const { data: sessions = [] } = useSessions();
+    const { data: sessions = [], isError: sessionsFailed } = useSessions();
     const current = sessions.find((s) => s.isCurrent);
     const { data: terms = [] } = useTerms(current?.id);
 
@@ -257,6 +257,8 @@ function ClassesPageInner() {
                         <p className="text-sm text-muted-foreground">Loading…</p>
                     ) : levels.length === 0 ? (
                         <EmptyState
+                            isError={isError}
+                            subject="the class levels"
                             title="No levels yet"
                             description="A level is a rung on the ladder — Primary 1, JSS1. Classes sit on a level, and children sit in a class."
                         />
@@ -369,6 +371,8 @@ function ClassesPageInner() {
                         <CardContent className="space-y-3">
                             {sessions.length === 0 ? (
                                 <EmptyState
+                                    isError={sessionsFailed}
+                                    subject="the sessions"
                                     title="No session"
                                     description="Applications cannot be taken until a session is current."
                                 />

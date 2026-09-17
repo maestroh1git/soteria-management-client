@@ -92,7 +92,7 @@ function FeedRow({ item }: { item: FeedItem }) {
 }
 
 export function EventsWidget() {
-    const { data: feed = [], isLoading } = useUpcomingFeed();
+    const { data: feed = [], isLoading, isError } = useUpcomingFeed();
     const { hasRole } = useAuth();
     const canManage = hasRole(MANAGE_ROLES);
 
@@ -130,7 +130,11 @@ export function EventsWidget() {
                     </div>
                 ) : visible.length === 0 ? (
                     <div className="text-center py-6">
-                        <p className="text-sm text-muted-foreground">Nothing coming up</p>
+                        <p className="text-sm text-muted-foreground">
+                            {isError
+                                ? "We couldn't load what's coming up"
+                                : 'Nothing coming up'}
+                        </p>
                         {canManage && (
                             <Link
                                 href="/events"

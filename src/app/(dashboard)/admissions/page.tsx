@@ -59,7 +59,11 @@ export default function AdmissionsPage() {
     const canDecide = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
 
     const [status, setStatus] = useState('all');
-    const { data: applications = [], isLoading } = useApplications({ status });
+    const {
+        data: applications = [],
+        isLoading,
+        isError,
+    } = useApplications({ status });
     const expire = useExpireOffers();
 
     const count = (s: ApplicationStatus) =>
@@ -190,6 +194,8 @@ export default function AdmissionsPage() {
                 <p className="text-sm text-muted-foreground">Loading…</p>
             ) : applications.length === 0 ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the applications"
                     title="No applications"
                     description="They will appear here as parents apply, or when you take one in the office."
                 />

@@ -176,9 +176,21 @@ export default function SettingsPage() {
     const [editingSetting, setEditingSetting] = useState<PayrollSetting | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
-    const { data: countries, isLoading: countriesLoading } = useCountries();
-    const { data: settings, isLoading: settingsLoading } = useSettings();
-    const { data: users, isLoading: usersLoading } = useUsers();
+    const {
+        data: countries,
+        isLoading: countriesLoading,
+        isError: countriesFailed,
+    } = useCountries();
+    const {
+        data: settings,
+        isLoading: settingsLoading,
+        isError: settingsFailed,
+    } = useSettings();
+    const {
+        data: users,
+        isLoading: usersLoading,
+        isError: usersFailed,
+    } = useUsers();
     const { data: employees } = useEmployees();
     const { data: myTenant, isLoading: tenantLoading } = useMyTenant();
     const updateTenantMutation = useUpdateTenant();
@@ -453,8 +465,10 @@ export default function SettingsPage() {
 
                         {usersLoading ? (
                             <LoadingSkeleton rows={5} />
-                        ) : !users?.length ? (
+                        ) : usersFailed || !users?.length ? (
                             <EmptyState
+                                isError={usersFailed}
+                                subject="the team members"
                                 title="No team members"
                                 description="Create user accounts for your employees to give them system access."
                                 actionLabel="Add User"
@@ -537,8 +551,10 @@ export default function SettingsPage() {
 
                     {countriesLoading ? (
                         <LoadingSkeleton rows={4} />
-                    ) : !countries?.length ? (
+                    ) : countriesFailed || !countries?.length ? (
                         <EmptyState
+                            isError={countriesFailed}
+                            subject="the countries"
                             title="No countries"
                             description="Add a country to configure currency and tax rules."
                             actionLabel="Add Country"
@@ -603,8 +619,10 @@ export default function SettingsPage() {
 
                     {settingsLoading ? (
                         <LoadingSkeleton rows={5} />
-                    ) : !settings?.length ? (
+                    ) : settingsFailed || !settings?.length ? (
                         <EmptyState
+                            isError={settingsFailed}
+                            subject="the settings"
                             title="No settings"
                             description="Add payroll configuration settings."
                             actionLabel="Add Setting"

@@ -16,7 +16,7 @@ import { useMyClasses } from '@/lib/hooks/use-attendance';
  * first job rather than an item in a menu.
  */
 export default function MyClassesPage() {
-    const { data, isLoading } = useMyClasses();
+    const { data, isLoading, isError } = useMyClasses();
 
     if (isLoading) {
         return (
@@ -31,6 +31,8 @@ export default function MyClassesPage() {
     if (classes.length === 0) {
         return (
             <EmptyState
+                isError={isError}
+                subject="your classes"
                 title="You are not the educator for a class"
                 description="If that looks wrong, ask the school office to set you as the educator on your class."
             />

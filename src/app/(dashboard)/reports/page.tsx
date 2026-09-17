@@ -46,10 +46,26 @@ export default function ReportsPage() {
     const [year, setYear] = useState(currentYear);
     const [taxYear, setTaxYear] = useState(currentYear);
 
-    const { data: summary, isLoading: summaryLoading } = useMonthlySummary(month, year);
-    const { data: taxSummary, isLoading: taxLoading } = useTaxSummary(taxYear);
-    const { data: loanPortfolio, isLoading: loanLoading } = useLoanPortfolio();
-    const { data: deptCost, isLoading: deptLoading } = useDepartmentCost(month, year);
+    const {
+        data: summary,
+        isLoading: summaryLoading,
+        isError: summaryFailed,
+    } = useMonthlySummary(month, year);
+    const {
+        data: taxSummary,
+        isLoading: taxLoading,
+        isError: taxFailed,
+    } = useTaxSummary(taxYear);
+    const {
+        data: loanPortfolio,
+        isLoading: loanLoading,
+        isError: loanFailed,
+    } = useLoanPortfolio();
+    const {
+        data: deptCost,
+        isLoading: deptLoading,
+        isError: deptFailed,
+    } = useDepartmentCost(month, year);
 
     // Amounts arrive as strings — `numeric` stays exact all the way from
     // Postgres and is converted here, at the point of display, and nowhere else.
@@ -136,7 +152,9 @@ export default function ReportsPage() {
                     {summaryLoading ? (
                         <LoadingSkeleton variant="card" />
                     ) : !summary ? (
-                        <EmptyState title="No data" description="No payroll data for this period." />
+                        <EmptyState
+                            isError={summaryFailed}
+                            subject="the payroll summary" title="No data" description="No payroll data for this period." />
                     ) : (
                         <>
                             <div className="grid gap-4 md:grid-cols-5">
@@ -224,7 +242,9 @@ export default function ReportsPage() {
                     {taxLoading ? (
                         <LoadingSkeleton variant="card" />
                     ) : !taxSummary ? (
-                        <EmptyState title="No data" description="No tax data for this year." />
+                        <EmptyState
+                            isError={taxFailed}
+                            subject="the tax summary" title="No data" description="No tax data for this year." />
                     ) : (
                         <>
                             <Card>
@@ -270,7 +290,9 @@ export default function ReportsPage() {
                     {loanLoading ? (
                         <LoadingSkeleton variant="card" />
                     ) : !loanPortfolio ? (
-                        <EmptyState title="No data" description="No loan data available." />
+                        <EmptyState
+                            isError={loanFailed}
+                            subject="the loan portfolio" title="No data" description="No loan data available." />
                     ) : (
                         <>
                             <div className="grid gap-4 md:grid-cols-3">
@@ -378,7 +400,9 @@ export default function ReportsPage() {
                     {deptLoading ? (
                         <LoadingSkeleton rows={5} />
                     ) : !deptCost?.departments.length ? (
-                        <EmptyState title="No data" description="No department cost data for this period." />
+                        <EmptyState
+                            isError={deptFailed}
+                            subject="the department costs" title="No data" description="No department cost data for this period." />
                     ) : (
                         <div className="rounded-lg border bg-card">
                             <table className="w-full text-sm">

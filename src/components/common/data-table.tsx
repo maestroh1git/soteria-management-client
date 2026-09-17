@@ -75,6 +75,14 @@ interface DataTableProps<TData, TValue> {
     emptyTitle?: string;
     emptyDescription?: string;
     emptyAction?: { label: string; onClick: () => void };
+    /**
+     * The query behind `data` failed. Without this an empty array and a
+     * failed request render identically — "No results found" for rows we
+     * never received.
+     */
+    isError?: boolean;
+    /** What could not be loaded: "the employees". */
+    errorSubject?: string;
 }
 
 // ============================================================
@@ -99,6 +107,8 @@ export function DataTable<TData, TValue>({
     emptyTitle = 'No results found',
     emptyDescription,
     emptyAction,
+    isError,
+    errorSubject,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -254,6 +264,8 @@ export function DataTable<TData, TValue>({
                                     className="h-48"
                                 >
                                     <EmptyState
+                                        isError={isError}
+                                        subject={errorSubject}
                                         title={emptyTitle}
                                         description={emptyDescription}
                                         actionLabel={emptyAction?.label}

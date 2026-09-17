@@ -45,7 +45,7 @@ export default function EmployeesPage() {
     const [search, setSearch] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
 
-    const { data: employees = [], isLoading } = useEmployees({
+    const { data: employees = [], isLoading, isError } = useEmployees({
         status: statusFilter !== 'all' ? statusFilter : undefined,
         search: search || undefined,
     });
@@ -207,6 +207,8 @@ export default function EmployeesPage() {
                 loading={isLoading}
                 searchPlaceholder="Search by name or email..."
                 onSearchChange={setSearch}
+                isError={isError}
+                errorSubject="the employees"
                 emptyTitle="No employees found"
                 emptyDescription="Get started by adding your first employee."
             />

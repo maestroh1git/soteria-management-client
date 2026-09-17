@@ -58,8 +58,10 @@ export default function LedgerPage() {
     const [sourceType, setSourceType] = useState('all');
     const [openEntry, setOpenEntry] = useState<string | undefined>();
 
-    const { data: trial, isLoading } = useTrialBalance();
-    const { data: entries = [] } = useJournalEntries({ sourceType });
+    const { data: trial, isLoading, isError } = useTrialBalance();
+    const { data: entries = [], isError: entriesFailed } = useJournalEntries({
+        sourceType,
+    });
     const { data: entry } = useJournalEntry(openEntry);
 
     return (
@@ -133,6 +135,8 @@ export default function LedgerPage() {
                                 </p>
                             ) : !trial?.rows.length ? (
                                 <EmptyState
+                                    isError={isError}
+                                    subject="the trial balance"
                                     title="Nothing posted yet"
                                     description="Approving a payroll run or paying an expense puts its cost in the books."
                                 />
@@ -194,7 +198,12 @@ export default function LedgerPage() {
                     </Select>
 
                     {entries.length === 0 ? (
-                        <EmptyState title="No entries" description="Nothing has been posted." />
+                        <EmptyState
+                            isError={entriesFailed}
+                            subject="the journal entries"
+                            title="No entries"
+                            description="Nothing has been posted."
+                        />
                     ) : (
                         <div className="overflow-x-auto rounded-md border">
                             <table className="w-full text-sm">

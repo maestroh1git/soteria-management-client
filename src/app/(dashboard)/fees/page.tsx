@@ -80,9 +80,9 @@ export default function FeesPage() {
     const [sessionId, setSessionId] = useState<string>();
     const [termId, setTermId] = useState<string>();
 
-    const { data: priceList, isLoading } = usePriceList(sessionId);
+    const { data: priceList, isLoading, isError } = usePriceList(sessionId);
     const { data: projection } = useFeeProjection(sessionId);
-    const { data: items } = useFeeItems(true);
+    const { data: items, isError: itemsFailed } = useFeeItems(true);
     const { data: accounts } = useAccounts();
     const setPrice = useSetFeePrice();
 
@@ -244,6 +244,8 @@ export default function FeesPage() {
                         </div>
                     ) : !priceList?.levels.length || !priceList?.items.length ? (
                         <EmptyState
+                            isError={isError}
+                            subject="the price list"
                             title="Nothing to price yet"
                             description={
                                 !priceList?.levels.length
@@ -342,6 +344,8 @@ export default function FeesPage() {
 
                     {!items?.length ? (
                         <EmptyState
+                            isError={itemsFailed}
+                            subject="the fee items"
                             title="No fees yet"
                             description="Tuition, boarding, the bus, levies — whatever the school charges for."
                         />

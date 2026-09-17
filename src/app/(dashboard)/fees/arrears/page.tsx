@@ -31,15 +31,15 @@ const cell = (v: string) =>
  * nobody ever compares them.
  */
 export default function ArrearsPage() {
-    const { data: debtors, isLoading } = useDebtors();
+    const { data: debtors, isLoading, isError } = useDebtors();
     const { data: sessions } = useSessions();
     const [sessionId, setSessionId] = useState<string>();
-    const { data: byTerm } = useCollectionByTerm(sessionId);
+    const { data: byTerm, isError: byTermFailed } = useCollectionByTerm(sessionId);
 
     // The session so far. A calendar year would split a Nigerian session in
     // half and make the net position meaningless.
     const current = sessions?.find((s) => s.isCurrent);
-    const { data: income } = useIncomeStatement(
+    const { data: income, isError: incomeFailed } = useIncomeStatement(
         current?.startDate,
         current?.endDate,
     );
@@ -70,6 +70,8 @@ export default function ArrearsPage() {
                         </div>
                     ) : !debtors?.rows.length ? (
                         <EmptyState
+                            isError={isError}
+                            subject="the arrears"
                             title="Nobody is behind"
                             description="Every issued invoice is settled."
                         />
@@ -233,6 +235,8 @@ export default function ArrearsPage() {
                 <TabsContent value="terms" className="space-y-4 pt-4">
                     {!byTerm?.length ? (
                         <EmptyState
+                            isError={byTermFailed}
+                            subject="collection by term"
                             title="Nothing billed yet"
                             description="Bill a term and this fills in."
                         />
@@ -312,6 +316,8 @@ export default function ArrearsPage() {
                 <TabsContent value="net" className="space-y-4 pt-4">
                     {!income ? (
                         <EmptyState
+                            isError={incomeFailed}
+                            subject="the net position"
                             title="Nothing posted yet"
                             description="Once fees are issued and costs are paid, this shows what the school netted."
                         />

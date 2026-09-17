@@ -93,7 +93,7 @@ export default function InvoicesPage() {
 
     const { data: terms } = useTerms(sessionId);
     const [page, setPage] = useState(1);
-    const { data: invoicePage, isLoading } = useInvoices({
+    const { data: invoicePage, isLoading, isError } = useInvoices({
         termId,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
         page,
@@ -212,6 +212,8 @@ export default function InvoicesPage() {
                 </div>
             ) : !invoices?.length ? (
                 <EmptyState
+                    isError={isError}
+                    subject="the invoices"
                     title="Nothing billed yet"
                     description="Run the term to create drafts. Nothing is owed until you issue them."
                 />

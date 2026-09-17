@@ -65,8 +65,9 @@ export default function StudentDetailPage({
     const { hasRole } = useAuth();
     const canEdit = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
 
-    const { data: student, isLoading } = useStudent(id);
-    const { data: guardians = [] } = useStudentGuardians(id);
+    const { data: student, isLoading, isError } = useStudent(id);
+    const { data: guardians = [], isError: guardiansFailed } =
+        useStudentGuardians(id);
     const { data: medical } = useStudentMedical(id);
     // So an award lands in a term rather than nowhere. termId is nullable and
     // nothing had ever set it.
@@ -80,7 +81,14 @@ export default function StudentDetailPage({
     const [addingGuardian, setAddingGuardian] = useState(false);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
-    if (!student) return <EmptyState title="Student not found" />;
+    if (isError || !student)
+        return (
+            <EmptyState
+                isError={isError}
+                subject="this pupil"
+                title="Student not found"
+            />
+        );
 
     const value = (k: string) =>
         form[k] ?? ((medical as any)?.[k] ?? '') ?? '';
@@ -213,8 +221,10 @@ export default function StudentDetailPage({
                             )}
                         </CardHeader>
                         <CardContent>
-                            {guardians.length === 0 ? (
+                            {guardiansFailed || guardians.length === 0 ? (
                                 <EmptyState
+                                    isError={guardiansFailed}
+                                    subject="this pupil’s guardians"
                                     title="No guardians"
                                     description="Nobody is recorded as a contact for this child."
                                 />

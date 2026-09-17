@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChildAttendance } from '@/components/portal/child-attendance';
 import { EmptyState } from '@/components/common/empty-state';
 import { useChildStatement } from '@/lib/hooks/use-portal';
+import { isApiError } from '@/lib/utils/api-error';
 
 const money = (v: string | number) =>
     Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
@@ -17,7 +18,7 @@ export default function ChildStatementPage({
     params: Promise<{ studentId: string }>;
 }) {
     const { studentId } = use(params);
-    const { data, isLoading, isError } = useChildStatement(studentId);
+    const { data, isLoading, error } = useChildStatement(studentId);
 
     if (isLoading) {
         return (
@@ -29,8 +30,33 @@ export default function ChildStatementPage({
 
     // A parent who edits the id in the address bar lands here. The server says
     // "no such child on your account" for somebody else's child and for one
-    // that does not exist, and so does this.
-    if (isError || !data) {
+    // that does not exist, and so does this — but only when the server actually
+    // declined. Telling a parent their child is not on their account because our
+    // request timed out reads as "the school has removed my child", to the
+    // person least able to check.
+    //
+    // 403 and 404 are the server declining. A 401 is an expired session, and a
+    // 5xx or a dropped connection is our problem; the interceptor reports a
+    // request that never landed as 500, so this lands on the honest side by
+    // default.
+    const refused =
+        isApiError(error) && (error.statusCode === 403 || error.statusCode === 404);
+    if (!data && !refused) {
+        return (
+            <div className="space-y-4">
+                <BackLink />
+                <EmptyState
+                    isError
+                    subject="your child's statement"
+                    title="We couldn't load that child"
+                />
+            </div>
+        );
+    }
+
+    // Reached only when the server refused. Stale data from a failed refetch
+    // falls through to the statement below, which is better than either message.
+    if (!data) {
         return (
             <div className="space-y-4">
                 <BackLink />
