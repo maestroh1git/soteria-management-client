@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { EmployeeForm } from '@/components/employees/employee-form';
 import { useCreateEmployee } from '@/lib/hooks/use-employees';
+import { toCreateEmployeeDto } from '@/lib/utils/employee-dto';
 import { type CreateEmployeeValues } from '@/lib/utils/validation';
 
 export default function NewEmployeePage() {
@@ -14,20 +15,10 @@ export default function NewEmployeePage() {
     const createMutation = useCreateEmployee();
 
     async function onSubmit(values: CreateEmployeeValues) {
-        // Clean optional empty strings. employeeNumber in particular must be
-        // omitted rather than sent as '' — the server treats absence as "assign
-        // the next number from the tenant sequence".
-        const dto = {
-            ...values,
-            employeeNumber: values.employeeNumber?.trim() || undefined,
-            middleName: values.middleName || undefined,
-            address: values.address || undefined,
-            nin: values.nin || undefined,
-            bvn: values.bvn || undefined,
-            countryId: values.countryId || undefined,
-            gradeId: values.gradeId || undefined,
-        };
-        await createMutation.mutateAsync(dto);
+        // Shared with the edit page: a field added to the form has to reach
+        // both, and building the payload twice is how one of them silently
+        // stops sending it.
+        await createMutation.mutateAsync(toCreateEmployeeDto(values));
         router.push('/employees');
     }
 

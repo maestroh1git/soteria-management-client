@@ -10,6 +10,7 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { EmployeeForm } from '@/components/employees/employee-form';
 import { useEmployee, useUpdateEmployee } from '@/lib/hooks/use-employees';
+import { toUpdateEmployeeDto } from '@/lib/utils/employee-dto';
 import { type CreateEmployeeValues } from '@/lib/utils/validation';
 
 export default function EditEmployeePage({
@@ -44,30 +45,31 @@ export default function EditEmployeePage({
         address: employee.address ?? '',
         nin: employee.nin ?? '',
         bvn: employee.bvn ?? '',
+        tin: employee.tin ?? '',
+        taxState: employee.taxState ?? '',
+        lasrraId: employee.lasrraId ?? '',
+        rsaPin: employee.rsaPin ?? '',
+        pfaName: employee.pfaName ?? '',
+        nhfNumber: employee.nhfNumber ?? '',
+        employmentType: employee.employmentType ?? '',
+        contractEndDate: employee.contractEndDate?.slice(0, 10) ?? '',
+        nextOfKinName: employee.nextOfKinName ?? '',
+        nextOfKinPhone: employee.nextOfKinPhone ?? '',
+        nextOfKinRelationship: employee.nextOfKinRelationship ?? '',
         joinDate: employee.joinDate?.slice(0, 10) ?? '',
         roleId: employee.roleId,
         gradeId: employee.gradeId ?? undefined,
+        status: employee.status,
+        terminationDate: employee.terminationDate?.slice(0, 10) ?? '',
+        terminationReason: employee.terminationReason ?? '',
+        lastWorkingDay: employee.lastWorkingDay?.slice(0, 10) ?? '',
     };
 
     async function onSubmit(values: CreateEmployeeValues) {
-        // employeeNumber is fixed once assigned and is omitted by the update
-        // DTO; empty optionals are sent as undefined, not ''.
-        const dto = {
-            firstName: values.firstName,
-            lastName: values.lastName,
-            middleName: values.middleName || undefined,
-            email: values.email,
-            phone: values.phone,
-            dateOfBirth: values.dateOfBirth,
-            gender: values.gender,
-            address: values.address || undefined,
-            nin: values.nin || undefined,
-            bvn: values.bvn || undefined,
-            joinDate: values.joinDate,
-            roleId: values.roleId,
-            gradeId: values.gradeId || undefined,
-        };
-        await updateMutation.mutateAsync({ id, dto });
+        // Shared with the create page. This branch differs in one way that
+        // matters: a field the user has emptied is sent as null so it is
+        // actually cleared, where omitting it would mean "leave as it was".
+        await updateMutation.mutateAsync({ id, dto: toUpdateEmployeeDto(values) });
         router.push(`/employees/${id}`);
     }
 

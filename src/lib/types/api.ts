@@ -14,6 +14,10 @@ import {
   TaxBase,
   RoleType,
   KybStatus,
+  EmploymentType,
+  TerminationReason,
+  CompletenessSeverity,
+  CompletenessSection,
 } from './enums';
 
 // ============================================================
@@ -239,8 +243,26 @@ export interface Employee {
   address: string | null;
   nin: string | null;
   bvn: string | null;
+  // Statutory identifiers. All optional by design — a new hire is recorded
+  // before their paperwork exists — and what is still blank is reported by the
+  // completeness endpoints rather than left to be noticed.
+  tin: string | null;
+  /** State of residence; PAYE is remitted here, not to the employer's state. */
+  taxState: string | null;
+  /** Lagos State Residents Registration Agency number. Lagos residents only. */
+  lasrraId: string | null;
+  rsaPin: string | null;
+  pfaName: string | null;
+  nhfNumber: string | null;
+  employmentType: EmploymentType | null;
+  contractEndDate: string | null;
+  nextOfKinName: string | null;
+  nextOfKinPhone: string | null;
+  nextOfKinRelationship: string | null;
   joinDate: string;
   terminationDate: string | null;
+  terminationReason: TerminationReason | null;
+  lastWorkingDay: string | null;
   roleId: string;
   gradeId: string | null;
   countryId: string | null;
@@ -251,6 +273,65 @@ export interface Employee {
   salaryComponents?: EmployeeSalaryComponent[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** A state PAYE can be remitted to, from GET /employees/reference/tax-states. */
+export interface NigerianState {
+  name: string;
+  revenueAuthority: string;
+}
+
+/**
+ * One thing an employee record is missing, and what it costs to leave it that
+ * way. `why` is written by the server to be shown to the user verbatim — a
+ * checklist that only names the empty field teaches nobody why to fill it in.
+ */
+export interface MissingField {
+  field: string;
+  label: string;
+  section: CompletenessSection;
+  severity: CompletenessSeverity;
+  why: string;
+}
+
+export interface EmployeeCompleteness {
+  employeeId: string;
+  employeeNumber: string;
+  name: string;
+  status: EmployeeStatus;
+  /** Worst first. */
+  missing: MissingField[];
+  counts: Record<CompletenessSeverity, number>;
+  satisfied: number;
+  applicable: number;
+  score: number;
+  /** No CRITICAL gaps: this person can be paid and their deductions remitted. */
+  readyToPay: boolean;
+}
+
+export interface FieldGap {
+  field: string;
+  label: string;
+  severity: CompletenessSeverity;
+  why: string;
+  employees: number;
+}
+
+export interface CompletenessSummary {
+  employees: number;
+  complete: number;
+  readyToPay: number;
+  counts: Record<CompletenessSeverity, number>;
+  gaps: FieldGap[];
+  incomplete: Array<{
+    employeeId: string;
+    employeeNumber: string;
+    name: string;
+    status: EmployeeStatus;
+    score: number;
+    counts: Record<CompletenessSeverity, number>;
+    topIssue: MissingField | null;
+  }>;
 }
 
 export interface Department {
@@ -333,6 +414,11 @@ export interface EmployeeBankDetails {
   id: string;
   employeeId: string;
   bankName: string;
+  /**
+   * NIBSS institution code, resolved from the name when the account is saved.
+   * Null on accounts written before the column existed — re-saving fills it in.
+   */
+  bankCode: string | null;
   // accountNumber/accountName/branchCode are AES-256-GCM encrypted at rest and
   // @Exclude'd from every API response — they are never returned, only sent on
   // create/update. Optional here so read responses type-check.

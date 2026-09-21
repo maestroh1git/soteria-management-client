@@ -1,8 +1,18 @@
 'use client';
 
-import { AlertCircle, Mail, Phone, Calendar, MapPin, Briefcase, Building2, Hash, CalendarClock } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, Mail, Phone, Calendar, MapPin, Briefcase, Building2, Hash, CalendarClock, Pencil } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { MyCompletenessPanel } from '@/components/self-service/my-completeness-panel';
+import { MyDetailsForm } from '@/components/self-service/my-details-form';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { useMyEmployee } from '@/lib/hooks/use-self-service';
@@ -16,6 +26,7 @@ function errorMessage(error: unknown): string {
 
 export default function MyProfilePage() {
     const { data: me, isLoading, isError, error } = useMyEmployee();
+    const [editing, setEditing] = useState(false);
 
     if (isLoading) return <LoadingSkeleton variant="detail" />;
 
@@ -58,7 +69,38 @@ export default function MyProfilePage() {
                         {p.department ? ` · ${p.department}` : ''}
                     </p>
                 </div>
+                {!editing && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-auto"
+                        onClick={() => setEditing(true)}
+                    >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit my details
+                    </Button>
+                )}
             </div>
+
+            {editing ? (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">My details</CardTitle>
+                        <CardDescription>
+                            Blank means “not yet” — leaving a field empty never removes
+                            anything already on file.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <MyDetailsForm me={p} onDone={() => setEditing(false)} />
+                    </CardContent>
+                </Card>
+            ) : (
+                /* What is still outstanding from this person, in their own terms.
+                   Above the record, because it is the only part of this page
+                   that asks anything of them. */
+                <MyCompletenessPanel onFillIn={() => setEditing(true)} />
+            )}
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Personal */}
@@ -101,8 +143,46 @@ export default function MyProfilePage() {
                 </Card>
             </div>
 
+            {/* The person's own statutory numbers. Empty rows are shown rather
+                than hidden — "Not provided" is the only thing that tells
+                somebody a number is missing. */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Tax, pension &amp; next of kin</CardTitle>
+                    <CardDescription>
+                        What your PAYE, pension and NHF deductions are filed against.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <InfoRow label="TIN" value={p.tin} />
+                    <InfoRow label="State you live in" value={p.taxState} />
+                    {p.taxState === 'Lagos' && (
+                        <InfoRow label="LASRRA number" value={p.lasrraId} />
+                    )}
+                    <InfoRow label="NIN" value={p.nin} />
+                    <InfoRow label="BVN" value={p.bvn} />
+                    <InfoRow label="RSA PIN" value={p.rsaPin} />
+                    <InfoRow label="PFA" value={p.pfaName} />
+                    <InfoRow label="NHF number" value={p.nhfNumber} />
+                    <InfoRow
+                        label="Next of kin"
+                        value={
+                            p.nextOfKinName
+                                ? `${p.nextOfKinName}${
+                                      p.nextOfKinRelationship
+                                          ? ` (${p.nextOfKinRelationship})`
+                                          : ''
+                                  }${p.nextOfKinPhone ? ` · ${p.nextOfKinPhone}` : ''}`
+                                : null
+                        }
+                    />
+                </CardContent>
+            </Card>
+
             <p className="text-xs text-muted-foreground">
-                Something here wrong? Ask your administrator to update your record.
+                Your contact details, tax and pension numbers and next of kin are yours
+                to edit. Your name, role, grade, pay and bank details are your
+                employer’s record — ask your administrator if one of those is wrong.
             </p>
         </div>
     );

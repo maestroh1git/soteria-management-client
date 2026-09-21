@@ -15,6 +15,53 @@ export enum EmployeeStatus {
   TERMINATED = 'TERMINATED',
 }
 
+// From: common/constants/employment-type.constant.ts
+// How a *person* is engaged, as against RoleType, which describes the position.
+// Null on an employee means "as the role is engaged".
+export const EMPLOYMENT_TYPES = [
+  'FULL_TIME',
+  'PART_TIME',
+  'CONTRACT',
+  'TEMPORARY',
+  'INTERN',
+  'NYSC',
+] as const;
+export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
+
+/** Engagements that are meant to end on a known date. */
+export const FIXED_TERM_EMPLOYMENT_TYPES: readonly string[] = [
+  'CONTRACT',
+  'TEMPORARY',
+  'INTERN',
+  'NYSC',
+];
+
+// From: common/constants/termination-reason.constant.ts
+export const TERMINATION_REASONS = [
+  'RESIGNATION',
+  'END_OF_CONTRACT',
+  'RETIREMENT',
+  'DISMISSAL',
+  'REDUNDANCY',
+  'DEATH',
+  'OTHER',
+] as const;
+export type TerminationReason = (typeof TERMINATION_REASONS)[number];
+
+/** Severity of a missing field, from the completeness endpoints. */
+export const COMPLETENESS_SEVERITIES = [
+  'CRITICAL',
+  'IMPORTANT',
+  'ADVISORY',
+] as const;
+export type CompletenessSeverity = (typeof COMPLETENESS_SEVERITIES)[number];
+
+export type CompletenessSection =
+  | 'PAYMENT'
+  | 'STATUTORY'
+  | 'EMPLOYMENT'
+  | 'PERSONAL';
+
 // From: modules/payroll/entities/salary.entity.ts
 export enum SalaryStatus {
   DRAFT = 'DRAFT',

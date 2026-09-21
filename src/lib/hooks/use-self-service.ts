@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getMyEmployee,
+  getMyCompleteness,
+  updateMyDetails,
   getMyPayslips,
   downloadMyPayslip,
   getMyYtd,
@@ -11,6 +13,7 @@ import {
   cancelOwnLeave,
   getMyLoans,
   type RequestOwnLeaveDto,
+  type UpdateMyDetailsDto,
 } from '@/lib/api/self-service';
 
 /**
@@ -25,6 +28,32 @@ export function useMyEmployee() {
     queryKey: ['me', 'employee'],
     queryFn: getMyEmployee,
     retry: false,
+  });
+}
+
+/** What is still missing from my own record. */
+export function useMyCompleteness() {
+  return useQuery({
+    queryKey: ['me', 'completeness'],
+    queryFn: getMyCompleteness,
+    retry: false,
+  });
+}
+
+export function useUpdateMyDetails() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: UpdateMyDetailsDto) => updateMyDetails(dto),
+    onSuccess: () => {
+      // Both: the profile shows the new value, and the checklist has to stop
+      // asking for what was just supplied.
+      qc.invalidateQueries({ queryKey: ['me', 'employee'] });
+      qc.invalidateQueries({ queryKey: ['me', 'completeness'] });
+      toast.success('Your details have been saved');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Could not save your details');
+    },
   });
 }
 
