@@ -45,6 +45,7 @@ import {
 } from '@/lib/hooks/use-admissions';
 import { useClassArms } from '@/lib/hooks/use-academics';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { AssessmentsPanel } from '@/components/admissions/assessments-panel';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
 
@@ -76,8 +77,12 @@ const ACTION: Record<
     string,
     { label: string; tone?: 'default' | 'destructive' | 'outline'; needs?: 'score' | 'offer' | 'date' | 'reason' }
 > = {
-    ASSESSMENT_SCHEDULED: { label: 'Schedule assessment', tone: 'outline', needs: 'date' },
-    ASSESSED: { label: 'Record score', tone: 'outline', needs: 'score' },
+    // Neither of these asks for anything any more. Booking a sitting moves the
+    // application to ASSESSMENT_SCHEDULED by itself, and ASSESSED is a reading
+    // of what the assessments panel already holds — the server refuses it
+    // outright when nothing has been recorded.
+    ASSESSMENT_SCHEDULED: { label: 'Schedule assessment', tone: 'outline' },
+    ASSESSED: { label: 'Mark as assessed', tone: 'outline' },
     OFFERED: { label: 'Make an offer', needs: 'offer' },
     ACCEPTED: { label: 'Parent accepted' },
     OFFER_DECLINED: { label: 'Parent declined', tone: 'outline' },
@@ -97,6 +102,15 @@ export default function ApplicationDetailPage({
     const router = useRouter();
     const { hasRole } = useAuth();
     const canDecide = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+    // Running the assessments and deciding who gets a place are deliberately
+    // different rights, and the API draws the same line: an officer may book a
+    // candidate in and record how it went, but not offer them anything.
+    const canRunAssessments = hasRole([
+        'tenant_owner',
+        'ADMIN',
+        'admissions.registrar',
+        'admissions.officer',
+    ]);
 
     const { data: application, isLoading, isError } = useApplication(id);
     const transition = useTransitionApplication(id);
@@ -104,7 +118,6 @@ export default function ApplicationDetailPage({
 
     const [pending, setPending] = useState<ApplicationStatus | null>(null);
     const [notes, setNotes] = useState('');
-    const [score, setScore] = useState('');
     const [when, setWhen] = useState('');
     const bounds = dateBounds();
     const [enrolOpen, setEnrolOpen] = useState(false);
@@ -123,24 +136,15 @@ export default function ApplicationDetailPage({
         await transition.mutateAsync({
             status: pending,
             notes: notes.trim() || undefined,
-            assessmentScore: needs === 'score' ? Number(score) : undefined,
-            assessmentDate:
-                needs === 'date' && when ? new Date(when).toISOString() : undefined,
             offerExpiresAt:
                 needs === 'offer' && when ? new Date(when).toISOString() : undefined,
         });
         setPending(null);
         setNotes('');
-        setScore('');
         setWhen('');
     };
 
-    const ready =
-        needs === 'score'
-            ? score !== '' && Number(score) >= 0 && Number(score) <= 100
-            : needs === 'offer' || needs === 'date'
-              ? !!when
-              : true;
+    const ready = needs === 'offer' ? !!when : true;
 
     return (
         <div className="space-y-6">
@@ -197,7 +201,6 @@ export default function ApplicationDetailPage({
                                     onClick={() => {
                                         setPending(s);
                                         setWhen('');
-                                        setScore('');
                                         setNotes('');
                                     }}
                                 >
@@ -247,17 +250,7 @@ export default function ApplicationDetailPage({
                 <CardHeader>
                     <CardTitle className="text-lg">Progress</CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-3">
-                    <Field
-                        label="Assessment"
-                        value={
-                            application.assessmentScore != null
-                                ? `${application.assessmentScore}${application.assessmentDate ? ` · ${formatDate(application.assessmentDate)}` : ''}`
-                                : application.assessmentDate
-                                  ? `Scheduled ${formatDate(application.assessmentDate)}`
-                                  : 'Not assessed'
-                        }
-                    />
+                <CardContent className="grid gap-3 sm:grid-cols-2">
                     <Field
                         label="Offer expires"
                         value={
@@ -295,6 +288,14 @@ export default function ApplicationDetailPage({
                 </CardContent>
             </Card>
 
+            {/* Every sitting this candidate has had. Its own card because an
+                exam and an interview are two events, and the single figure
+                this card used to show could not tell them apart. */}
+            <AssessmentsPanel
+                applicationId={application.id}
+                canEdit={canRunAssessments}
+            />
+
             {/* ── Transition dialog ── */}
             <Dialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
                 <DialogContent>
@@ -309,30 +310,6 @@ export default function ApplicationDetailPage({
                     </DialogHeader>
 
                     <div className="space-y-4">
-                        {needs === 'score' && (
-                            <div className="space-y-2">
-                                <Label htmlFor="id-page-score-out-of-100">Score out of 100</Label>
-                                <Input id="id-page-score-out-of-100"
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    value={score}
-                                    onChange={(e) => setScore(e.target.value)}
-                                />
-                            </div>
-                        )}
-                        {needs === 'date' && (
-                            <div className="space-y-2">
-                                <Label htmlFor="id-page-assessment-date">Assessment date</Label>
-                                <Input id="id-page-assessment-date"
-                                    type="datetime-local"
-                                    min={bounds.min}
-                                    max={bounds.max}
-                                    value={when}
-                                    onChange={(e) => setWhen(e.target.value)}
-                                />
-                            </div>
-                        )}
                         {needs === 'offer' && (
                             <div className="space-y-2">
                                 <Label htmlFor="id-page-offer-expires">Offer expires</Label>

@@ -34,8 +34,6 @@ export interface AdmissionApplication {
     guardianPhone: string;
     guardianEmail: string | null;
     guardianRelationship: string;
-    assessmentDate: string | null;
-    assessmentScore: string | number | null;
     offerExpiresAt: string | null;
     decisionNotes: string | null;
     retentionExpiresAt: string | null;
@@ -85,8 +83,6 @@ export async function transitionApplication(
         status: ApplicationStatus;
         notes?: string;
         offerExpiresAt?: string;
-        assessmentDate?: string;
-        assessmentScore?: number;
     },
 ): Promise<AdmissionApplication> {
     return (await api.patch(
@@ -125,4 +121,87 @@ export async function expireLapsedOffers(): Promise<AdmissionApplication[]> {
         '/admissions/applications/offers/expire',
         {},
     )) as unknown as AdmissionApplication[];
+}
+
+// ── Assessments ──────────────────────────────────────────────────────────────
+
+export type AssessmentKind = 'ENTRANCE_EXAM' | 'INTERVIEW';
+export type AssessmentMode = 'IN_PERSON' | 'ONLINE';
+export type AssessmentStatus =
+    | 'SCHEDULED'
+    | 'COMPLETED'
+    | 'NO_SHOW'
+    | 'CANCELLED';
+export type AssessmentOutcome = 'RECOMMEND' | 'BORDERLINE' | 'DECLINE';
+
+export interface AdmissionAssessment {
+    id: string;
+    applicationId: string;
+    kind: AssessmentKind;
+    mode: AssessmentMode;
+    status: AssessmentStatus;
+    scheduledFor: string;
+    location: string | null;
+    assessorId: string | null;
+    /** Numeric in the database, and therefore a string here. Never parsed. */
+    score: string | null;
+    outcome: AssessmentOutcome | null;
+    notes: string | null;
+    completedAt: string | null;
+    isOpen: boolean;
+    /**
+     * From the same rulebook the server refuses with. The screen renders its
+     * actions from this and knows no rules of its own.
+     */
+    allowedTransitions: AssessmentStatus[];
+}
+
+export async function getAssessments(
+    applicationId: string,
+): Promise<AdmissionAssessment[]> {
+    return (
+        await api.get(`/admissions/applications/${applicationId}/assessments`)
+    ).data;
+}
+
+export async function scheduleAssessment(
+    applicationId: string,
+    dto: {
+        kind: AssessmentKind;
+        mode?: AssessmentMode;
+        scheduledFor: string;
+        location?: string;
+    },
+): Promise<AdmissionAssessment> {
+    return (
+        await api.post(
+            `/admissions/applications/${applicationId}/assessments`,
+            dto,
+        )
+    ).data;
+}
+
+export async function rescheduleAssessment(
+    id: string,
+    dto: { scheduledFor: string; location?: string },
+): Promise<AdmissionAssessment> {
+    return (await api.patch(`/admissions/assessments/${id}/reschedule`, dto))
+        .data;
+}
+
+export async function completeAssessment(
+    id: string,
+    dto: { score?: number; outcome?: AssessmentOutcome; notes?: string },
+): Promise<AdmissionAssessment> {
+    return (await api.patch(`/admissions/assessments/${id}/complete`, dto))
+        .data;
+}
+
+export async function settleAssessment(
+    id: string,
+    what: 'no-show' | 'cancel',
+    notes?: string,
+): Promise<AdmissionAssessment> {
+    return (await api.patch(`/admissions/assessments/${id}/${what}`, { notes }))
+        .data;
 }

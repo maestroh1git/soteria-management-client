@@ -7,7 +7,13 @@ import {
     getEnrolmentPreview,
     enrolApplication,
     expireLapsedOffers,
+    getAssessments,
+    scheduleAssessment,
+    rescheduleAssessment,
+    completeAssessment,
+    settleAssessment,
     type ApplicationStatus,
+    type AssessmentOutcome,
 } from '../api/admissions';
 
 export function useApplications(
@@ -36,8 +42,6 @@ export function useTransitionApplication(id: string) {
             status: ApplicationStatus;
             notes?: string;
             offerExpiresAt?: string;
-            assessmentDate?: string;
-            assessmentScore?: number;
         }) => transitionApplication(id, dto),
         onSuccess: (application) => {
             qc.invalidateQueries({ queryKey: ['admissions'] });
@@ -88,4 +92,88 @@ export function useExpireOffers() {
         },
         onError: (e: Error) => toast.error(e.message || 'Could not expire offers'),
     });
+}
+
+// ── Assessments ──────────────────────────────────────────────────────────────
+
+export function useAssessments(applicationId: string) {
+    return useQuery({
+        queryKey: ['admissions', 'applications', applicationId, 'assessments'],
+        queryFn: () => getAssessments(applicationId),
+        enabled: !!applicationId,
+    });
+}
+
+/**
+ * One mutation for every change to a sitting.
+ *
+ * They all invalidate the same two things — the sittings and the application,
+ * because booking the first one moves the pipeline — and they all surface the
+ * server's refusal verbatim. It names what WAS possible, which is more use
+ * than anything this layer could invent.
+ */
+function useAssessmentMutation<TArgs>(
+    applicationId: string,
+    run: (args: TArgs) => Promise<unknown>,
+    success: string,
+) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: run,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success(success);
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not update'),
+    });
+}
+
+export function useScheduleAssessment(applicationId: string) {
+    return useAssessmentMutation(
+        applicationId,
+        (dto: Parameters<typeof scheduleAssessment>[1]) =>
+            scheduleAssessment(applicationId, dto),
+        'Booked',
+    );
+}
+
+export function useRescheduleAssessment(applicationId: string) {
+    return useAssessmentMutation(
+        applicationId,
+        ({ id, ...dto }: { id: string; scheduledFor: string; location?: string }) =>
+            rescheduleAssessment(id, dto),
+        'Moved',
+    );
+}
+
+export function useCompleteAssessment(applicationId: string) {
+    return useAssessmentMutation(
+        applicationId,
+        ({
+            id,
+            ...dto
+        }: {
+            id: string;
+            score?: number;
+            outcome?: AssessmentOutcome;
+            notes?: string;
+        }) => completeAssessment(id, dto),
+        'Recorded',
+    );
+}
+
+export function useSettleAssessment(applicationId: string) {
+    return useAssessmentMutation(
+        applicationId,
+        ({
+            id,
+            what,
+            notes,
+        }: {
+            id: string;
+            what: 'no-show' | 'cancel';
+            notes?: string;
+        }) => settleAssessment(id, what, notes),
+        'Updated',
+    );
 }
