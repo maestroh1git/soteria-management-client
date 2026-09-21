@@ -12,8 +12,13 @@ import {
     rescheduleAssessment,
     completeAssessment,
     settleAssessment,
+    getFlags,
+    raiseFlag,
+    clearFlag,
+    getCriteriaVerdict,
     type ApplicationStatus,
     type AssessmentOutcome,
+    type FlagKind,
 } from '../api/admissions';
 
 export function useApplications(
@@ -176,4 +181,47 @@ export function useSettleAssessment(applicationId: string) {
         }) => settleAssessment(id, what, notes),
         'Updated',
     );
+}
+
+// ── Vetting and criteria ─────────────────────────────────────────────────────
+
+export function useFlags(applicationId: string) {
+    return useQuery({
+        queryKey: ['admissions', 'applications', applicationId, 'flags'],
+        queryFn: () => getFlags(applicationId),
+        enabled: !!applicationId,
+    });
+}
+
+export function useRaiseFlag(applicationId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (dto: { kind: FlagKind; detail?: string }) =>
+            raiseFlag(applicationId, dto),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success('Raised');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not raise it'),
+    });
+}
+
+export function useClearFlag(applicationId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => clearFlag(id),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success('Cleared');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not clear it'),
+    });
+}
+
+export function useCriteriaVerdict(applicationId: string) {
+    return useQuery({
+        queryKey: ['admissions', 'applications', applicationId, 'criteria'],
+        queryFn: () => getCriteriaVerdict(applicationId),
+        enabled: !!applicationId,
+    });
 }

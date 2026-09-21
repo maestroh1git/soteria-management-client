@@ -46,6 +46,7 @@ import {
 import { useClassArms } from '@/lib/hooks/use-academics';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { AssessmentsPanel } from '@/components/admissions/assessments-panel';
+import { VettingPanel } from '@/components/admissions/vetting-panel';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
 
@@ -292,6 +293,14 @@ export default function ApplicationDetailPage({
                 exam and an interview are two events, and the single figure
                 this card used to show could not tell them apart. */}
             <AssessmentsPanel
+                applicationId={application.id}
+                canEdit={canRunAssessments}
+            />
+
+            {/* What vetting turned up, and how the candidate measures against
+                the standard the school set. Advisory: it decides nothing, and
+                says so on the face of it. */}
+            <VettingPanel
                 applicationId={application.id}
                 canEdit={canRunAssessments}
             />
