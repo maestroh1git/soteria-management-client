@@ -1,8 +1,11 @@
 import api from './client';
 import type {
+  CompletenessSummary,
   Employee,
   EmployeeBankDetails,
+  EmployeeCompleteness,
   EmployeeSalaryComponent,
+  NigerianState,
 } from '@/lib/types/api';
 
 // ── Employee CRUD ───────────────────────────────────────────
@@ -19,6 +22,17 @@ export interface CreateEmployeeDto {
   address?: string;
   nin?: string;
   bvn?: string;
+  tin?: string;
+  taxState?: string;
+  lasrraId?: string;
+  rsaPin?: string;
+  pfaName?: string;
+  nhfNumber?: string;
+  employmentType?: string;
+  contractEndDate?: string;
+  nextOfKinName?: string;
+  nextOfKinPhone?: string;
+  nextOfKinRelationship?: string;
   joinDate: string;
   roleId: string;
   gradeId?: string;
@@ -26,7 +40,23 @@ export interface CreateEmployeeDto {
   status?: string;
 }
 
-export type UpdateEmployeeDto = Partial<CreateEmployeeDto>;
+/**
+ * Exit fields are update-only, mirroring the server DTO: a new hire is not
+ * leaving, and offering the fields on create is an invitation to record a
+ * contradiction.
+ *
+ * Every field also accepts null, which is how a value is *cleared*. Omitting a
+ * field means "leave it as it was", so without null a TIN typed in error could
+ * be corrected but never removed. The server treats null as empty
+ * (class-validator's @IsOptional passes it through) and writes it.
+ */
+export type UpdateEmployeeDto = {
+  [K in keyof CreateEmployeeDto]?: CreateEmployeeDto[K] | null;
+} & {
+  terminationDate?: string | null;
+  terminationReason?: string | null;
+  lastWorkingDay?: string | null;
+};
 
 export async function getEmployees(params?: {
   status?: string;
@@ -50,6 +80,31 @@ export async function updateEmployee(id: string, dto: UpdateEmployeeDto): Promis
 
 export async function deleteEmployee(id: string): Promise<void> {
   await api.delete(`/employees/${id}`);
+}
+
+// ── Record completeness ─────────────────────────────────────
+// Every statutory field is optional; these endpoints are what keeps optional
+// from meaning invisible.
+export async function getEmployeeCompleteness(
+  id: string,
+): Promise<EmployeeCompleteness> {
+  return await api.get(
+    `/employees/${id}/completeness`,
+  ) as unknown as EmployeeCompleteness;
+}
+
+export async function getCompletenessSummary(): Promise<CompletenessSummary> {
+  return await api.get(
+    '/employees/completeness/summary',
+  ) as unknown as CompletenessSummary;
+}
+
+/** The 36 states and FCT, served so the form can never offer a value the
+ *  server would reject. */
+export async function getTaxStates(): Promise<NigerianState[]> {
+  return await api.get(
+    '/employees/reference/tax-states',
+  ) as unknown as NigerianState[];
 }
 
 // ── Bank Details ────────────────────────────────────────────

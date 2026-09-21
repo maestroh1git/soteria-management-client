@@ -24,6 +24,7 @@ import {
 import { EventsWidget } from '@/components/dashboard/events-widget';
 import { EmployeeDashboard } from '@/components/dashboard/employee-dashboard';
 import { SchoolWidget } from '@/components/dashboard/school-widget';
+import { StaffRecordsWidget } from '@/components/dashboard/staff-records-widget';
 import { AttendanceTile } from '@/components/dashboard/attendance-tile';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
@@ -225,6 +226,12 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground mt-1">{subtitle}</p>
                 </div>
                 <GettingStartedCard />
+                {/* Also here, not only on the populated dashboard below: a
+                    tenant still setting up is exactly who is adding staff, and
+                    exactly who would otherwise not hear that half those records
+                    cannot be paid until the first payroll run fails. It renders
+                    nothing when there is nothing to act on. */}
+                <StaffRecordsWidget />
                 <EmptyState
                     icon={BarChart3}
                     title="No approved payroll yet"
@@ -304,6 +311,11 @@ export default function DashboardPage() {
             </div>
 
             ) : null}
+
+            {/* Staff whose records cannot carry a payment or a filing. Above
+                the rest because it is the one tile with a deadline attached,
+                and it hides itself when there is nothing to do. */}
+            <StaffRecordsWidget />
 
             {/* Today's attendance, and — louder — the registers nobody has
                 taken. Hides itself for a tenant with no classes. */}

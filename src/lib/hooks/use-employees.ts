@@ -14,6 +14,9 @@ import {
   updateEmployeeSalaryComponent,
   deactivateEmployeeSalaryComponent,
   getBirthdaysThisMonth,
+  getEmployeeCompleteness,
+  getCompletenessSummary,
+  getTaxStates,
   type CreateEmployeeDto,
   type UpdateEmployeeDto,
   type CreateBankDetailsDto,
@@ -39,6 +42,52 @@ export function useEmployee(id: string) {
     queryFn: () => getEmployee(id),
     enabled: !!id,
   });
+}
+
+// ── Record completeness ─────────────────────────────────────
+/**
+ * What one record is still missing. Separate from useEmployee so the panel
+ * refreshes on its own after an edit without refetching the whole employee,
+ * and so a 403 on it never blanks the profile page.
+ */
+export function useEmployeeCompleteness(id: string, enabled = true) {
+  return useQuery({
+    queryKey: ['employees', id, 'completeness'],
+    queryFn: () => getEmployeeCompleteness(id),
+    enabled: !!id && enabled,
+  });
+}
+
+/** The same assessment across the organisation — what an owner sees. */
+export function useCompletenessSummary(enabled = true) {
+  return useQuery({
+    queryKey: ['employees', 'completeness', 'summary'],
+    queryFn: getCompletenessSummary,
+    enabled,
+  });
+}
+
+/** States PAYE can be remitted to. Static reference data: cached for the session. */
+export function useTaxStates() {
+  return useQuery({
+    queryKey: ['reference', 'tax-states'],
+    queryFn: getTaxStates,
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * Anything that changes a bank account or a salary line changes what the
+ * record is missing — an account arriving clears a CRITICAL gap, and a pension
+ * deduction being assigned creates one. Without this the panel keeps showing
+ * the problem the user just fixed, which is how people learn to distrust it.
+ */
+function invalidateCompleteness(
+  qc: ReturnType<typeof useQueryClient>,
+  employeeId: string,
+) {
+  qc.invalidateQueries({ queryKey: ['employees', employeeId, 'completeness'] });
+  qc.invalidateQueries({ queryKey: ['employees', 'completeness', 'summary'] });
 }
 
 // ── Employee mutations ──────────────────────────────────────
@@ -102,6 +151,7 @@ export function useAddBankDetails() {
     mutationFn: (dto: CreateBankDetailsDto) => addBankDetails(dto),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['employees', variables.employeeId, 'bank-details'] });
+      invalidateCompleteness(qc, variables.employeeId);
       toast.success('Bank details added');
     },
     onError: (error: Error) => {
@@ -123,6 +173,7 @@ export function useUpdateBankDetails() {
     }) => updateBankDetails(id, dto),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['employees', variables.employeeId, 'bank-details'] });
+      invalidateCompleteness(qc, variables.employeeId);
       toast.success('Bank details updated');
     },
     onError: (error: Error) => {
@@ -138,6 +189,7 @@ export function useDeleteBankDetails() {
       deleteBankDetails(id),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['employees', variables.employeeId, 'bank-details'] });
+      invalidateCompleteness(qc, variables.employeeId);
       toast.success('Bank details removed');
     },
     onError: (error: Error) => {
@@ -169,6 +221,7 @@ export function useAddEmployeeSalaryComponent() {
       qc.invalidateQueries({
         queryKey: ['employees', variables.employeeId, 'salary-components'],
       });
+      invalidateCompleteness(qc, variables.employeeId);
       toast.success('Salary component assigned');
     },
     onError: (error: Error) => {
@@ -192,6 +245,7 @@ export function useUpdateEmployeeSalaryComponent() {
       qc.invalidateQueries({
         queryKey: ['employees', variables.employeeId, 'salary-components'],
       });
+      invalidateCompleteness(qc, variables.employeeId);
       toast.success('Salary component updated');
     },
     onError: (error: Error) => {
@@ -209,6 +263,7 @@ export function useDeactivateEmployeeSalaryComponent() {
       qc.invalidateQueries({
         queryKey: ['employees', variables.employeeId, 'salary-components'],
       });
+      invalidateCompleteness(qc, variables.employeeId);
       toast.success('Salary component deactivated');
     },
     onError: (error: Error) => {

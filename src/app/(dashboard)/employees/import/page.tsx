@@ -311,7 +311,22 @@ export default function ImportStaffPage() {
                             <p className="mt-2 mb-1 text-sm font-medium">Optional</p>
                             <p className="text-xs text-muted-foreground">
                                 middle_name, gender (MALE/FEMALE/OTHER), department,
-                                bank_name, account_number (10-digit NUBAN), account_name
+                                address, bank_name, account_number (10-digit NUBAN),
+                                account_name
+                            </p>
+                            <p className="mt-2 mb-1 text-sm font-medium">
+                                Optional — statutory and HR
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                nin, bvn, tin, tax_state, lasrra_id, rsa_pin, pfa_name,
+                                nhf_number, employment_type, contract_end_date,
+                                next_of_kin_name, next_of_kin_phone,
+                                next_of_kin_relationship
+                            </p>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Leave any of these out and the import still runs — each
+                                staff record then says what it is missing, and why it
+                                matters, on the employee’s page.
                             </p>
                         </div>
                     </CardContent>

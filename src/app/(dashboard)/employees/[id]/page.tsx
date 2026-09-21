@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { useEmployee } from '@/lib/hooks/use-employees';
 import { BankAccountsPanel } from '@/components/employees/bank-accounts-panel';
+import { RecordCompletenessPanel } from '@/components/employees/record-completeness-panel';
 import { SalaryComponentsPanel } from '@/components/employees/salary-components-panel';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
@@ -41,6 +42,9 @@ export default function EmployeeDetailPage({
     // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
     const canManageEmployee = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
     const { data: employee, isLoading, isError } = useEmployee(id);
+    // Controlled so the completeness panel can send the user to the tab a gap
+    // is actually fixed on.
+    const [tab, setTab] = useState('overview');
     const {
         data: history = [],
         isLoading: historyLoading,
@@ -87,7 +91,7 @@ export default function EmployeeDetailPage({
                 )}
             </div>
 
-            <Tabs defaultValue="overview">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     {canViewSensitive && (
@@ -101,6 +105,17 @@ export default function EmployeeDetailPage({
 
                 {/* ── Overview Tab ── */}
                 <TabsContent value="overview" className="space-y-6">
+                    {/* Above the record, not below it: the point of keeping
+                        every statutory field optional is that the gaps are
+                        stated rather than discovered when a remittance is due. */}
+                    <RecordCompletenessPanel
+                        employeeId={id}
+                        canEdit={canManageEmployee}
+                        onOpenBankTab={
+                            canViewSensitive ? () => setTab('bank') : undefined
+                        }
+                    />
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>
@@ -118,12 +133,22 @@ export default function EmployeeDetailPage({
                                 {employee.address && (
                                     <InfoRow icon={<MapPin className="h-4 w-4" />} label="Address" value={employee.address} />
                                 )}
-                                {employee.nin && (
-                                    <InfoRow label="NIN" value={employee.nin} />
-                                )}
-                                {employee.bvn && (
-                                    <InfoRow label="BVN" value={employee.bvn} />
-                                )}
+                                <InfoRow
+                                    label="Next of kin"
+                                    value={
+                                        employee.nextOfKinName
+                                            ? `${employee.nextOfKinName}${
+                                                  employee.nextOfKinRelationship
+                                                      ? ` (${employee.nextOfKinRelationship})`
+                                                      : ''
+                                              }${
+                                                  employee.nextOfKinPhone
+                                                      ? ` · ${employee.nextOfKinPhone}`
+                                                      : ''
+                                              }`
+                                            : null
+                                    }
+                                />
                             </CardContent>
                         </Card>
 
@@ -146,7 +171,7 @@ export default function EmployeeDetailPage({
                                     value={
                                         employee.grade
                                             ? `${employee.grade.code} — ${employee.grade.name}`
-                                            : '—'
+                                            : null
                                     }
                                 />
 
@@ -155,12 +180,79 @@ export default function EmployeeDetailPage({
                                     label="Join Date"
                                     value={formatDate(employee.joinDate)}
                                 />
-                                {employee.terminationDate && (
+                                <InfoRow
+                                    label="Employment type"
+                                    value={
+                                        employee.employmentType
+                                            ? humanise(employee.employmentType)
+                                            : employee.role
+                                              ? `As the role (${humanise(employee.role.roleType)})`
+                                              : null
+                                    }
+                                />
+                                {employee.contractEndDate && (
                                     <InfoRow
-                                        label="Termination Date"
-                                        value={formatDate(employee.terminationDate)}
+                                        label="Contract ends"
+                                        value={formatDate(employee.contractEndDate)}
                                     />
                                 )}
+                                {employee.terminationDate && (
+                                    <>
+                                        <InfoRow
+                                            label="Termination Date"
+                                            value={formatDate(employee.terminationDate)}
+                                        />
+                                        <InfoRow
+                                            label="Reason for leaving"
+                                            value={
+                                                employee.terminationReason
+                                                    ? humanise(employee.terminationReason)
+                                                    : null
+                                            }
+                                        />
+                                        <InfoRow
+                                            label="Last working day"
+                                            value={
+                                                employee.lastWorkingDay
+                                                    ? formatDate(employee.lastWorkingDay)
+                                                    : null
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Statutory identifiers, in one place rather than
+                            scattered through the personal details: this is the
+                            card somebody opens when a filing is due. Rows are
+                            rendered even when empty — an em dash is what tells
+                            you the number is missing, and hiding it is how it
+                            stays missing. */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-lg">
+                                    Statutory &amp; Tax
+                                </CardTitle>
+                                <CardDescription>
+                                    What PAYE, pension and housing remittances are filed
+                                    against.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <InfoRow label="NIN" value={employee.nin} />
+                                <InfoRow label="BVN" value={employee.bvn} />
+                                <InfoRow label="TIN" value={employee.tin} />
+                                <InfoRow
+                                    label="State of residence"
+                                    value={employee.taxState}
+                                />
+                                {employee.taxState === 'Lagos' && (
+                                    <InfoRow label="LASRRA" value={employee.lasrraId} />
+                                )}
+                                <InfoRow label="RSA PIN" value={employee.rsaPin} />
+                                <InfoRow label="PFA" value={employee.pfaName} />
+                                <InfoRow label="NHF number" value={employee.nhfNumber} />
                             </CardContent>
                         </Card>
                     </div>
@@ -251,6 +343,15 @@ export default function EmployeeDetailPage({
     );
 }
 
+/** Enum member → something a person reads. */
+function humanise(value: string) {
+    return value
+        .toLowerCase()
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
 function InfoRow({
     icon,
     label,
@@ -258,14 +359,24 @@ function InfoRow({
 }: {
     icon?: React.ReactNode;
     label: string;
-    value: string;
+    /** Null or empty renders as "Not provided" rather than being dropped. */
+    value?: string | null;
 }) {
+    const empty = value === null || value === undefined || value === '';
     return (
         <div className="flex items-start gap-3">
             {icon && <span className="text-muted-foreground mt-0.5">{icon}</span>}
             <div>
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-sm font-medium">{value}</p>
+                <p
+                    className={
+                        empty
+                            ? 'text-sm italic text-muted-foreground'
+                            : 'text-sm font-medium'
+                    }
+                >
+                    {empty ? 'Not provided' : value}
+                </p>
             </div>
         </div>
     );

@@ -1,5 +1,11 @@
 import api from './client';
-import type { LeaveBalance, LeaveRequest, Loan, YtdTotals } from '@/lib/types/api';
+import type {
+  EmployeeCompleteness,
+  LeaveBalance,
+  LeaveRequest,
+  Loan,
+  YtdTotals,
+} from '@/lib/types/api';
 
 /** Projection returned by /me/employee — not the full employee entity. */
 export interface MyEmployee {
@@ -12,11 +18,49 @@ export interface MyEmployee {
   dateOfBirth: string | null;
   gender: string | null;
   address: string | null;
+  // The person's own statutory numbers. Shown here and nowhere else in the
+  // employee-facing app: a form that asks somebody for their TIN has to be
+  // able to show them the one already on file.
+  nin: string | null;
+  bvn: string | null;
+  tin: string | null;
+  taxState: string | null;
+  lasrraId: string | null;
+  rsaPin: string | null;
+  pfaName: string | null;
+  nhfNumber: string | null;
+  nextOfKinName: string | null;
+  nextOfKinPhone: string | null;
+  nextOfKinRelationship: string | null;
   joinDate: string;
   status: string;
   role: string | null;
   department: string | null;
   grade: { code: string; name: string } | null;
+}
+
+/**
+ * What an employee may change about themselves.
+ *
+ * Mirrors the server's allowlist exactly. Anything else — bank details, name,
+ * role, grade, pay — is rejected by the API rather than ignored, so sending a
+ * field that is not here produces an error the person can see, not a silent
+ * no-op.
+ */
+export interface UpdateMyDetailsDto {
+  phone?: string;
+  address?: string;
+  nin?: string;
+  bvn?: string;
+  tin?: string;
+  taxState?: string;
+  lasrraId?: string;
+  rsaPin?: string;
+  pfaName?: string;
+  nhfNumber?: string;
+  nextOfKinName?: string;
+  nextOfKinPhone?: string;
+  nextOfKinRelationship?: string;
 }
 
 /** Payslip list entry — deliberately without the PDF bytes. */
@@ -40,6 +84,18 @@ export interface RequestOwnLeaveDto {
 
 export async function getMyEmployee(): Promise<MyEmployee> {
   return (await api.get('/me/employee')) as unknown as MyEmployee;
+}
+
+export async function updateMyDetails(
+  dto: UpdateMyDetailsDto,
+): Promise<MyEmployee> {
+  return (await api.patch('/me/employee', dto)) as unknown as MyEmployee;
+}
+
+/** The same assessment HR sees, asked for the employee's own audience: only
+ *  the gaps they can close, worded as their own business. */
+export async function getMyCompleteness(): Promise<EmployeeCompleteness> {
+  return (await api.get('/me/completeness')) as unknown as EmployeeCompleteness;
 }
 
 export async function getMyPayslips(): Promise<MyPayslip[]> {

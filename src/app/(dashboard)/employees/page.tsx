@@ -4,8 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Eye, Pencil, UserX, Upload } from 'lucide-react';
+import {
+    MoreHorizontal,
+    Plus,
+    Eye,
+    Pencil,
+    UserX,
+    Upload,
+    AlertTriangle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,7 +30,11 @@ import {
 } from '@/components/ui/select';
 import { DataTable } from '@/components/common/data-table';
 import { StatusBadge } from '@/components/common/status-badge';
-import { useEmployees, useDeleteEmployee } from '@/lib/hooks/use-employees';
+import {
+    useEmployees,
+    useDeleteEmployee,
+    useCompletenessSummary,
+} from '@/lib/hooks/use-employees';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useRolesList } from '@/lib/hooks/use-onboarding';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
@@ -51,6 +64,14 @@ export default function EmployeesPage() {
     });
 
     const deleteMutation = useDeleteEmployee();
+
+    // One request for the whole directory rather than one per row. Keyed by id
+    // so the column can say, per person, what their record is missing — the
+    // directory is where somebody notices that six people have no TIN.
+    const { data: completeness } = useCompletenessSummary();
+    const gapsByEmployee = new Map(
+        (completeness?.incomplete ?? []).map((row) => [row.employeeId, row]),
+    );
 
     const columns: ColumnDef<Employee>[] = [
         {
@@ -91,6 +112,41 @@ export default function EmployeesPage() {
             accessorKey: 'status',
             header: 'Status',
             cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        },
+        {
+            id: 'record',
+            header: 'Record',
+            cell: ({ row }) => {
+                const gaps = gapsByEmployee.get(row.original.id);
+                // Nothing to say is said with nothing: a tick on every complete
+                // row would drown the rows that need attention, and so would
+                // flagging everybody who has not typed in a home address. Only
+                // gaps that hold something up reach this column; the rest are
+                // on the employee's own page.
+                const blocking = gaps
+                    ? gaps.counts.CRITICAL + gaps.counts.IMPORTANT
+                    : 0;
+                if (!gaps || blocking === 0)
+                    return <span className="text-xs text-muted-foreground">—</span>;
+                const critical = gaps.counts.CRITICAL > 0;
+                return (
+                    <Link href={`/employees/${row.original.id}`} title={gaps.topIssue?.why}>
+                        <Badge
+                            variant="outline"
+                            className={
+                                critical
+                                    ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300'
+                                    : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300'
+                            }
+                        >
+                            {critical && <AlertTriangle className="mr-1 h-3 w-3" />}
+                            {critical
+                                ? `${gaps.counts.CRITICAL} blocking`
+                                : `${gaps.counts.IMPORTANT} missing`}
+                        </Badge>
+                    </Link>
+                );
+            },
         },
         {
             accessorKey: 'joinDate',
