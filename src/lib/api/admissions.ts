@@ -205,3 +205,67 @@ export async function settleAssessment(
     return (await api.patch(`/admissions/assessments/${id}/${what}`, { notes }))
         .data;
 }
+
+// ── Vetting and criteria ─────────────────────────────────────────────────────
+
+export type FlagKind =
+    | 'SPECIAL_NEEDS'
+    | 'TALENT'
+    | 'SIBLING'
+    | 'STAFF_CHILD';
+
+export interface AdmissionFlag {
+    id: string;
+    applicationId: string;
+    kind: FlagKind;
+    detail: string | null;
+    raisedBy: string | null;
+    createdAt: string;
+}
+
+export interface CriteriaCheck {
+    code: 'AGE' | 'EXAM_SCORE' | 'INTERVIEW' | 'CAPACITY';
+    met: boolean;
+    expected: string;
+    actual: string;
+}
+
+export interface CriteriaVerdict {
+    checks: CriteriaCheck[];
+    metCount: number;
+    total: number;
+    allMet: boolean;
+}
+
+export async function getFlags(
+    applicationId: string,
+): Promise<AdmissionFlag[]> {
+    return (await api.get(`/admissions/applications/${applicationId}/flags`))
+        .data;
+}
+
+export async function raiseFlag(
+    applicationId: string,
+    dto: { kind: FlagKind; detail?: string },
+): Promise<AdmissionFlag> {
+    return (
+        await api.post(`/admissions/applications/${applicationId}/flags`, dto)
+    ).data;
+}
+
+export async function clearFlag(id: string): Promise<void> {
+    await api.delete(`/admissions/flags/${id}`);
+}
+
+/**
+ * Null when the school has set no standard for this level — which is a
+ * different answer from "meets none of it", and shown differently.
+ */
+export async function getCriteriaVerdict(
+    applicationId: string,
+): Promise<CriteriaVerdict | null> {
+    const { data } = await api.get(
+        `/admissions/applications/${applicationId}/criteria`,
+    );
+    return data && Object.keys(data).length > 0 ? data : null;
+}
