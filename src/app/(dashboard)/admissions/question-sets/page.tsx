@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft,
+    ChevronDown,
+    ChevronRight,
     GripVertical,
     Loader2,
     Plus,
@@ -42,6 +44,7 @@ import {
     useCreateInterviewTemplate,
     useInterviewTemplates,
     useRetireInterviewTemplate,
+    useTemplateInterviews,
 } from '@/lib/hooks/use-admissions';
 import { useAuth } from '@/lib/hooks/use-auth';
 import type { InterviewTemplate, QuestionKind } from '@/lib/api/admissions';
@@ -65,6 +68,105 @@ const BLANK: Draft = { prompt: '', kind: 'TEXT', required: false };
 function interviewsRun(count: number): string {
     if (count === 0) return 'No interviews were';
     return count === 1 ? '1 interview was' : `${count} interviews were`;
+}
+
+const SITTING_STYLE: Record<string, string> = {
+    SCHEDULED: 'text-blue-600 dark:text-blue-400',
+    COMPLETED: 'text-green-700 dark:text-green-400',
+    NO_SHOW: 'text-amber-700 dark:text-amber-400',
+    CANCELLED: 'text-muted-foreground',
+};
+
+/**
+ * The candidates behind the count.
+ *
+ * "12 interviews were run against this" is a number with nothing behind it,
+ * and it is the number a registrar is looking at when they decide whether to
+ * retire the set. Loaded only when expanded — most sets are never opened.
+ */
+function InterviewsOnSet({ templateId }: { templateId: string }) {
+    const { data: interviews, isLoading } = useTemplateInterviews(templateId);
+
+    if (isLoading) {
+        return (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+        );
+    }
+    if (!interviews?.length) {
+        return (
+            <p className="text-sm text-muted-foreground">
+                Nobody has been interviewed on it.
+            </p>
+        );
+    }
+
+    return (
+        <ul className="space-y-1">
+            {interviews.map((interview) => (
+                <li key={interview.assessmentId}>
+                    <Link
+                        href={`/admissions/${interview.applicationId}`}
+                        className="flex flex-wrap items-baseline gap-x-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
+                    >
+                        <span className="tabular-nums text-muted-foreground">
+                            {interview.applicationNumber}
+                        </span>
+                        <span className="font-medium">
+                            {interview.candidate}
+                        </span>
+                        {interview.classLevel && (
+                            <span className="text-muted-foreground">
+                                {interview.classLevel}
+                            </span>
+                        )}
+                        <span
+                            className={`ml-auto ${
+                                SITTING_STYLE[interview.status] ?? ''
+                            }`}
+                        >
+                            {interview.status.replace(/_/g, ' ').toLowerCase()}
+                        </span>
+                    </Link>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+/** "12 interviews were run against it" — pressed, it says which twelve. */
+function InterviewsDisclosure({
+    template,
+    open,
+    onToggle,
+}: {
+    template: InterviewTemplate;
+    open: boolean;
+    onToggle: () => void;
+}) {
+    if (template.interviewsRun === 0) return null;
+
+    return (
+        <div className="mt-4 border-t pt-3">
+            <button
+                type="button"
+                onClick={onToggle}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                aria-expanded={open}
+            >
+                {open ? (
+                    <ChevronDown className="h-4 w-4" />
+                ) : (
+                    <ChevronRight className="h-4 w-4" />
+                )}
+                {interviewsRun(template.interviewsRun)} run against it
+            </button>
+            {open && (
+                <div className="mt-2">
+                    <InterviewsOnSet templateId={template.id} />
+                </div>
+            )}
+        </div>
+    );
 }
 
 function QuestionList({ template }: { template: InterviewTemplate }) {
@@ -128,6 +230,8 @@ export default function QuestionSetsPage() {
     const [name, setName] = useState('');
     const [drafts, setDrafts] = useState<Draft[]>([{ ...BLANK }]);
     const [retiring, setRetiring] = useState<InterviewTemplate | null>(null);
+    /** Which set's candidates are open. One at a time; this is a sidebar read. */
+    const [showing, setShowing] = useState<string | null>(null);
 
     const active = templates.find((t) => t.active);
     const retired = templates.filter((t) => !t.active);
@@ -216,8 +320,6 @@ export default function QuestionSetsPage() {
                             <CardDescription>
                                 Every interview booked from now is run against
                                 these.
-                                {active.interviewsRun > 0 &&
-                                    ` ${active.interviewsRun} so far.`}
                             </CardDescription>
                         </div>
                         {canSetQuestions && (
@@ -232,6 +334,15 @@ export default function QuestionSetsPage() {
                     </CardHeader>
                     <CardContent>
                         <QuestionList template={active} />
+                        <InterviewsDisclosure
+                            template={active}
+                            open={showing === active.id}
+                            onToggle={() =>
+                                setShowing(
+                                    showing === active.id ? null : active.id,
+                                )
+                            }
+                        />
                     </CardContent>
                 </Card>
             )}
@@ -251,13 +362,25 @@ export default function QuestionSetsPage() {
                                 <CardTitle className="text-base">
                                     {template.name}
                                 </CardTitle>
-                                <CardDescription>
-                                    {interviewsRun(template.interviewsRun)} run
-                                    against it.
-                                </CardDescription>
+                                {template.interviewsRun === 0 && (
+                                    <CardDescription>
+                                        No interviews were run against it.
+                                    </CardDescription>
+                                )}
                             </CardHeader>
                             <CardContent>
                                 <QuestionList template={template} />
+                                <InterviewsDisclosure
+                                    template={template}
+                                    open={showing === template.id}
+                                    onToggle={() =>
+                                        setShowing(
+                                            showing === template.id
+                                                ? null
+                                                : template.id,
+                                        )
+                                    }
+                                />
                             </CardContent>
                         </Card>
                     ))}

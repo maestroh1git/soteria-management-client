@@ -167,6 +167,11 @@ export interface AdmissionAssessment {
      * Null on an exam, and on an interview booked when nothing was active.
      */
     templateId: string | null;
+    /**
+     * That set, by name. Null on an exam, and on an interview booked while
+     * nothing was in force.
+     */
+    templateName: string | null;
     isOpen: boolean;
     /**
      * From the same rulebook the server refuses with. The screen renders its
@@ -277,6 +282,28 @@ export interface AnswerInput {
     questionId: string;
     answerText?: string;
     rating?: number;
+}
+
+/** One candidate interviewed on a set, and enough to open their application. */
+export interface TemplateInterview {
+    assessmentId: string;
+    status: AssessmentStatus;
+    outcome: AssessmentOutcome | null;
+    scheduledFor: string;
+    applicationId: string;
+    applicationNumber: string;
+    candidate: string;
+    applicationStatus: ApplicationStatus;
+    classLevel: string | null;
+}
+
+/** Which candidates were interviewed on one set — the count, made of people. */
+export async function getTemplateInterviews(
+    templateId: string,
+): Promise<TemplateInterview[]> {
+    return (await api.get(
+        `/admissions/interview-templates/${templateId}/interviews`,
+    )) as unknown as TemplateInterview[];
 }
 
 /** Every question set, the active one first. */
