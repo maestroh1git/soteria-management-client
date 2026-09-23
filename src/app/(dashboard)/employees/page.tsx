@@ -267,6 +267,9 @@ export default function EmployeesPage() {
                 errorSubject="the employees"
                 emptyTitle="No employees found"
                 emptyDescription="Get started by adding your first employee."
+                onRowClick={(employee) =>
+                    router.push(`/employees/${employee.id}`)
+                }
             />
 
             <ConfirmDialog

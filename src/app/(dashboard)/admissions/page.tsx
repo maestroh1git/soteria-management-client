@@ -37,6 +37,7 @@ import {
     useRemindOffers,
 } from '@/lib/hooks/use-admissions';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { isRowNavigationClick } from '@/lib/utils/row-click';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
 
@@ -253,7 +254,11 @@ export default function AdmissionsPage() {
                                     <tr
                                         key={a.id}
                                         className="cursor-pointer border-t hover:bg-muted/40"
-                                        onClick={() => router.push(`/admissions/${a.id}`)}
+                                        onClick={(e) => {
+                                            if (isRowNavigationClick(e)) {
+                                                router.push(`/admissions/${a.id}`);
+                                            }
+                                        }}
                                     >
                                         <td className="px-3 py-2 text-muted-foreground">
                                             {a.applicationNumber}

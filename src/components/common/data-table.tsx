@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { isRowNavigationClick } from '@/lib/utils/row-click';
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -70,6 +71,12 @@ interface DataTableProps<TData, TValue> {
     onFilterChange?: (filterId: string, value: string | undefined) => void;
     enableRowSelection?: boolean;
     onRowSelectionChange?: (selectedRows: TData[]) => void;
+    /**
+     * A click anywhere in the row. The row is a mouse affordance only: the
+     * keyboard and screen-reader path stays the link inside the row, so this
+     * adds neither a second tab stop nor a control with no accessible name.
+     */
+    onRowClick?: (row: TData) => void;
     bulkActions?: React.ReactNode;
     loading?: boolean;
     emptyTitle?: string;
@@ -102,6 +109,7 @@ export function DataTable<TData, TValue>({
     onFilterChange,
     enableRowSelection = false,
     onRowSelectionChange,
+    onRowClick,
     bulkActions,
     loading = false,
     emptyTitle = 'No results found',
@@ -162,6 +170,13 @@ export function DataTable<TData, TValue>({
     const selectedCount = Object.keys(rowSelection).filter(
         (key) => rowSelection[key],
     ).length;
+
+    const handleRowClick = useCallback(
+        (e: React.MouseEvent<HTMLTableRowElement>, row: TData) => {
+            if (onRowClick && isRowNavigationClick(e)) onRowClick(row);
+        },
+        [onRowClick],
+    );
 
     return (
         <div className="space-y-4">
@@ -246,6 +261,12 @@ export function DataTable<TData, TValue>({
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && 'selected'}
+                                    className={onRowClick ? 'cursor-pointer' : undefined}
+                                    onClick={
+                                        onRowClick
+                                            ? (e) => handleRowClick(e, row.original)
+                                            : undefined
+                                    }
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>

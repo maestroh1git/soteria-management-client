@@ -178,6 +178,7 @@ export default function StudentsPage() {
                 loading={isLoading}
                 isError={isError}
                 errorSubject="the roll"
+                onRowClick={(pupil) => router.push(`/students/${pupil.id}`)}
             />
 
             {(rollPage?.totalPages ?? 1) > 1 && (
