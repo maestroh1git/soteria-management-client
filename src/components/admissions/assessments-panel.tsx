@@ -273,6 +273,15 @@ export function AssessmentsPanel({
                             )}
                         </div>
 
+                        {/* Which set this was run against. A sitting has
+                            carried the id since templates shipped; a uuid is
+                            not something a registrar can read. */}
+                        {a.templateName && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Asked the {a.templateName}
+                            </p>
+                        )}
+
                         <p className="mt-1 text-muted-foreground">
                             {when(a.scheduledFor)}
                             {a.location && (

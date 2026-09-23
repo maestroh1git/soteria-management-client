@@ -18,6 +18,7 @@ import {
     clearFlag,
     getCriteriaVerdict,
     getInterviewTemplates,
+    getTemplateInterviews,
     createInterviewTemplate,
     retireInterviewTemplate,
     getAssessmentAnswers,
@@ -236,6 +237,15 @@ export function useRetireInterviewTemplate() {
             toast.success('Retired. Interviews already run against it are kept.');
         },
         onError: (e: Error) => toast.error(e.message || 'Could not retire it'),
+    });
+}
+
+/** Fetched only when a set is expanded: most of them never are. */
+export function useTemplateInterviews(templateId: string | null) {
+    return useQuery({
+        queryKey: ['admissions', 'interview-templates', templateId, 'interviews'],
+        queryFn: () => getTemplateInterviews(templateId!),
+        enabled: !!templateId,
     });
 }
 
