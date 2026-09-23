@@ -25,6 +25,9 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
     "admissions.registrar",
     "admissions.officer",
   ],
+  // Its own entry, not inherited from /admissions: deciding what the school
+  // asks is a registrar's call, and the API draws the same line.
+  "/admissions/question-sets": ["tenant_owner", "ADMIN", "admissions.registrar"],
   "/attendance": [
     "tenant_owner",
     "ADMIN",

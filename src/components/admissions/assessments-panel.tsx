@@ -31,16 +31,20 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
+    useAssessmentAnswers,
     useAssessments,
     useCompleteAssessment,
+    useInterviewTemplates,
     useRescheduleAssessment,
     useScheduleAssessment,
     useSettleAssessment,
 } from '@/lib/hooks/use-admissions';
 import type {
     AdmissionAssessment,
+    AnswerInput,
     AssessmentKind,
     AssessmentOutcome,
+    InterviewQuestion,
 } from '@/lib/api/admissions';
 
 const KIND_LABEL: Record<AssessmentKind, string> = {
@@ -67,6 +71,37 @@ function when(value: string): string {
         dateStyle: 'medium',
         timeStyle: 'short',
     });
+}
+
+/**
+ * What was said at an interview that has been recorded.
+ *
+ * Each answer is shown under the prompt as it was put at the time, not as the
+ * template reads today — the whole reason the snapshot column exists. Its own
+ * component because the query is per sitting, and hooks cannot be called from
+ * inside a map.
+ */
+function InterviewAnswers({ assessmentId }: { assessmentId: string }) {
+    const { data: answers, isLoading } = useAssessmentAnswers(assessmentId);
+
+    if (isLoading || !answers || answers.length === 0) return null;
+
+    return (
+        <dl className="mt-3 space-y-2 border-t pt-3">
+            {answers.map((answer) => (
+                <div key={answer.id}>
+                    <dt className="text-xs text-muted-foreground">
+                        {answer.promptSnapshot}
+                    </dt>
+                    <dd>
+                        {answer.rating != null
+                            ? `${answer.rating} out of 5`
+                            : answer.answerText}
+                    </dd>
+                </div>
+            ))}
+        </dl>
+    );
 }
 
 /**
@@ -100,6 +135,20 @@ export function AssessmentsPanel({
     const [score, setScore] = useState('');
     const [outcome, setOutcome] = useState<AssessmentOutcome | ''>('');
     const [notes, setNotes] = useState('');
+    /** questionId → what the panel wrote. Ratings are held as their digit. */
+    const [answers, setAnswers] = useState<Record<string, string>>({});
+
+    // The sheet this sitting was booked against — which may since have been
+    // retired, so it is found among all of them rather than by asking for
+    // whichever is active now.
+    const { data: templates } = useInterviewTemplates(!!recording?.templateId);
+    const questions: InterviewQuestion[] = [
+        ...(templates?.find((t) => t.id === recording?.templateId)?.questions ??
+            []),
+    ].sort((a, b) => a.sortOrder - b.sortOrder);
+    const unanswered = questions.filter(
+        (q) => q.required && !answers[q.id]?.trim(),
+    );
 
     const [moving, setMoving] = useState<AdmissionAssessment | null>(null);
     const [movedTo, setMovedTo] = useState('');
@@ -126,16 +175,32 @@ export function AssessmentsPanel({
 
     const submitResult = async () => {
         if (!recording) return;
+        // A question left blank is sent as nothing at all, not as an empty
+        // answer: the server records saying nothing by the absence of a row.
+        const given: AnswerInput[] = questions
+            .filter((q) => answers[q.id]?.trim())
+            .map((q) =>
+                q.kind === 'RATING_1_5'
+                    ? { questionId: q.id, rating: Number(answers[q.id]) }
+                    : { questionId: q.id, answerText: answers[q.id].trim() },
+            );
+
         await complete.mutateAsync({
             id: recording.id,
             score: score === '' ? undefined : Number(score),
             outcome: outcome === '' ? undefined : outcome,
             notes: notes || undefined,
+            answers: given.length > 0 ? given : undefined,
         });
+        closeRecording();
+    };
+
+    const closeRecording = () => {
         setRecording(null);
         setScore('');
         setOutcome('');
         setNotes('');
+        setAnswers({});
     };
 
     return (
@@ -225,6 +290,10 @@ export function AssessmentsPanel({
                             <p className="mt-1 text-muted-foreground">
                                 {a.notes}
                             </p>
+                        )}
+
+                        {a.kind === 'INTERVIEW' && a.status === 'COMPLETED' && (
+                            <InterviewAnswers assessmentId={a.id} />
                         )}
 
                         {canEdit && a.allowedTransitions.length > 0 && (
@@ -397,7 +466,7 @@ export function AssessmentsPanel({
 
             <Dialog
                 open={!!recording}
-                onOpenChange={(open) => !open && setRecording(null)}
+                onOpenChange={(open) => !open && closeRecording()}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -423,6 +492,79 @@ export function AssessmentsPanel({
                                 />
                             </div>
                         )}
+                        {questions.map((question) => (
+                            <div key={question.id} className="space-y-2">
+                                <Label htmlFor={`q-${question.id}`}>
+                                    {question.prompt}
+                                    {question.required && (
+                                        <span className="ml-1 text-destructive">
+                                            *
+                                        </span>
+                                    )}
+                                </Label>
+                                {question.kind === 'RATING_1_5' ? (
+                                    <Select
+                                        value={answers[question.id] ?? ''}
+                                        onValueChange={(v) =>
+                                            setAnswers((prev) => ({
+                                                ...prev,
+                                                [question.id]: v,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger id={`q-${question.id}`}>
+                                            <SelectValue placeholder="One to five" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {['1', '2', '3', '4', '5'].map(
+                                                (n) => (
+                                                    <SelectItem
+                                                        key={n}
+                                                        value={n}
+                                                    >
+                                                        {n}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                ) : question.kind === 'YES_NO' ? (
+                                    <Select
+                                        value={answers[question.id] ?? ''}
+                                        onValueChange={(v) =>
+                                            setAnswers((prev) => ({
+                                                ...prev,
+                                                [question.id]: v,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger id={`q-${question.id}`}>
+                                            <SelectValue placeholder="Yes or no" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Yes">
+                                                Yes
+                                            </SelectItem>
+                                            <SelectItem value="No">
+                                                No
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Textarea
+                                        id={`q-${question.id}`}
+                                        value={answers[question.id] ?? ''}
+                                        onChange={(e) =>
+                                            setAnswers((prev) => ({
+                                                ...prev,
+                                                [question.id]: e.target.value,
+                                            }))
+                                        }
+                                    />
+                                )}
+                            </div>
+                        ))}
+
                         <div className="space-y-2">
                             <Label>Recommendation</Label>
                             <Select
@@ -458,16 +600,14 @@ export function AssessmentsPanel({
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setRecording(null)}
-                        >
+                        <Button variant="outline" onClick={closeRecording}>
                             Cancel
                         </Button>
                         <Button
                             onClick={submitResult}
                             disabled={
                                 complete.isPending ||
+                                unanswered.length > 0 ||
                                 (recording?.kind === 'ENTRANCE_EXAM' &&
                                     score === '')
                             }
@@ -475,7 +615,11 @@ export function AssessmentsPanel({
                                 recording?.kind === 'ENTRANCE_EXAM' &&
                                 score === ''
                                     ? 'An exam that has been sat has a mark'
-                                    : undefined
+                                    : unanswered.length > 0
+                                      ? `Still to answer: ${unanswered
+                                            .map((q) => q.prompt)
+                                            .join(', ')}`
+                                      : undefined
                             }
                         >
                             {complete.isPending && (

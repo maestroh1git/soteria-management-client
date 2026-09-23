@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Clock, Eye, Link2, Check, TimerOff, Loader2 } from 'lucide-react';
+import {
+    Clock,
+    Eye,
+    Link2,
+    Check,
+    TimerOff,
+    BellRing,
+    Loader2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -23,7 +31,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/common/empty-state';
-import { useApplications, useExpireOffers } from '@/lib/hooks/use-admissions';
+import {
+    useApplications,
+    useExpireOffers,
+    useRemindOffers,
+} from '@/lib/hooks/use-admissions';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
@@ -65,6 +77,7 @@ export default function AdmissionsPage() {
         isError,
     } = useApplications({ status });
     const expire = useExpireOffers();
+    const remind = useRemindOffers();
 
     const count = (s: ApplicationStatus) =>
         applications.filter((a) => a.status === s).length;
@@ -84,13 +97,30 @@ export default function AdmissionsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            {/* Wraps: two actions and a heading do not fit side by side on a
+                phone, and the second one was sliding off the right edge. */}
+            <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Admissions</h1>
                     <p className="text-muted-foreground">
                         Applications, from enquiry to a child on the roll.
                     </p>
                 </div>
+                {canDecide && (
+                    <Button
+                        variant="outline"
+                        onClick={() => remind.mutate()}
+                        disabled={remind.isPending}
+                        title="Email the families whose offers lapse within three days. Runs nightly too; nobody is warned twice about the same offer."
+                    >
+                        {remind.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <BellRing className="mr-2 h-4 w-4" />
+                        )}
+                        Chase pending offers
+                    </Button>
+                )}
                 {canDecide && (
                     <Button
                         variant="outline"

@@ -20,6 +20,21 @@ export interface PublicSchool {
     sessionName: string | null;
 }
 
+/**
+ * The next time the child is expected at the school.
+ *
+ * Deliberately only what a parent has to act on. The mark, the recommendation
+ * and the assessor's notes are not in this response and never will be — what
+ * the school made of a sitting is the school's to tell them.
+ */
+export interface PublicAppointment {
+    kind: 'ENTRANCE_EXAM' | 'INTERVIEW';
+    mode: 'IN_PERSON' | 'ONLINE';
+    scheduledFor: string;
+    /** A room, or a joining link when it is held online. */
+    location: string | null;
+}
+
 export interface PublicApplicationStatus {
     applicationNumber: string;
     childFirstName: string;
@@ -27,6 +42,8 @@ export interface PublicApplicationStatus {
     submittedAt: string;
     offerExpiresAt: string | null;
     schoolName: string;
+    /** The soonest sitting still to come, or null when there is none. */
+    nextAppointment: PublicAppointment | null;
 }
 
 export interface ApplyPayload {

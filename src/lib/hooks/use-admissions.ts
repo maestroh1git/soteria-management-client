@@ -7,6 +7,7 @@ import {
     getEnrolmentPreview,
     enrolApplication,
     expireLapsedOffers,
+    remindExpiringOffers,
     getAssessments,
     scheduleAssessment,
     rescheduleAssessment,
@@ -16,6 +17,11 @@ import {
     raiseFlag,
     clearFlag,
     getCriteriaVerdict,
+    getInterviewTemplates,
+    createInterviewTemplate,
+    retireInterviewTemplate,
+    getAssessmentAnswers,
+    type AnswerInput,
     type ApplicationStatus,
     type AssessmentOutcome,
     type FlagKind,
@@ -99,6 +105,23 @@ export function useExpireOffers() {
     });
 }
 
+export function useRemindOffers() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: remindExpiringOffers,
+        onSuccess: (warned) => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success(
+                warned.length
+                    ? `${warned.length} family/families reminded their offer is about to lapse`
+                    : 'Nobody is due a reminder — everyone near a deadline has had one',
+            );
+        },
+        onError: (e: Error) =>
+            toast.error(e.message || 'Could not send the reminders'),
+    });
+}
+
 // ── Assessments ──────────────────────────────────────────────────────────────
 
 export function useAssessments(applicationId: string) {
@@ -162,9 +185,66 @@ export function useCompleteAssessment(applicationId: string) {
             score?: number;
             outcome?: AssessmentOutcome;
             notes?: string;
+            answers?: AnswerInput[];
         }) => completeAssessment(id, dto),
         'Recorded',
     );
+}
+
+/**
+ * The question sets this school has published.
+ *
+ * Read as a list rather than one by id: a sitting is answered against the
+ * template it was BOOKED against, which may since have been retired, and the
+ * list carries those too.
+ */
+export function useInterviewTemplates(enabled = true) {
+    return useQuery({
+        queryKey: ['admissions', 'interview-templates'],
+        queryFn: getInterviewTemplates,
+        enabled,
+    });
+}
+
+/**
+ * Publishing a set, and standing one down.
+ *
+ * Both invalidate every admissions query rather than just the template list:
+ * which questions are in force decides what the record-interview dialog asks,
+ * so a stale list there would put questions to a panel that the school has
+ * stopped asking.
+ */
+export function useCreateInterviewTemplate() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: createInterviewTemplate,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success('Published. This is now the set in force.');
+        },
+        onError: (e: Error) =>
+            toast.error(e.message || 'Could not publish that set'),
+    });
+}
+
+export function useRetireInterviewTemplate() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: retireInterviewTemplate,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success('Retired. Interviews already run against it are kept.');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not retire it'),
+    });
+}
+
+export function useAssessmentAnswers(assessmentId: string | null) {
+    return useQuery({
+        queryKey: ['admissions', 'assessments', assessmentId, 'answers'],
+        queryFn: () => getAssessmentAnswers(assessmentId!),
+        enabled: !!assessmentId,
+    });
 }
 
 export function useSettleAssessment(applicationId: string) {
