@@ -159,10 +159,20 @@ export default function EmployeesPage() {
         },
         {
             id: 'actions',
+            // The label names the person, not the control. A screen reader
+            // moving down this column otherwise hears "button" two dozen times
+            // with nothing to tell one row from the next — and this is the
+            // keyboard path to a row, now that a mouse can click the row
+            // itself.
             cell: ({ row }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label={`Actions for ${row.original.firstName} ${row.original.lastName}`}
+                        >
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>

@@ -120,7 +120,7 @@ export default function StudentsPage() {
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => router.push(`/students/${row.original.id}`)}
-                    aria-label="View student"
+                    aria-label={`View ${row.original.firstName} ${row.original.lastName}`}
                 >
                     <Eye className="h-4 w-4" />
                 </Button>
