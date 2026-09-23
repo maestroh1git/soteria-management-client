@@ -1,7 +1,14 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { Loader2, AlertCircle, Clock } from 'lucide-react';
+import {
+    Loader2,
+    AlertCircle,
+    Clock,
+    CalendarClock,
+    MapPin,
+    Video,
+} from 'lucide-react';
 
 import {
     Card,
@@ -13,6 +20,7 @@ import {
 import {
     getApplicationStatus,
     type PublicApplicationStatus,
+    type PublicAppointment,
 } from '@/lib/api/public-admissions';
 
 /**
@@ -31,6 +39,8 @@ const SAY: Record<string, { title: string; detail: string; tone: string }> = {
     },
     ASSESSMENT_SCHEDULED: {
         title: 'Assessment arranged',
+        // Replaced below when the date is actually known — which, now that
+        // booking a sitting is what sets this status, it very nearly always is.
         detail: 'The school will contact you with the details.',
         tone: 'text-indigo-700 dark:text-indigo-300',
     },
@@ -82,6 +92,80 @@ const SAY: Record<string, { title: string; detail: string; tone: string }> = {
     },
 };
 
+const APPOINTMENT_LABEL: Record<PublicAppointment['kind'], string> = {
+    ENTRANCE_EXAM: 'Entrance exam',
+    INTERVIEW: 'Interview',
+};
+
+/**
+ * When to turn up, said the way somebody would say it aloud.
+ *
+ * The parent's half of the booking the registrar made. It shows only what they
+ * have to act on: a parent who needs to know the mark can ask the school, and
+ * a page anybody with a link can open is not where that belongs.
+ */
+function Appointment({ appointment }: { appointment: PublicAppointment }) {
+    const when = new Date(appointment.scheduledFor);
+    const online = appointment.mode === 'ONLINE';
+
+    return (
+        <div className="rounded-md border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900/50 dark:bg-indigo-950/30">
+            <div className="flex items-center gap-2 text-sm font-medium text-indigo-900 dark:text-indigo-200">
+                <CalendarClock className="h-4 w-4 shrink-0" />
+                {APPOINTMENT_LABEL[appointment.kind]}
+                {online && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs dark:bg-indigo-900/60">
+                        <Video className="h-3 w-3" />
+                        online
+                    </span>
+                )}
+            </div>
+
+            <p className="mt-2 text-lg font-semibold text-indigo-950 dark:text-indigo-100">
+                {when.toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                })}
+            </p>
+            <p className="text-indigo-900 dark:text-indigo-200">
+                {when.toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                })}
+            </p>
+
+            {/* A room, a joining link, or an honest admission of neither —
+                rather than a blank space the parent has to interpret. */}
+            {online ? (
+                appointment.location ? (
+                    <a
+                        href={appointment.location}
+                        className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-700 underline dark:text-indigo-300"
+                    >
+                        <Video className="h-3.5 w-3.5" />
+                        Joining link
+                    </a>
+                ) : (
+                    <p className="mt-2 text-sm text-indigo-800 dark:text-indigo-300">
+                        The school will send the joining details.
+                    </p>
+                )
+            ) : appointment.location ? (
+                <p className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-800 dark:text-indigo-300">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {appointment.location}
+                </p>
+            ) : (
+                <p className="mt-2 text-sm text-indigo-800 dark:text-indigo-300">
+                    The school will confirm where.
+                </p>
+            )}
+        </div>
+    );
+}
+
 export default function ApplicationStatusPage({
     params,
 }: {
@@ -129,6 +213,13 @@ export default function ApplicationStatusPage({
         tone: 'text-muted-foreground',
     };
 
+    // Once there is a date on the page, promising to be in touch about it reads
+    // as though the school has not got round to it yet.
+    const detail =
+        status.nextAppointment && status.status === 'ASSESSMENT_SCHEDULED'
+            ? 'The details are below. Contact the school if the date does not suit.'
+            : say.detail;
+
     return (
         <div className="space-y-6">
             <div>
@@ -141,9 +232,13 @@ export default function ApplicationStatusPage({
             <Card>
                 <CardHeader>
                     <CardTitle className={say.tone}>{say.title}</CardTitle>
-                    <CardDescription>{say.detail}</CardDescription>
+                    <CardDescription>{detail}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {status.nextAppointment && (
+                        <Appointment appointment={status.nextAppointment} />
+                    )}
+
                     <div>
                         <p className="text-sm text-muted-foreground">
                             Application number

@@ -30,6 +30,7 @@ import {
   CalendarRange,
   AlertTriangle,
   Trophy,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import { routeRolesFor } from "@/lib/auth/route-roles";
@@ -106,6 +107,12 @@ export const navigation: NavGroup[] = [
         title: "Admissions",
         href: "/admissions",
         icon: ClipboardList,
+        orgTypes: ["SCHOOL"],
+      },
+      {
+        title: "Question Sets",
+        href: "/admissions/question-sets",
+        icon: ListChecks,
         orgTypes: ["SCHOOL"],
       },
       {

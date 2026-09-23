@@ -116,6 +116,19 @@ export async function enrolApplication(
     )) as unknown as { studentId: string; admissionNumber: string };
 }
 
+/**
+ * Warn families whose offers are about to lapse.
+ *
+ * Runs nightly too. Safe to press: a family already warned about this offer
+ * is not warned again.
+ */
+export async function remindExpiringOffers(): Promise<AdmissionApplication[]> {
+    return (await api.post(
+        '/admissions/applications/offers/remind',
+        {},
+    )) as unknown as AdmissionApplication[];
+}
+
 export async function expireLapsedOffers(): Promise<AdmissionApplication[]> {
     return (await api.post(
         '/admissions/applications/offers/expire',
@@ -148,6 +161,12 @@ export interface AdmissionAssessment {
     outcome: AssessmentOutcome | null;
     notes: string | null;
     completedAt: string | null;
+    /**
+     * The question set this interview was booked against, fixed at booking so
+     * a template edited afterwards cannot change what the sitting covered.
+     * Null on an exam, and on an interview booked when nothing was active.
+     */
+    templateId: string | null;
     isOpen: boolean;
     /**
      * From the same rulebook the server refuses with. The screen renders its
@@ -159,9 +178,9 @@ export interface AdmissionAssessment {
 export async function getAssessments(
     applicationId: string,
 ): Promise<AdmissionAssessment[]> {
-    return (
-        await api.get(`/admissions/applications/${applicationId}/assessments`)
-    ).data;
+    return (await api.get(
+        `/admissions/applications/${applicationId}/assessments`,
+    )) as unknown as AdmissionAssessment[];
 }
 
 export async function scheduleAssessment(
@@ -173,28 +192,35 @@ export async function scheduleAssessment(
         location?: string;
     },
 ): Promise<AdmissionAssessment> {
-    return (
-        await api.post(
-            `/admissions/applications/${applicationId}/assessments`,
-            dto,
-        )
-    ).data;
+    return (await api.post(
+        `/admissions/applications/${applicationId}/assessments`,
+        dto,
+    )) as unknown as AdmissionAssessment;
 }
 
 export async function rescheduleAssessment(
     id: string,
     dto: { scheduledFor: string; location?: string },
 ): Promise<AdmissionAssessment> {
-    return (await api.patch(`/admissions/assessments/${id}/reschedule`, dto))
-        .data;
+    return (await api.patch(
+        `/admissions/assessments/${id}/reschedule`,
+        dto,
+    )) as unknown as AdmissionAssessment;
 }
 
 export async function completeAssessment(
     id: string,
-    dto: { score?: number; outcome?: AssessmentOutcome; notes?: string },
+    dto: {
+        score?: number;
+        outcome?: AssessmentOutcome;
+        notes?: string;
+        answers?: AnswerInput[];
+    },
 ): Promise<AdmissionAssessment> {
-    return (await api.patch(`/admissions/assessments/${id}/complete`, dto))
-        .data;
+    return (await api.patch(
+        `/admissions/assessments/${id}/complete`,
+        dto,
+    )) as unknown as AdmissionAssessment;
 }
 
 export async function settleAssessment(
@@ -202,8 +228,94 @@ export async function settleAssessment(
     what: 'no-show' | 'cancel',
     notes?: string,
 ): Promise<AdmissionAssessment> {
-    return (await api.patch(`/admissions/assessments/${id}/${what}`, { notes }))
-        .data;
+    return (await api.patch(`/admissions/assessments/${id}/${what}`, {
+        notes,
+    })) as unknown as AdmissionAssessment;
+}
+
+// ── The questions a panel asks ───────────────────────────────────────────────
+
+export type QuestionKind = 'TEXT' | 'RATING_1_5' | 'YES_NO';
+
+export interface InterviewQuestion {
+    id: string;
+    templateId: string;
+    prompt: string;
+    kind: QuestionKind;
+    sortOrder: number;
+    required: boolean;
+}
+
+export interface InterviewTemplate {
+    id: string;
+    name: string;
+    active: boolean;
+    createdAt: string;
+    questions?: InterviewQuestion[];
+    /**
+     * How many sittings were booked against this set. What makes retiring one
+     * legible: a set with interviews behind it is kept, not deleted.
+     */
+    interviewsRun: number;
+}
+
+/** What was said at one sitting, in the words it was asked in. */
+export interface InterviewResponse {
+    id: string;
+    assessmentId: string;
+    questionId: string | null;
+    /**
+     * The prompt as it stood when the question was put. The template may have
+     * been reworded or retired since; the answer still reads as it was given.
+     */
+    promptSnapshot: string;
+    answerText: string | null;
+    rating: number | null;
+}
+
+export interface AnswerInput {
+    questionId: string;
+    answerText?: string;
+    rating?: number;
+}
+
+/** Every question set, the active one first. */
+export async function getInterviewTemplates(): Promise<InterviewTemplate[]> {
+    return (await api.get(
+        '/admissions/interview-templates',
+    )) as unknown as InterviewTemplate[];
+}
+
+export async function createInterviewTemplate(dto: {
+    name: string;
+    questions: Array<{
+        prompt: string;
+        kind?: QuestionKind;
+        required?: boolean;
+    }>;
+}): Promise<InterviewTemplate> {
+    return (await api.post(
+        '/admissions/interview-templates',
+        dto,
+    )) as unknown as InterviewTemplate;
+}
+
+/** Stops the school asking these. Interviews already run against it are kept. */
+export async function retireInterviewTemplate(
+    id: string,
+): Promise<InterviewTemplate> {
+    return (await api.patch(
+        `/admissions/interview-templates/${id}/retire`,
+        {},
+    )) as unknown as InterviewTemplate;
+}
+
+export async function getAssessmentAnswers(
+    assessmentId: string,
+): Promise<InterviewResponse[]> {
+    return (await api.get(
+        `/admissions/assessments/${assessmentId}/answers`,
+    )) as unknown as InterviewResponse[];
 }
 
 // ── Vetting and criteria ─────────────────────────────────────────────────────
@@ -240,17 +352,19 @@ export interface CriteriaVerdict {
 export async function getFlags(
     applicationId: string,
 ): Promise<AdmissionFlag[]> {
-    return (await api.get(`/admissions/applications/${applicationId}/flags`))
-        .data;
+    return (await api.get(
+        `/admissions/applications/${applicationId}/flags`,
+    )) as unknown as AdmissionFlag[];
 }
 
 export async function raiseFlag(
     applicationId: string,
     dto: { kind: FlagKind; detail?: string },
 ): Promise<AdmissionFlag> {
-    return (
-        await api.post(`/admissions/applications/${applicationId}/flags`, dto)
-    ).data;
+    return (await api.post(
+        `/admissions/applications/${applicationId}/flags`,
+        dto,
+    )) as unknown as AdmissionFlag;
 }
 
 export async function clearFlag(id: string): Promise<void> {
@@ -264,8 +378,8 @@ export async function clearFlag(id: string): Promise<void> {
 export async function getCriteriaVerdict(
     applicationId: string,
 ): Promise<CriteriaVerdict | null> {
-    const { data } = await api.get(
+    const verdict = (await api.get(
         `/admissions/applications/${applicationId}/criteria`,
-    );
-    return data && Object.keys(data).length > 0 ? data : null;
+    )) as unknown as CriteriaVerdict | null;
+    return verdict && Object.keys(verdict).length > 0 ? verdict : null;
 }
