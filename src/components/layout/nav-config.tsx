@@ -5,9 +5,6 @@ import {
   ClipboardList,
   School,
   BadgeDollarSign,
-  ReceiptText,
-  HandCoins,
-  TrendingDown,
   Scale,
   PiggyBank,
   CalendarDays,
@@ -126,10 +123,9 @@ export const navigation: NavGroup[] = [
   {
     label: "Money",
     items: [
+      // Prices, invoices, receipts, concessions, optional fees and arrears
+      // are tabs of one hub now (C4.7).
       { title: "Fees", href: "/fees", icon: BadgeDollarSign, orgTypes: ["SCHOOL"] },
-      { title: "Invoices", href: "/fees/invoices", icon: ReceiptText, orgTypes: ["SCHOOL"] },
-      { title: "Receipts", href: "/fees/payments", icon: HandCoins, orgTypes: ["SCHOOL"] },
-      { title: "Arrears", href: "/fees/arrears", icon: TrendingDown, orgTypes: ["SCHOOL"] },
       { title: "Expenses", href: "/expenses", icon: Wallet },
       { title: "Budgets", href: "/budgets", icon: PiggyBank },
       { title: "Bank reconciliation", href: "/banking", icon: ArrowLeftRight },

@@ -63,6 +63,9 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/fees/arrears': 'fees.read',
   '/fees/invoices': 'fees.read',
   '/fees/payments': 'fees.read',
+  // Approvers read concessions to decide them, without reading the rest of Fees.
+  '/fees/concessions': 'fees.concessions.read',
+  '/fees/optional': 'fees.read',
   '/expenses': 'expenses.read',
   '/budgets': 'budgets.read',
   '/banking': 'banking.reconcile',

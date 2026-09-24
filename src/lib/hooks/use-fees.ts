@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 import {
     approveConcession,
     cancelInvoice,
@@ -34,6 +35,9 @@ import {
     getCollectionByTerm,
     getFeeSummary,
     type InvoiceStatus,
+    deleteConcession,
+    getSiblingCandidates,
+    unsubscribeStudentFee,
 } from '../api/fees';
 
 /** The catalogue changes rarely and is read by every price cell. */
@@ -133,7 +137,9 @@ export function useRemoveFeePrice() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['fees', 'structure'] });
             qc.invalidateQueries({ queryKey: ['fees', 'projection'] });
+            toast.success('Price removed');
         },
+        onError: (err) => toast.error(getApiErrorMessage(err, 'That price could not be removed.')),
     });
 }
 
@@ -298,6 +304,39 @@ export function useConcessionDecision() {
             qc.invalidateQueries({ queryKey: ['fees'] });
             toast.success(variables.approve ? 'Concession approved' : 'Concession refused');
         },
+        onError: (err) => toast.error(getApiErrorMessage(err, 'That could not be decided.')),
+    });
+}
+
+export function useWithdrawConcession() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: deleteConcession,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['fees', 'concessions'] });
+            toast.success('Concession withdrawn');
+        },
+        onError: (err) => toast.error(getApiErrorMessage(err, 'It could not be withdrawn.')),
+    });
+}
+
+export function useSiblingCandidates(enabled = true) {
+    return useQuery({
+        queryKey: ['fees', 'sibling-candidates'],
+        queryFn: getSiblingCandidates,
+        enabled,
+    });
+}
+
+export function useUnsubscribeStudentFee() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: unsubscribeStudentFee,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['fees'] });
+            toast.success('Taken off the fee');
+        },
+        onError: (err) => toast.error(getApiErrorMessage(err, 'That could not be changed.')),
     });
 }
 
@@ -317,7 +356,7 @@ export function useSubscribeStudentFee() {
         mutationFn: subscribeStudentFee,
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['fees'] });
-            toast.success('Added');
+            toast.success('Added to the fee');
         },
     });
 }

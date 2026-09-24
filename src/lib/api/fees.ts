@@ -354,25 +354,46 @@ export async function rejectConcession(id: string): Promise<Concession> {
     return (await api.post(`/fees/concessions/${id}/reject`, {})) as unknown as Concession;
 }
 
+/** Withdraw a concession that has not been decided. */
+export async function deleteConcession(id: string): Promise<void> {
+    await api.delete(`/fees/concessions/${id}`);
+}
+
+export interface SiblingFamily {
+    guardianId: string;
+    guardianName: string;
+    children: Array<{ id: string; name: string; admissionNumber: string }>;
+}
+
+/** Families with more than one child on the roll: a suggestion, never applied. */
+export async function getSiblingCandidates(): Promise<SiblingFamily[]> {
+    return (await api.get('/fees/concessions/sibling-candidates')) as unknown as SiblingFamily[];
+}
+
+export interface Subscription {
+    id: string;
+    studentId: string;
+    studentName: string;
+    admissionNumber: string;
+    feeItemId: string;
+    feeName: string;
+    amount: string | null;
+    active: boolean;
+    notes: string | null;
+}
+
+/** Take a child off an optional fee. */
+export async function unsubscribeStudentFee(id: string): Promise<void> {
+    await api.delete(`/fees/subscriptions/${id}`);
+}
+
 export async function getSubscriptions(filters?: {
     studentId?: string;
     sessionId?: string;
-}): Promise<
-    Array<{
-        id: string;
-        studentId: string;
-        studentName: string;
-        admissionNumber: string;
-        feeItemId: string;
-        feeName: string;
-        amount: string | null;
-        active: boolean;
-        notes: string | null;
-    }>
-> {
+}): Promise<Subscription[]> {
     return (await api.get('/fees/subscriptions', {
         params: filters ?? {},
-    })) as unknown as any;
+    })) as unknown as Subscription[];
 }
 
 export async function subscribeStudentFee(data: {
@@ -413,6 +434,8 @@ export interface Receipt {
     reference: string | null;
     status: 'RECEIVED' | 'VOIDED';
     payerName: string | null;
+    /** Whose receipt: to find their unpaid invoices when applying credit. */
+    studentId: string;
     admissionNumber: string;
     studentName: string;
     allocated: string;

@@ -38,6 +38,8 @@ import { Money } from '@/components/common/money';
 import { fromMinorUnits, toMinorUnits } from '@/lib/utils/money';
 import { statusOptions } from '@/lib/status/registry';
 import { ListFilters, matches } from '@/components/common/list-filters';
+import { ApplyCreditDialog } from '@/features/fees/receipts/apply-credit-dialog';
+import type { Receipt } from '@/lib/api/fees';
 
 /** Kobo, so the running total of an allocation never drifts. */
 const METHODS = [
@@ -78,6 +80,7 @@ export default function PaymentsPage() {
     const filtered = !!(search || method || state);
     const voidPayment = useVoidPayment();
     const [voidTarget, setVoidTarget] = useState<string | null>(null);
+    const [applying, setApplying] = useState<Receipt | null>(null);
     const [voidReason, setVoidReason] = useState('');
 
     return (
@@ -204,6 +207,15 @@ export default function PaymentsPage() {
                                                     >
                                                         <Download className="h-4 w-4" />
                                                     </Button>
+                                                    {canWrite && Number(p.unallocated) > 0 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setApplying(p)}
+                                                        >
+                                                            Apply credit
+                                                        </Button>
+                                                    )}
                                                     {canWrite && (
                                                         <Button
                                                             variant="ghost"
@@ -230,6 +242,7 @@ export default function PaymentsPage() {
             {canWrite && (
                 <RecordPaymentDialog open={recordOpen} onOpenChange={setRecordOpen} />
             )}
+            <ApplyCreditDialog receipt={applying} onClose={() => setApplying(null)} />
 
             <Dialog
                 open={!!voidTarget}
