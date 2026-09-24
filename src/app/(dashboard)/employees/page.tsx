@@ -238,7 +238,7 @@ export default function EmployeesPage() {
             {needsRole && (
                 <PrerequisiteNotice
                     message="Everyone on the staff list holds a position. Add at least one before adding staff."
-                    href="/roles"
+                    href="/setup/positions"
                     actionLabel="Add a position"
                 />
             )}

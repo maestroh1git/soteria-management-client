@@ -51,6 +51,7 @@ import {
     useSalaryComponents,
     useUpdateSalaryComponent,
 } from '@/features/staff/salary-components/hooks';
+import { PageHeader } from '@/components/layout/page-header';
 
 const APPLICABILITY_BY_ORG_TYPE: Record<string, string[]> = {
     SCHOOL: ['ALL_STAFF', 'TEACHING_STAFF', 'ADMIN_STAFF', 'SUPERVISORS', 'SUPPORT_STAFF'],
@@ -90,20 +91,20 @@ export default function SalaryComponentsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Salary Components</h1>
-                    <p className="text-muted-foreground">
-                        Define earnings, deductions, and calculation rules
-                    </p>
-                </div>
-                <Button
-                    onClick={openCreate}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Add Component
-                </Button>
-            </div>
+            <PageHeader
+                title="Salary components"
+                description="Define earnings, deductions, and calculation rules"
+                actions={
+                    <>
+                        <Button
+                            onClick={openCreate}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Add Component
+                        </Button>
+                    </>
+                }
+            />
 
             <div className="rounded-md border bg-white dark:bg-slate-950">
                 <table className="w-full text-sm">

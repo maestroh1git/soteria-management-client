@@ -1,16 +1,14 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useBranding } from '@/lib/hooks/use-branding';
 import { brandingImageUrl } from '@/lib/api/branding';
 import { useUIStore } from '@/stores/ui-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { filterNavigation } from './nav-config';
+import { NavGroups } from './nav-groups';
 import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
 
 
@@ -26,7 +24,6 @@ const ORG_TYPE_LABEL: Record<string, string> = {
 };
 
 export function Sidebar() {
-    const pathname = usePathname();
     const { tenantName, tenantOrgType, mayReach } = useAuth();
     const { word: learnerWord } = useLearnerTerm();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
@@ -83,49 +80,15 @@ export function Sidebar() {
 
             {/* Navigation */}
             <ScrollArea className="flex-1 min-h-0 overflow-hidden px-3 py-4">
-                <nav className="space-y-6">
-                    {filteredNavigation.map((group) => (
-                        <div key={group.label}>
-                            {!sidebarCollapsed && (
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">
-                                    {group.label}
-                                </p>
-                            )}
-                            {sidebarCollapsed && <Separator className="mb-2" />}
-                            <div className="space-y-1">
-                                {group.items.map((item) => {
-                                    const isActive =
-                                        pathname === item.href ||
-                                        (item.href !== '/' && pathname.startsWith(item.href));
-
-                                    return (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            className={cn(
-                                                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                                                isActive
-                                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400'
-                                                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900',
-                                                sidebarCollapsed && 'justify-center px-2',
-                                            )}
-                                            title={sidebarCollapsed ? item.title : undefined}
-                                        >
-                                            <item.icon className="h-4 w-4 flex-shrink-0" />
-                                            {!sidebarCollapsed && <span>{item.title}</span>}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
-                </nav>
+                <NavGroups groups={filteredNavigation} rail={sidebarCollapsed} />
             </ScrollArea>
 
             {/* Collapse toggle */}
             <div className="border-t p-3">
                 <button
+                    type="button"
                     onClick={toggleSidebar}
+                    aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     className="flex items-center justify-center w-full rounded-lg py-2 text-sm text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
                 >
                     {sidebarCollapsed ? (

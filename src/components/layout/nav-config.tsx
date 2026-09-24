@@ -8,17 +8,11 @@ import {
   ReceiptText,
   HandCoins,
   TrendingDown,
-  Landmark,
   Scale,
   PiggyBank,
-  Briefcase,
-  Building2,
-  Layers,
   CalendarDays,
-  CalendarClock,
   Wallet,
   Calculator,
-  CreditCard,
   Receipt,
   FileText,
   BarChart3,
@@ -36,7 +30,6 @@ import {
   Banknote,
   TreePalm,
   ArrowLeftRight,
-  Percent,
 } from "lucide-react";
 
 export interface NavItem {
@@ -73,160 +66,89 @@ export const navigation: NavGroup[] = [
     // Deliberately unrestricted. Everyone with an account is also an
     // employee, including administrators, and the API resolves the subject
     // from the token — there is nothing here to gate.
-    label: "My Account",
+    label: "Me",
     items: [
-      // A form teacher's landing page. Beside My Pay rather than in the
-      // admin sidebar: before this, a teacher signing in got the payroll
-      // dashboard, which is nobody's idea of a teacher's home page.
-      //
-      // Deliberately ungated, like the rest of this group. Being an
-      // Educator is a job role on the employee record and does not grant
-      // the `academic.teacher` system role, so gating on that hid a
-      // teacher's own class from them until somebody remembered a second,
-      // invisible step. The page resolves from the account and says
-      // plainly when you are not a form teacher.
-      {
-        title: "My Classes",
-        href: "/me/classes",
-        icon: Presentation,
-        orgTypes: ["SCHOOL"],
-      },
+      // A form teacher's landing page. Ungated like the rest of this group:
+      // being an Educator is a job on the employee record, not the
+      // `academic.teacher` access, and gating on that hid a teacher's own
+      // class from them. The page says plainly when you have no class.
+      { title: "My Classes", href: "/me/classes", icon: Presentation, orgTypes: ["SCHOOL"] },
       { title: "My Pay", href: "/me", icon: Banknote },
       { title: "My Leave", href: "/me/leave", icon: TreePalm },
       { title: "My Profile", href: "/me/profile", icon: UserCircle },
     ],
   },
   {
-    label: "Overview",
+    label: "Home",
     items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
   },
   {
-    label: "School",
+    label: "People",
     items: [
+      { title: "Staff", href: "/employees", icon: Users },
       {
         title: "Students",
-    // "Pupils" in a school that says so (D7); see filterNavigation.
-    learnerTerm: true,
+        // "Pupils" in a school that says so (D7); see filterNavigation.
+        learnerTerm: true,
         href: "/students",
         icon: GraduationCap,
         orgTypes: ["SCHOOL"],
       },
-      {
-        title: "Admissions",
-        href: "/admissions",
-        icon: ClipboardList,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Question Sets",
-        href: "/admissions/question-sets",
-        icon: ListChecks,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Classes",
-        href: "/classes",
-        icon: School,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Register",
-        href: "/attendance",
-        icon: CalendarCheck,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "The Gate",
-        href: "/attendance/gate",
-        icon: DoorOpen,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Follow Up",
-        href: "/attendance/at-risk",
-        icon: AlertTriangle,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Awards",
-        href: "/awards",
-        icon: Trophy,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "School Calendar",
-        href: "/attendance/calendar",
-        icon: CalendarRange,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Fees",
-        href: "/fees",
-        icon: BadgeDollarSign,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Invoices",
-        href: "/fees/invoices",
-        icon: ReceiptText,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Receipts",
-        href: "/fees/payments",
-        icon: HandCoins,
-        orgTypes: ["SCHOOL"],
-      },
-      {
-        title: "Arrears",
-        href: "/fees/arrears",
-        icon: TrendingDown,
-        orgTypes: ["SCHOOL"],
-      },
     ],
   },
   {
-    label: "Staff",
+    label: "Admissions",
     items: [
-      { title: "Employees", href: "/employees", icon: Users },
-      { title: "Positions", href: "/roles", icon: Briefcase },
-      { title: "Departments", href: "/departments", icon: Building2 },
-      { title: "Grades", href: "/grades", icon: Layers },
+      { title: "Applications", href: "/admissions", icon: ClipboardList, orgTypes: ["SCHOOL"] },
+      { title: "Question sets", href: "/admissions/question-sets", icon: ListChecks, orgTypes: ["SCHOOL"] },
+    ],
+  },
+  {
+    label: "School day",
+    items: [
+      { title: "Classes", href: "/classes", icon: School, orgTypes: ["SCHOOL"] },
+      { title: "Register", href: "/attendance", icon: CalendarCheck, orgTypes: ["SCHOOL"] },
+      { title: "The Gate", href: "/attendance/gate", icon: DoorOpen, orgTypes: ["SCHOOL"] },
+      { title: "Follow up", href: "/attendance/at-risk", icon: AlertTriangle, orgTypes: ["SCHOOL"] },
+      { title: "Awards", href: "/awards", icon: Trophy, orgTypes: ["SCHOOL"] },
+      { title: "School calendar", href: "/attendance/calendar", icon: CalendarRange, orgTypes: ["SCHOOL"] },
+    ],
+  },
+  {
+    label: "Pay",
+    items: [
+      { title: "Pay runs", href: "/payroll", icon: Calculator },
+      { title: "Payslips", href: "/payslips", icon: FileText },
+      { title: "Loans & advances", href: "/loans", icon: Receipt },
       { title: "Leave", href: "/leave", icon: CalendarDays },
-      { title: "Events", href: "/events", icon: CalendarClock },
-      {
-        title: "Salary Components",
-        href: "/salary-components",
-        icon: CreditCard,
-      },
-      { title: "Bank list", href: "/banks", icon: Landmark },
     ],
   },
   {
-    label: "Finance",
+    label: "Money",
     items: [
-      { title: "Payroll", href: "/payroll", icon: Calculator },
-      { title: "Ledger", href: "/ledger", icon: Scale },
+      { title: "Fees", href: "/fees", icon: BadgeDollarSign, orgTypes: ["SCHOOL"] },
+      { title: "Invoices", href: "/fees/invoices", icon: ReceiptText, orgTypes: ["SCHOOL"] },
+      { title: "Receipts", href: "/fees/payments", icon: HandCoins, orgTypes: ["SCHOOL"] },
+      { title: "Arrears", href: "/fees/arrears", icon: TrendingDown, orgTypes: ["SCHOOL"] },
       { title: "Expenses", href: "/expenses", icon: Wallet },
       { title: "Budgets", href: "/budgets", icon: PiggyBank },
       { title: "Bank reconciliation", href: "/banking", icon: ArrowLeftRight },
-      { title: "Loans", href: "/loans", icon: Receipt },
-      { title: "Tax Rules", href: "/tax-rules", icon: Percent },
+      { title: "Ledger", href: "/ledger", icon: Scale },
     ],
   },
   {
-    label: "Reporting",
+    label: "Insight",
     items: [
-      { title: "Payslips", href: "/payslips", icon: FileText },
       { title: "Reports", href: "/reports", icon: BarChart3 },
+      { title: "Audit log", href: "/audit-logs", icon: Shield },
     ],
   },
   {
-    label: "System",
-    items: [
-      { title: "Settings", href: "/settings", icon: Settings },
-      { title: "Audit Logs", href: "/audit-logs", icon: Shield },
-    ],
+    // One door to everything that is set once and changed rarely: the
+    // organisation, its structure, pay rules and the school year. Eight
+    // sidebar entries became one (ROADMAP-EXECUTION.md, C4.1–C4.2).
+    label: "Setup",
+    items: [{ title: "Setup", href: "/setup", icon: Settings }],
   },
 ];
 

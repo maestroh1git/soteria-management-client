@@ -186,7 +186,7 @@ export function EmployeeForm({
         return (
             <PrerequisiteNotice
                 message="Add at least one position first — everyone on the staff list holds one."
-                href="/roles"
+                href="/setup/positions"
                 actionLabel="Add a position"
             />
         );
@@ -652,7 +652,7 @@ export function EmployeeForm({
                                                 {filteredRoles.length === 0 && (
                                                     <EmptySelectHint
                                                         what="roles in that department"
-                                                        href="/roles"
+                                                        href="/setup/positions"
                                                         action="Add one under Staff → Roles"
                                                     />
                                                 )}
@@ -688,7 +688,7 @@ export function EmployeeForm({
                                             {grades.length === 0 ? (
                                                 <EmptySelectHint
                                                     what="grades"
-                                                    href="/grades"
+                                                    href="/setup/grades"
                                                     action="Add one under Staff → Grades"
                                                 />
                                             ) : (

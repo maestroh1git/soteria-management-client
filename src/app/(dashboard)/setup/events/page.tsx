@@ -32,6 +32,7 @@ import {
     useDeleteEvent,
 } from '@/lib/hooks/use-events';
 import { EVENT_TYPES, type EventType, type OrgEvent } from '@/lib/api/events';
+import { PageHeader } from '@/components/layout/page-header';
 
 const TYPE_LABEL: Record<EventType, string> = {
     GENERAL: 'General',
@@ -131,19 +132,18 @@ export default function EventsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Events</h1>
-                    <p className="text-sm text-muted-foreground">
-                        What the whole organisation should see on the way in. Birthdays are
-                        added automatically — create the rest here.
-                    </p>
-                </div>
-                <Button onClick={startAdd} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add event
-                </Button>
-            </div>
+            <PageHeader
+                title="Events"
+                description="What the whole organisation should see on the way in. Birthdays are added automatically — create the rest here."
+                actions={
+                    <>
+                        <Button onClick={startAdd} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Add event
+                        </Button>
+                    </>
+                }
+            />
 
             {isLoading ? (
                 <LoadingSkeleton rows={6} />

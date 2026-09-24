@@ -1,4 +1,5 @@
 import api from './client';
+import { saveBlob } from '@/lib/utils/download';
 import type {
   MonthlySummary,
   TaxSummary,
@@ -37,20 +38,28 @@ export async function getYearEndReport(year?: number): Promise<YearEndReport> {
 
 // ── Export URLs ──────────────────────────────────────────────
 
-export function getExportCsvUrl(filters: ReportFilters): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-  const params = new URLSearchParams();
-  if (filters.month) params.set('month', String(filters.month));
-  if (filters.year) params.set('year', String(filters.year));
-  if (filters.reportType) params.set('reportType', filters.reportType);
-  return `${baseUrl}/reports/export/csv?${params.toString()}`;
-}
-
-export function getExportExcelUrl(filters: ReportFilters): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-  const params = new URLSearchParams();
-  if (filters.month) params.set('month', String(filters.month));
-  if (filters.year) params.set('year', String(filters.year));
-  if (filters.reportType) params.set('reportType', filters.reportType);
-  return `${baseUrl}/reports/export/excel?${params.toString()}`;
+/**
+ * A report as a file, downloaded with the login attached. These used to be
+ * URLs opened in a new tab, which carry no token, so every export was a 401.
+ */
+export async function downloadReport(
+  format: 'csv' | 'excel',
+  filters: ReportFilters,
+): Promise<void> {
+  const params: Record<string, string> = {};
+  if (filters.month) params.month = String(filters.month);
+  if (filters.year) params.year = String(filters.year);
+  if (filters.reportType) params.reportType = filters.reportType;
+  const data = await api.get(`/reports/export/${format}`, {
+    params,
+    responseType: 'blob',
+  });
+  const stem = `${filters.reportType ?? 'report'}-${filters.year ?? ''}-${String(filters.month ?? '').padStart(2, '0')}`;
+  saveBlob(
+    data as unknown as BlobPart,
+    `${stem}.${format === 'csv' ? 'csv' : 'xlsx'}`,
+    format === 'csv'
+      ? 'text/csv'
+      : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  );
 }

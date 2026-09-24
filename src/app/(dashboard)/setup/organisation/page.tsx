@@ -68,6 +68,7 @@ import type { PayrollSetting } from '@/lib/api/settings';
 import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LearnerTermSetting } from '@/components/settings/learner-term-setting';
+import { PageHeader } from '@/components/layout/page-header';
 
 // ── Schemas ─────────────────────────────────────────────────
 
@@ -419,11 +420,10 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground">Manage team, countries and organization profile</p>
-            </div>
+            <PageHeader
+                title="Organisation & access"
+                description="Your organisation’s profile and branding, who on the team can do what, and the reference data every school shares."
+            />
 
             <Tabs defaultValue={canManageTeam ? 'team' : 'countries'} className="space-y-6">
                 <TabsList>

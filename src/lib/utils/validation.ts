@@ -257,7 +257,6 @@ export const processPayrollSchema = z.object({
 export type ProcessPayrollValues = z.infer<typeof processPayrollSchema>;
 
 export const salaryApprovalSchema = z.object({
-  approverId: z.string().uuid('Approver is required'),
   notes: z.string().optional(),
 });
 
@@ -290,7 +289,6 @@ export const createAdvanceSchema = z.object({
 export type CreateAdvanceValues = z.infer<typeof createAdvanceSchema>;
 
 export const loanApprovalSchema = z.object({
-  approverId: z.string().uuid('Approver is required'),
   notes: z.string().optional(),
 });
 
