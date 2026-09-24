@@ -30,9 +30,8 @@ import {
     useRejectAdjustment,
     useDeleteAdjustment,
 } from '@/lib/hooks/use-payroll-adjustments';
-import { useQuery } from '@tanstack/react-query';
 import { useEmployees } from '@/lib/hooks/use-employees';
-import { getSalaryComponents } from '@/lib/api/salary-components';
+import { useSalaryComponents } from '@/features/staff/salary-components/hooks';
 import type {
     AdjustmentType,
     PayrollAdjustment,
@@ -242,10 +241,7 @@ function AdjustmentFormDialog({
     payPeriodId: string;
 }) {
     const { data: employees = [] } = useEmployees({ status: 'ACTIVE' });
-    const { data: components = [] } = useQuery({
-        queryKey: ['salary-components'],
-        queryFn: () => getSalaryComponents(),
-    });
+    const { data: components = [] } = useSalaryComponents();
     const createMutation = useCreateAdjustment();
 
     const [employeeId, setEmployeeId] = useState('');

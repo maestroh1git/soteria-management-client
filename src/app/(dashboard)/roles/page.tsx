@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Pencil, Trash2, Loader2, Shield } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,30 +37,25 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import {
-    getRoles,
-    createRole,
-    updateRole,
-    deleteRole,
-    getPermissions,
     type CreateRoleDto,
-} from '@/lib/api/roles';
-import { getDepartments } from '@/features/staff/departments/api';
+} from '@/features/staff/positions/api';
 import { createRoleSchema, type CreateRoleValues } from '@/lib/utils/validation';
 import { RoleType } from '@/lib/types/enums';
 import type { Role } from '@/lib/types/api';
+import { useDepartments } from '@/features/staff/departments/hooks';
+import {
+    useCreatePosition,
+    useDeletePosition,
+    usePermissionCatalogue,
+    usePositions,
+    useUpdatePosition,
+} from '@/features/staff/positions/hooks';
 
 export default function RolesPage() {
-    const qc = useQueryClient();
-    const { data: roles = [], isLoading } = useQuery({
-        queryKey: ['roles'],
-        queryFn: getRoles,
-    });
+    const { data: roles = [], isLoading } = usePositions();
     // Roles should be grouped under a department (powers the department-scoped
     // role picker on the employee form) — nudge users to create one first.
-    const departmentsQuery = useQuery({
-        queryKey: ['departments'],
-        queryFn: getDepartments,
-    });
+    const departmentsQuery = useDepartments();
     const noDepartments =
         departmentsQuery.data !== undefined && departmentsQuery.data.length === 0;
 
@@ -70,37 +63,11 @@ export default function RolesPage() {
     const [editTarget, setEditTarget] = useState<Role | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
 
-    const createMutation = useMutation({
-        mutationFn: (dto: CreateRoleDto) => createRole(dto),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['roles'] });
-            toast.success('Role created');
-            setDialogOpen(false);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const createMutation = useCreatePosition();
 
-    const updateMutation = useMutation({
-        mutationFn: ({ id, dto }: { id: string; dto: Partial<CreateRoleDto> }) =>
-            updateRole(id, dto),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['roles'] });
-            toast.success('Role updated');
-            setEditTarget(null);
-            setDialogOpen(false);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const updateMutation = useUpdatePosition();
 
-    const delMutation = useMutation({
-        mutationFn: (id: string) => deleteRole(id),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['roles'] });
-            toast.success('Role deleted');
-            setDeleteTarget(null);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const delMutation = useDeletePosition();
 
     if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -211,9 +178,12 @@ export default function RolesPage() {
                         permissionIds: values.permissionIds,
                     };
                     if (editTarget) {
-                        updateMutation.mutate({ id: editTarget.id, dto });
+                        updateMutation.mutate(
+                            { id: editTarget.id, dto },
+                            { onSuccess: () => { setEditTarget(null); setDialogOpen(false); } },
+                        );
                     } else {
-                        createMutation.mutate(dto);
+                        createMutation.mutate(dto, { onSuccess: () => setDialogOpen(false) });
                     }
                 }}
             />
@@ -227,7 +197,12 @@ export default function RolesPage() {
                 variant="destructive"
                 loading={delMutation.isPending}
                 onConfirm={async () => {
-                    if (deleteTarget) await delMutation.mutateAsync(deleteTarget.id);
+                    if (!deleteTarget) return;
+                    // A refusal is toasted by the hook; the dialog stays open.
+                    await delMutation.mutateAsync(deleteTarget.id).then(
+                        () => setDeleteTarget(null),
+                        () => undefined,
+                    );
                 }}
             />
         </div>
@@ -247,16 +222,10 @@ function RoleFormDialog({
     isLoading: boolean;
     onSubmit: (values: CreateRoleValues) => void;
 }) {
-    const { data: departments = [] } = useQuery({
-        queryKey: ['departments'],
-        queryFn: getDepartments,
-    });
-    const { data: permissions = [] } = useQuery({
-        queryKey: ['permissions'],
-        queryFn: getPermissions,
-    });
+    const { data: departments = [] } = useDepartments();
+    const { data: permissions = [] } = usePermissionCatalogue();
     // For the reporting line. A role cannot report to itself.
-    const { data: allRoles = [] } = useQuery({ queryKey: ['roles'], queryFn: getRoles });
+    const { data: allRoles = [] } = usePositions();
     const reportingOptions = allRoles.filter((r) => r.id !== role?.id);
 
     const form = useForm<CreateRoleValues>({

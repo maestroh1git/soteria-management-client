@@ -1,8 +1,7 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { getApiErrorMessage } from '@/lib/utils/api-error';
+import { useQuery } from '@tanstack/react-query';
+import { useResourceMutation } from '@/lib/hooks/use-resource-mutation';
 import {
   activateDepartment,
   createDepartment,
@@ -20,57 +19,41 @@ import {
  * other reader of the list (the employee form, budgets, onboarding).
  */
 export const DEPARTMENTS_KEY = ['departments'] as const;
+const invalidate = [DEPARTMENTS_KEY];
 
 export function useDepartments(enabled = true) {
   return useQuery({ queryKey: DEPARTMENTS_KEY, queryFn: getDepartments, enabled });
 }
 
-/**
- * `inForm`: the change is made from a FormDialog, which shows a refusal on
- * the form. Anything else (a row's toggle, a delete) says so in a toast.
- */
-function useDepartmentMutation<V>(
-  fn: (v: V) => Promise<unknown>,
-  done: string | ((v: V) => string),
-  inForm = false,
-) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: fn,
-    onSuccess: (_, v) => {
-      qc.invalidateQueries({ queryKey: DEPARTMENTS_KEY });
-      toast.success(typeof done === 'function' ? done(v) : done);
-    },
-    onError: inForm
-      ? undefined
-      : (err) => toast.error(getApiErrorMessage(err, 'That could not be done. Please try again.')),
+export function useCreateDepartment() {
+  return useResourceMutation((dto: CreateDepartmentDto) => createDepartment(dto), {
+    invalidate,
+    success: 'Department added',
+    inForm: true,
   });
 }
 
-export function useCreateDepartment() {
-  return useDepartmentMutation(
-    (dto: CreateDepartmentDto) => createDepartment(dto),
-    'Department added',
-    true,
-  );
-}
-
 export function useUpdateDepartment() {
-  return useDepartmentMutation(
+  return useResourceMutation(
     ({ id, dto }: { id: string; dto: UpdateDepartmentDto }) => updateDepartment(id, dto),
-    'Department updated',
-    true,
+    { invalidate, success: 'Department updated', inForm: true },
   );
 }
 
 export function useDeleteDepartment() {
-  return useDepartmentMutation((id: string) => deleteDepartment(id), 'Department deleted');
+  return useResourceMutation((id: string) => deleteDepartment(id), {
+    invalidate,
+    success: 'Department deleted',
+  });
 }
 
 export function useSetDepartmentActive() {
-  return useDepartmentMutation(
+  return useResourceMutation(
     ({ id, active }: { id: string; active: boolean }) =>
       active ? activateDepartment(id) : deactivateDepartment(id),
-    ({ active }) => (active ? 'Department reactivated' : 'Department deactivated'),
+    {
+      invalidate,
+      success: ({ active }) => (active ? 'Department reactivated' : 'Department deactivated'),
+    },
   );
 }

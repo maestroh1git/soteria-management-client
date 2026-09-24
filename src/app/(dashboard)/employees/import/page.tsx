@@ -9,8 +9,6 @@ import {
     CheckCircle2,
     Loader2,
 } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -23,12 +21,12 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import type { ImportPreview } from '@/features/staff/import/api';
 import {
-    getImportOptions,
-    previewImport,
-    commitImport,
-    type ImportPreview,
-} from '@/lib/api/employee-import';
+    useCommitImport,
+    useImportOptions,
+    usePreviewImport,
+} from '@/features/staff/import/hooks';
 import { PageHeader } from '@/components/layout/page-header';
 
 /**
@@ -41,51 +39,36 @@ import { PageHeader } from '@/components/layout/page-header';
  */
 export default function ImportStaffPage() {
     const router = useRouter();
-    const qc = useQueryClient();
 
     const [file, setFile] = useState<File | null>(null);
     const [createMissingRoles, setCreateMissingRoles] = useState(false);
     const [preview, setPreview] = useState<ImportPreview | null>(null);
-    const [checking, setChecking] = useState(false);
-    const [importing, setImporting] = useState(false);
+    const previewMutation = usePreviewImport();
+    const commitMutation = useCommitImport();
+    const checking = previewMutation.isPending;
+    const importing = commitMutation.isPending;
 
-    const { data: options } = useQuery({
-        queryKey: ['employees', 'import', 'options'],
-        queryFn: getImportOptions,
-    });
+    const { data: options } = useImportOptions();
 
     const choose = (f: File | null) => {
         setFile(f);
         setPreview(null); // a new file invalidates the previous check
     };
 
-    const check = async () => {
+    const check = () => {
         if (!file) return;
-        setChecking(true);
-        try {
-            setPreview(await previewImport(file, createMissingRoles));
-        } catch (e) {
-            toast.error(
-                e instanceof Error ? e.message : 'Could not read that file',
-            );
-        } finally {
-            setChecking(false);
-        }
+        previewMutation.mutate(
+            { file, createMissingRoles },
+            { onSuccess: (p) => setPreview(p) },
+        );
     };
 
-    const confirm = async () => {
+    const confirm = () => {
         if (!file) return;
-        setImporting(true);
-        try {
-            const result = await commitImport(file, createMissingRoles);
-            toast.success(`Imported ${result.created} employee(s)`);
-            qc.invalidateQueries({ queryKey: ['employees'] });
-            router.push('/employees');
-        } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Import failed');
-        } finally {
-            setImporting(false);
-        }
+        commitMutation.mutate(
+            { file, createMissingRoles },
+            { onSuccess: () => router.push('/employees') },
+        );
     };
 
     const blocked = !!preview?.errors.length;

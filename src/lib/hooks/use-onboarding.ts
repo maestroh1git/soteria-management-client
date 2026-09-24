@@ -1,9 +1,9 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDepartments } from '@/features/staff/departments/api';
-import { getRoles } from '@/lib/api/roles';
-import { getSalaryComponents } from '@/lib/api/salary-components';
+import { useDepartments } from '@/features/staff/departments/hooks';
+import { usePositions } from '@/features/staff/positions/hooks';
+import { useSalaryComponents } from '@/features/staff/salary-components/hooks';
 import { getTaxRules } from '@/lib/api/tax';
 import { getEmployees } from '@/lib/api/employees';
 import { getPayPeriods } from '@/lib/api/pay-periods';
@@ -20,15 +20,10 @@ import type { Tenant } from '@/lib/types/api';
 // ── Thin existence hooks (share the same query keys as the list pages, so
 //    react-query dedupes — no extra network when a page already loaded them).
 //    `enabled` lets callers skip endpoints the current role would 403 on. ──
-export function useRolesList(enabled = true) {
-  return useQuery({ queryKey: ['roles'], queryFn: getRoles, enabled });
-}
-export function useDepartmentsList(enabled = true) {
-  return useQuery({ queryKey: ['departments'], queryFn: getDepartments, enabled });
-}
-export function useSalaryComponentsList(enabled = true) {
-  return useQuery({ queryKey: ['salary-components'], queryFn: () => getSalaryComponents(), enabled });
-}
+// The staff structure lives in features/staff; these names stay for callers.
+export const useRolesList = usePositions;
+export const useDepartmentsList = useDepartments;
+export const useSalaryComponentsList = useSalaryComponents;
 export function useTaxRulesList(enabled = true) {
   return useQuery({ queryKey: ['tax-rules'], queryFn: getTaxRules, enabled });
 }
