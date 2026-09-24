@@ -47,16 +47,13 @@ import {
     useSetFeePrice,
 } from '@/lib/hooks/use-fees';
 import type { FeeCategory } from '@/lib/api/fees';
+import { Money } from '@/components/common/money';
+import { formatAmount } from '@/lib/utils/money';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 type FeeItemRow = NonNullable<ReturnType<typeof useFeeItems>['data']>[number];
 
 /** Groups digits without parsing the string into a float. */
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
-
 const CATEGORIES: FeeCategory[] = [
     'TUITION',
     'BOARDING',
@@ -65,6 +62,8 @@ const CATEGORIES: FeeCategory[] = [
     'MATERIALS',
     'OTHER',
 ];
+
+const FEES_TABS = ['prices', 'catalogue'] as const;
 
 /**
  * The fee catalogue and the price list.
@@ -77,6 +76,7 @@ const CATEGORIES: FeeCategory[] = [
  * Nothing on this page bills anybody. Invoicing is S2.
  */
 export default function FeesPage() {
+    const [tab, setTab] = useTabParam(FEES_TABS);
     const { data: sessions } = useSessions();
     const [sessionId, setSessionId] = useState<string>();
     const [termId, setTermId] = useState<string>();
@@ -160,7 +160,7 @@ export default function FeesPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="prices">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="prices">Price list</TabsTrigger>
                     <TabsTrigger value="catalogue">Fees charged</TabsTrigger>
@@ -185,7 +185,7 @@ export default function FeesPage() {
                                             Whole session
                                         </p>
                                         <p className="text-2xl font-bold tabular-nums">
-                                            ₦{money(projection.projectedTotal)}
+                                            <Money value={projection.projectedTotal} />
                                         </p>
                                     </div>
                                     {projection.terms.map((t) => (
@@ -194,7 +194,7 @@ export default function FeesPage() {
                                                 {t.termName}
                                             </p>
                                             <p className="text-lg font-semibold tabular-nums">
-                                                ₦{money(t.projected)}
+                                                <Money value={t.projected} />
                                             </p>
                                         </div>
                                     ))}
@@ -323,7 +323,7 @@ export default function FeesPage() {
                                                     );
                                                 })}
                                                 <td className="px-4 py-2 text-right font-semibold tabular-nums">
-                                                    ₦{money((rowTotal(level.id) / 100).toFixed(2))}
+                                                    <Money value={(rowTotal(level.id) / 100).toFixed(2)} />
                                                 </td>
                                             </tr>
                                         ))}
@@ -448,7 +448,7 @@ function PriceCell({
     if (readOnly) {
         return (
             <span className="block w-28 text-right tabular-nums text-muted-foreground">
-                {value ? money(Number(value).toFixed(2)) : '—'}
+                {value ? formatAmount(value) : '—'}
             </span>
         );
     }

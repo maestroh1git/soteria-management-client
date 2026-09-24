@@ -6,7 +6,6 @@ import { Plus, Check, X, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
@@ -31,20 +30,14 @@ import {
     useRejectAdjustment,
     useDeleteAdjustment,
 } from '@/lib/hooks/use-payroll-adjustments';
-import { useQuery } from '@tanstack/react-query';
 import { useEmployees } from '@/lib/hooks/use-employees';
-import { getSalaryComponents } from '@/lib/api/salary-components';
+import { useSalaryComponents } from '@/features/staff/salary-components/hooks';
 import type {
-    AdjustmentStatus,
     AdjustmentType,
     PayrollAdjustment,
 } from '@/lib/types/api';
-
-const STATUS_VARIANT: Record<AdjustmentStatus, 'default' | 'secondary' | 'destructive'> = {
-    APPROVED: 'default',
-    PENDING: 'secondary',
-    REJECTED: 'destructive',
-};
+import { StatusBadge } from '@/components/common/status-badge';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 const TYPE_LABEL: Record<AdjustmentType, string> = {
     EARNING: 'One-off earning',
@@ -166,13 +159,12 @@ function AdjustmentRow({
     onDelete: () => void;
     busy: boolean;
 }) {
-    const employeeName = adjustment.employee
-        ? `${adjustment.employee.firstName} ${adjustment.employee.lastName}`
-        : '—';
 
     return (
         <tr className="border-b">
-            <td className="px-3 py-2">{employeeName}</td>
+            <td className="px-3 py-2">
+                <EmployeeLink id={adjustment.employeeId} employee={adjustment.employee} />
+            </td>
             <td className="px-3 py-2 text-muted-foreground">
                 {TYPE_LABEL[adjustment.type]}
             </td>
@@ -193,9 +185,7 @@ function AdjustmentRow({
                 )}
             </td>
             <td className="px-3 py-2">
-                <Badge variant={STATUS_VARIANT[adjustment.status]}>
-                    {adjustment.status}
-                </Badge>
+                <StatusBadge kind="adjustment" status={adjustment.status} />
             </td>
             <td className="px-3 py-2">
                 <div className="flex items-center justify-end gap-1">
@@ -251,10 +241,7 @@ function AdjustmentFormDialog({
     payPeriodId: string;
 }) {
     const { data: employees = [] } = useEmployees({ status: 'ACTIVE' });
-    const { data: components = [] } = useQuery({
-        queryKey: ['salary-components'],
-        queryFn: () => getSalaryComponents(),
-    });
+    const { data: components = [] } = useSalaryComponents();
     const createMutation = useCreateAdjustment();
 
     const [employeeId, setEmployeeId] = useState('');

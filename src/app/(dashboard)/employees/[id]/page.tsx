@@ -1,8 +1,8 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -19,10 +19,12 @@ import { useEmployee } from '@/lib/hooks/use-employees';
 import { BankAccountsPanel } from '@/components/employees/bank-accounts-panel';
 import { RecordCompletenessPanel } from '@/components/employees/record-completeness-panel';
 import { SalaryComponentsPanel } from '@/components/employees/salary-components-panel';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
-import { formatDate } from '@/lib/utils/dates';
+import { formatDate, formatDateTime } from '@/lib/utils/dates';
+import { PageHeader } from '@/components/layout/page-header';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 export default function EmployeeDetailPage({
     params,
@@ -30,21 +32,28 @@ export default function EmployeeDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
-    const { hasRole } = useAuth();
+    const can = useCan();
     // Bank details & salary components are forbidden for VIEWER (S13) — skip the
     // requests and hide the tabs entirely for roles that can't manage them.
-    const canViewSensitive = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canViewSensitive = can('employees.manage');
     // Changing where salary lands is the classic payroll fraud, so it is held to
     // the roles that own payroll rather than everyone who may view an employee.
-    const canManageBank = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManageBank = can('employees.manage');
     // Salary lines are guarded by the same payroll-owning roles on the server.
-    const canManageSalary = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManageSalary = can('employees.manage');
     // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
-    const canManageEmployee = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManageEmployee = can('employees.manage');
     const { data: employee, isLoading, isError } = useEmployee(id);
-    // Controlled so the completeness panel can send the user to the tab a gap
-    // is actually fixed on.
-    const [tab, setTab] = useState('overview');
+    // In the URL, so the completeness panel (and any link) can send the user to
+    // the tab a gap is actually fixed on. Tabs they may not see are not tabs.
+    const tabs = useMemo(
+        () =>
+            canViewSensitive
+                ? (['overview', 'salary', 'bank', 'history'] as const)
+                : (['overview', 'history'] as const),
+        [canViewSensitive],
+    );
+    const [tab, setTab] = useTabParam<(typeof tabs)[number]>(tabs);
     const {
         data: history = [],
         isLoading: historyLoading,
@@ -63,33 +72,22 @@ export default function EmployeeDetailPage({
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link href="/employees">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            {employee.firstName} {employee.lastName}
-                        </h1>
-                        <StatusBadge status={employee.status} />
-                    </div>
-                    <p className="text-muted-foreground">
-                        {employee.employeeNumber} · {employee.role?.name ?? 'No role'}
-                    </p>
-                </div>
-                {canManageEmployee && (
-                    <Link href={`/employees/${id}/edit`}>
-                        <Button variant="outline" size="sm">
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                        </Button>
-                    </Link>
-                )}
-            </div>
+            <PageHeader
+                title={`${employee.firstName} ${employee.lastName}`}
+                badge={<StatusBadge kind="employee" status={employee.status} />}
+                description={`${employee.employeeNumber} · ${employee.role?.name ?? 'No position'}`}
+                crumbs={[{ label: `${employee.firstName} ${employee.lastName}` }]}
+                actions={
+                    canManageEmployee && (
+                        <Link href={`/employees/${id}/edit`}>
+                            <Button variant="outline" size="sm">
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                            </Button>
+                        </Link>
+                    )
+                }
+            />
 
             <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
@@ -160,7 +158,7 @@ export default function EmployeeDetailPage({
                                 <InfoRow label="Employee #" value={employee.employeeNumber} />
                                 <InfoRow
                                     icon={<Briefcase className="h-4 w-4" />}
-                                    label="Role"
+                                    label="Position"
                                     value={employee.role?.name ?? '—'}
                                 />
                                 {employee.role?.department && (
@@ -301,10 +299,7 @@ export default function EmployeeDetailPage({
                                             <div className="flex items-center gap-2 mb-1">
                                                 <ActionBadge action={log.action} />
                                                 <span className="text-xs text-muted-foreground">
-                                                    {new Date(log.createdAt).toLocaleString('en-US', {
-                                                        month: 'short', day: 'numeric', year: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit',
-                                                    })}
+                                                    {formatDateTime(log.createdAt)}
                                                 </span>
                                                 {log.userName && (
                                                     <span className="text-xs text-muted-foreground">· by {log.userName}</span>

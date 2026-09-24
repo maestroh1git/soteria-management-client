@@ -13,7 +13,6 @@ import {
     ChevronRight,
     CheckCircle2,
 } from 'lucide-react';
-import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +47,7 @@ import { useCan } from '@/lib/hooks/use-can';
 import type { TaxRule, TaxBracket } from '@/lib/types/api';
 import { TaxRuleType, TaxBase, TAX_BASE_LABEL } from '@/lib/types/enums';
 import { formatCurrency } from '@/lib/utils/currency';
+import { formatDate } from '@/lib/utils/dates';
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
@@ -74,11 +74,6 @@ const taxRuleSchema = z.object({
 type TaxRuleFormValues = z.infer<typeof taxRuleSchema>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtDate(d: string) {
-    try { return format(new Date(d), 'dd MMM yyyy'); }
-    catch { return d; }
-}
 
 function typeBadge(type: string) {
     return type === TaxRuleType.PROGRESSIVE
@@ -152,11 +147,11 @@ function TaxRuleCard({
                         <span>On: <span className="font-medium text-slate-700">{TAX_BASE_LABEL[(rule.taxBase as TaxBase) ?? TaxBase.GROSS]}</span></span>
 
                         <span>
-                            From: <span className="font-medium text-slate-700">{fmtDate(rule.effectiveFrom)}</span>
+                            From: <span className="font-medium text-slate-700">{formatDate(rule.effectiveFrom)}</span>
                         </span>
                         {rule.effectiveTo && (
                             <span>
-                                To: <span className="font-medium text-slate-700">{fmtDate(rule.effectiveTo)}</span>
+                                To: <span className="font-medium text-slate-700">{formatDate(rule.effectiveTo)}</span>
                             </span>
                         )}
                         {!rule.effectiveTo && (

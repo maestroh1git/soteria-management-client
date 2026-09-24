@@ -33,19 +33,15 @@ import {
     useJournalEntry,
 } from '@/lib/hooks/use-finance';
 import { formatDate } from '@/lib/utils/dates';
+import { Money } from '@/components/common/money';
+import { formatAmount } from '@/lib/utils/money';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 /**
  * Amounts arrive as strings from Postgres `numeric` and are formatted, never
  * parsed. Turning one into a float to add a thousands separator is how a
  * ledger loses a kobo between the database and the person reading it.
  */
-function money(value: string): string {
-    const [whole, fraction = '00'] = value.split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    const digits = whole.replace('-', '');
-    return `${sign}${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-}
-
 const SOURCE_LABEL: Record<string, string> = {
     PAYROLL: 'Payroll',
     EXPENSE: 'Expense',
@@ -54,7 +50,10 @@ const SOURCE_LABEL: Record<string, string> = {
     MANUAL: 'Manual',
 };
 
+const LEDGER_TABS = ['accounts', 'entries'] as const;
+
 export default function LedgerPage() {
+    const [tab, setTab] = useTabParam(LEDGER_TABS);
     const [sourceType, setSourceType] = useState('all');
     const [openEntry, setOpenEntry] = useState<string | undefined>();
 
@@ -95,22 +94,22 @@ export default function LedgerPage() {
                         <CardDescription>
                             {trial.balanced
                                 ? 'Debits equal credits, as of today.'
-                                : `Out by ₦${money(trial.difference)}. Posting refuses an unbalanced entry, so something got in another way — a hand-written INSERT, a partial rollback, a restore.`}
+                                : <>Out by <Money value={trial.difference} />. Posting refuses an unbalanced entry, so something got in another way — a hand-written INSERT, a partial rollback, a restore.</>}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 sm:grid-cols-3">
-                        <Figure label="Total debits" value={money(trial.totalDebits)} />
-                        <Figure label="Total credits" value={money(trial.totalCredits)} />
+                        <Figure label="Total debits" value={trial.totalDebits} />
+                        <Figure label="Total credits" value={trial.totalCredits} />
                         <Figure
                             label="Difference"
-                            value={money(trial.difference)}
+                            value={trial.difference}
                             tone={trial.balanced ? undefined : 'text-destructive'}
                         />
                     </CardContent>
                 </Card>
             )}
 
-            <Tabs defaultValue="accounts">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="accounts">Accounts</TabsTrigger>
                     <TabsTrigger value="entries">Journal</TabsTrigger>
@@ -164,13 +163,13 @@ export default function LedgerPage() {
                                                         <Badge variant="outline">{a.type.toLowerCase()}</Badge>
                                                     </td>
                                                     <td className="px-3 py-2 text-right tabular-nums">
-                                                        {money(a.debits)}
+                                                        {formatAmount(a.debits)}
                                                     </td>
                                                     <td className="px-3 py-2 text-right tabular-nums">
-                                                        {money(a.credits)}
+                                                        {formatAmount(a.credits)}
                                                     </td>
                                                     <td className="px-3 py-2 text-right font-medium tabular-nums">
-                                                        {money(a.balance)}
+                                                        {formatAmount(a.balance)}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -237,7 +236,7 @@ export default function LedgerPage() {
                                             </td>
                                             <td className="px-3 py-2">{e.description}</td>
                                             <td className="px-3 py-2 text-right tabular-nums">
-                                                {money(e.total)}
+                                                {formatAmount(e.total)}
                                             </td>
                                         </tr>
                                     ))}
@@ -282,10 +281,10 @@ export default function LedgerPage() {
                                                 )}
                                             </td>
                                             <td className="px-3 py-2 text-right tabular-nums">
-                                                {Number(l.debit) ? money(l.debit) : ''}
+                                                {Number(l.debit) ? formatAmount(l.debit) : ''}
                                             </td>
                                             <td className="px-3 py-2 text-right tabular-nums">
-                                                {Number(l.credit) ? money(l.credit) : ''}
+                                                {Number(l.credit) ? formatAmount(l.credit) : ''}
                                             </td>
                                         </tr>
                                     ))}
@@ -314,7 +313,7 @@ function Figure({
                 {label}
             </p>
             <p className={`text-xl font-semibold tabular-nums ${tone ?? ''}`}>
-                ₦{value}
+                <Money value={value} />
             </p>
         </div>
     );

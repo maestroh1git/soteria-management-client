@@ -32,8 +32,12 @@ import {
   Trophy,
   ListChecks,
   type LucideIcon,
+  Presentation,
+  Banknote,
+  TreePalm,
+  ArrowLeftRight,
+  Percent,
 } from "lucide-react";
-import { routeRolesFor } from "@/lib/auth/route-roles";
 
 export interface NavItem {
   title: string;
@@ -48,6 +52,8 @@ export interface NavItem {
    * them.
    */
   orgTypes?: string[];
+  /** Titled with the school's word for its learners (lib/copy/glossary). */
+  learnerTerm?: boolean;
 }
 
 export interface NavGroup {
@@ -82,11 +88,11 @@ export const navigation: NavGroup[] = [
       {
         title: "My Classes",
         href: "/me/classes",
-        icon: School,
+        icon: Presentation,
         orgTypes: ["SCHOOL"],
       },
-      { title: "My Pay", href: "/me", icon: Wallet },
-      { title: "My Leave", href: "/me/leave", icon: CalendarDays },
+      { title: "My Pay", href: "/me", icon: Banknote },
+      { title: "My Leave", href: "/me/leave", icon: TreePalm },
       { title: "My Profile", href: "/me/profile", icon: UserCircle },
     ],
   },
@@ -99,6 +105,8 @@ export const navigation: NavGroup[] = [
     items: [
       {
         title: "Students",
+    // "Pupils" in a school that says so (D7); see filterNavigation.
+    learnerTerm: true,
         href: "/students",
         icon: GraduationCap,
         orgTypes: ["SCHOOL"],
@@ -181,7 +189,7 @@ export const navigation: NavGroup[] = [
     label: "Staff",
     items: [
       { title: "Employees", href: "/employees", icon: Users },
-      { title: "Roles", href: "/roles", icon: Briefcase },
+      { title: "Positions", href: "/roles", icon: Briefcase },
       { title: "Departments", href: "/departments", icon: Building2 },
       { title: "Grades", href: "/grades", icon: Layers },
       { title: "Leave", href: "/leave", icon: CalendarDays },
@@ -191,7 +199,7 @@ export const navigation: NavGroup[] = [
         href: "/salary-components",
         icon: CreditCard,
       },
-      { title: "Banks", href: "/banks", icon: Landmark },
+      { title: "Bank list", href: "/banks", icon: Landmark },
     ],
   },
   {
@@ -201,9 +209,9 @@ export const navigation: NavGroup[] = [
       { title: "Ledger", href: "/ledger", icon: Scale },
       { title: "Expenses", href: "/expenses", icon: Wallet },
       { title: "Budgets", href: "/budgets", icon: PiggyBank },
-      { title: "Bank", href: "/banking", icon: Landmark },
+      { title: "Bank reconciliation", href: "/banking", icon: ArrowLeftRight },
       { title: "Loans", href: "/loans", icon: Receipt },
-      { title: "Tax Rules", href: "/tax-rules", icon: FileText },
+      { title: "Tax Rules", href: "/tax-rules", icon: Percent },
     ],
   },
   {
@@ -224,22 +232,42 @@ export const navigation: NavGroup[] = [
 
 /** The filter both sidebars share: role gate, then org-type gate (fail closed). */
 export function filterNavigation(
-  hasRole: (roles: string[]) => boolean,
+  mayReach: (href: string) => boolean,
   tenantOrgType: string | null,
+  learners = "Students",
 ): NavGroup[] {
   return navigation
     .map((group) => ({
       ...group,
-      items: group.items.filter(
+      items: group.items
+        .map((item) => (item.learnerTerm ? { ...item, title: learners } : item))
+        .filter(
         (item) =>
           // Roles come from ROUTE_ROLES, the same map the middleware
           // reads. Two copies drifted into 15 sidebar routes the
           // middleware had never heard of.
-          (!routeRolesFor(item.href).roles ||
-            hasRole(routeRolesFor(item.href).roles as string[])) &&
+          mayReach(item.href) &&
           (!item.orgTypes ||
             (tenantOrgType !== null && item.orgTypes.includes(tenantOrgType))),
       ),
     }))
     .filter((group) => group.items.length > 0);
+}
+
+/**
+ * The sidebar entry a path lives under — the longest href that is a prefix of
+ * it. Breadcrumbs start here, so a record's trail names the section the way
+ * the sidebar does.
+ */
+export function sectionFor(pathname: string): NavItem | null {
+  let best: NavItem | null = null;
+  for (const group of navigation) {
+    for (const item of group.items) {
+      const match =
+        pathname === item.href ||
+        (item.href !== "/" && pathname.startsWith(item.href + "/"));
+      if (match && (!best || item.href.length > best.href.length)) best = item;
+    }
+  }
+  return best;
 }

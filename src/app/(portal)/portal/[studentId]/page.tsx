@@ -8,9 +8,7 @@ import { ChildAttendance } from '@/components/portal/child-attendance';
 import { EmptyState } from '@/components/common/empty-state';
 import { useChildStatement } from '@/lib/hooks/use-portal';
 import { isApiError } from '@/lib/utils/api-error';
-
-const money = (v: string | number) =>
-    Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+import { Money } from '@/components/common/money';
 
 export default function ChildStatementPage({
     params,
@@ -99,7 +97,7 @@ export default function ChildStatementPage({
                                 owed > 0 ? '' : 'text-green-600 dark:text-green-400'
                             }`}
                         >
-                            ₦{money(data.balance)}
+                            <Money value={data.balance} />
                         </p>
                         {owed <= 0 && (
                             <p className="mt-1 text-xs text-muted-foreground">
@@ -115,7 +113,7 @@ export default function ChildStatementPage({
                                 Credit on account
                             </p>
                             <p className="mt-1 text-2xl font-semibold tabular-nums">
-                                ₦{money(data.unallocatedCredit)}
+                                <Money value={data.unallocatedCredit} />
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground">
                                 Paid but not yet applied to a bill. It will be used
@@ -165,15 +163,15 @@ export default function ChildStatementPage({
                                                 {e.description}
                                             </td>
                                             <td className="py-2 pr-3 text-right tabular-nums">
-                                                {e.charge ? `₦${money(e.charge)}` : '—'}
+                                                {e.charge ? <Money value={e.charge} /> : '—'}
                                             </td>
                                             <td className="py-2 pr-3 text-right tabular-nums text-green-700 dark:text-green-400">
                                                 {e.payment
-                                                    ? `₦${money(e.payment)}`
+                                                    ? <Money value={e.payment} />
                                                     : '—'}
                                             </td>
                                             <td className="py-2 text-right font-medium tabular-nums">
-                                                ₦{money(e.balance)}
+                                                <Money value={e.balance} />
                                             </td>
                                         </tr>
                                     ))}

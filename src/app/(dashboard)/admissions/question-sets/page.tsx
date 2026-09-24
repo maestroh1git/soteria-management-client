@@ -46,7 +46,7 @@ import {
     useRetireInterviewTemplate,
     useTemplateInterviews,
 } from '@/lib/hooks/use-admissions';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import type { InterviewTemplate, QuestionKind } from '@/lib/api/admissions';
 
 const KIND_LABEL: Record<QuestionKind, string> = {
@@ -244,14 +244,10 @@ function QuestionList({ template }: { template: InterviewTemplate }) {
  * current one down.
  */
 export default function QuestionSetsPage() {
-    const { hasRole } = useAuth();
+    const can = useCan();
     // Deciding what the school asks is a registrar's call, not an officer's,
     // and the API draws the same line.
-    const canSetQuestions = hasRole([
-        'tenant_owner',
-        'ADMIN',
-        'admissions.registrar',
-    ]);
+    const canSetQuestions = can('admissions.setQuestions');
 
     const { data: templates = [], isLoading } = useInterviewTemplates();
     const create = useCreateInterviewTemplate();

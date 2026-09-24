@@ -1,0 +1,439 @@
+{
+  "academics.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar"
+  ],
+  "admissions.assess": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar",
+    "admissions.officer"
+  ],
+  "admissions.decide": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar"
+  ],
+  "admissions.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar"
+  ],
+  "admissions.read": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar",
+    "admissions.officer"
+  ],
+  "admissions.setQuestions": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar"
+  ],
+  "attendance.calendar.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "attendance.departures.read": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.attendance_officer",
+    "academic.teacher"
+  ],
+  "attendance.export": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.attendance_officer",
+    "FINANCE_ADMIN"
+  ],
+  "attendance.gate": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.attendance_officer"
+  ],
+  "attendance.report": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.attendance_officer",
+    "academic.teacher",
+    "FINANCE_ADMIN",
+    "VIEWER"
+  ],
+  "audit.entityHistory": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "audit.read": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "awards.grant": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.teacher"
+  ],
+  "awards.read": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.teacher",
+    "VIEWER"
+  ],
+  "banking.reconcile": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "banks.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "banks.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "VIEWER"
+  ],
+  "branding.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "budgets.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "budgets.read": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "APPROVER"
+  ],
+  "countries.manage": [
+    "super_admin"
+  ],
+  "countries.read": [
+    "tenant_owner",
+    "ADMIN",
+    "VIEWER"
+  ],
+  "departments.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "departments.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "APPROVER",
+    "VIEWER"
+  ],
+  "employees.directory": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "VIEWER",
+    "EMPLOYEE"
+  ],
+  "employees.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "employees.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "VIEWER"
+  ],
+  "events.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "events.read": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "expenses.decide": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "APPROVER"
+  ],
+  "expenses.raise": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "expenses.read": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "APPROVER"
+  ],
+  "fees.read": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "admissions.registrar"
+  ],
+  "fees.write": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "grades.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "grades.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "VIEWER"
+  ],
+  "leave.decide": [
+    "tenant_owner",
+    "ADMIN",
+    "APPROVER"
+  ],
+  "leave.raise": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "leave.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "APPROVER",
+    "VIEWER"
+  ],
+  "leave.types.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "ledger.read": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "loans.create": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "loans.decide": [
+    "tenant_owner",
+    "ADMIN",
+    "APPROVER"
+  ],
+  "loans.disburse": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "loans.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "APPROVER",
+    "VIEWER"
+  ],
+  "organisation.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "payPeriods.create": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "payPeriods.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "APPROVER",
+    "VIEWER"
+  ],
+  "payroll.adjustments.decide": [
+    "tenant_owner",
+    "ADMIN",
+    "APPROVER"
+  ],
+  "payroll.adjustments.raise": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "payroll.adjustments.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "APPROVER",
+    "VIEWER"
+  ],
+  "payroll.approve": [
+    "tenant_owner",
+    "ADMIN",
+    "APPROVER"
+  ],
+  "payroll.pay": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "payroll.paymentFile": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "payroll.paymentFile.preview": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "payroll.process": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "payroll.readSalaries": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "APPROVER",
+    "VIEWER"
+  ],
+  "payroll.variance": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "APPROVER"
+  ],
+  "payslips.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "payslips.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "VIEWER"
+  ],
+  "permissions.manage": [
+    "super_admin"
+  ],
+  "permissions.read": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "platform.read": [
+    "super_admin"
+  ],
+  "positions.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ],
+  "positions.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "VIEWER"
+  ],
+  "reports.detail": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN"
+  ],
+  "reports.monthly": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "VIEWER"
+  ],
+  "reports.yearEnd": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "salaryComponents.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "salaryComponents.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER"
+  ],
+  "settings.manage": [
+    "super_admin"
+  ],
+  "settings.read": [
+    "tenant_owner",
+    "ADMIN",
+    "VIEWER"
+  ],
+  "students.list": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar",
+    "admissions.officer",
+    "academic.teacher",
+    "academic.attendance_officer"
+  ],
+  "students.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar"
+  ],
+  "students.read": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar",
+    "admissions.officer",
+    "academic.teacher"
+  ],
+  "tax.manage": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN"
+  ],
+  "tax.read": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "VIEWER"
+  ],
+  "tenants.manage": [
+    "super_admin"
+  ],
+  "tenants.own": [
+    "super_admin",
+    "tenant_owner"
+  ],
+  "users.grantOwnership": [
+    "tenant_owner"
+  ],
+  "users.manage": [
+    "tenant_owner",
+    "ADMIN"
+  ]
+}

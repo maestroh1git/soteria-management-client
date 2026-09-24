@@ -2,12 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
     Clock,
-    Eye,
     Link2,
-    Check,
     TimerOff,
     BellRing,
     Loader2,
@@ -24,40 +21,20 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { EmptyState } from '@/components/common/empty-state';
-import {
     useApplications,
     useExpireOffers,
     useRemindOffers,
 } from '@/lib/hooks/use-admissions';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { isRowNavigationClick } from '@/lib/utils/row-click';
+import { useCan } from '@/lib/hooks/use-can';
 import { formatDate } from '@/lib/utils/dates';
-import type { ApplicationStatus } from '@/lib/api/admissions';
+import type { AdmissionApplication, ApplicationStatus } from '@/lib/api/admissions';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
+import { PageHeader } from '@/components/layout/page-header';
+import { DataTable } from '@/components/common/data-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
-const STATUS_STYLE: Record<string, string> = {
-    APPLIED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    ASSESSMENT_SCHEDULED:
-        'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-    ASSESSED:
-        'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
-    OFFERED:
-        'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    ACCEPTED:
-        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    ENROLLED:
-        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    WAITLISTED:
-        'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-};
-
-const label = (s: string) => s.replace(/_/g, ' ').toLowerCase();
 
 /**
  * The registrar's queue.
@@ -67,16 +44,20 @@ const label = (s: string) => s.replace(/_/g, ' ').toLowerCase();
  * me", not "what arrived most recently".
  */
 export default function AdmissionsPage() {
-    const router = useRouter();
-    const { hasRole, tenantSlug } = useAuth();
-    const canDecide = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+    const { tenantSlug } = useAuth();
+    const can = useCan();
+    const canDecide = can('admissions.decide');
 
-    const [status, setStatus] = useState('all');
+    const [status, setStatus] = useState<string>();
+    const [levelId, setLevelId] = useState<string>();
+    const [session, setSession] = useState<string>();
+    // The whole intake, filtered here: the counts above the table are of the
+    // intake, and asking the server for one status made every other count 0.
     const {
         data: applications = [],
         isLoading,
         isError,
-    } = useApplications({ status });
+    } = useApplications({ status: 'all' });
     const expire = useExpireOffers();
     const remind = useRemindOffers();
 
@@ -91,6 +72,88 @@ export default function AdmissionsPage() {
             new Date(a.offerExpiresAt).getTime() < Date.now(),
     ).length;
 
+    const isLapsed = (a: AdmissionApplication) =>
+        a.status === 'OFFERED' &&
+        !!a.offerExpiresAt &&
+        new Date(a.offerExpiresAt).getTime() < Date.now();
+
+    const unique = (pairs: Array<{ id: string; name: string } | undefined>) =>
+        [...new Map(pairs.filter(Boolean).map((p) => [p!.id, p!.name])).entries()].map(
+            ([value, label]) => ({ value, label }),
+        );
+    const levels = unique(applications.map((a) => a.classLevel));
+    const sessions = unique(applications.map((a) => a.session));
+
+    const shown = applications.filter(
+        (a) =>
+            (!status ||
+                (status === 'LAPSED' ? isLapsed(a) : a.status === status)) &&
+            (!levelId || a.classLevel?.id === levelId) &&
+            (!session || a.session?.id === session),
+    );
+    const filtered = !!(status || levelId || session);
+
+    const columns: ColumnDef<AdmissionApplication>[] = [
+        {
+            id: 'number',
+            header: 'No.',
+            cell: ({ row }) => (
+                <span className="text-muted-foreground">{row.original.applicationNumber}</span>
+            ),
+        },
+        {
+            id: 'child',
+            header: 'Child',
+            meta: { cardTitle: true },
+            cell: ({ row }) => (
+                <Link
+                    href={`/admissions/${row.original.id}`}
+                    className="font-medium hover:underline underline-offset-2"
+                >
+                    {row.original.firstName} {row.original.lastName}
+                </Link>
+            ),
+        },
+        {
+            id: 'level',
+            header: 'Applying to',
+            cell: ({ row }) => row.original.classLevel?.name ?? '—',
+        },
+        {
+            id: 'guardian',
+            header: 'Guardian',
+            cell: ({ row }) => (
+                <span className="text-muted-foreground">
+                    {row.original.guardianFirstName} {row.original.guardianLastName}
+                </span>
+            ),
+        },
+        {
+            id: 'status',
+            header: 'Status',
+            cell: ({ row }) => (
+                <span className="inline-flex items-center gap-2">
+                    <StatusBadge kind="application" status={row.original.status} />
+                    {isLapsed(row.original) && (
+                        <span
+                            className="inline-flex items-center gap-1 text-xs text-destructive"
+                            title="The deadline has passed — sweep to free the place"
+                        >
+                            <Clock className="h-3 w-3" /> lapsed
+                        </span>
+                    )}
+                </span>
+            ),
+        },
+        {
+            id: 'applied',
+            header: 'Applied',
+            cell: ({ row }) => (
+                <span className="text-muted-foreground">{formatDate(row.original.createdAt)}</span>
+            ),
+        },
+    ];
+
     const publicLink =
         typeof window !== 'undefined' && tenantSlug
             ? `${window.location.origin}/apply/${tenantSlug}`
@@ -98,51 +161,49 @@ export default function AdmissionsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Wraps: two actions and a heading do not fit side by side on a
-                phone, and the second one was sliding off the right edge. */}
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Admissions</h1>
-                    <p className="text-muted-foreground">
-                        Applications, from enquiry to a child on the roll.
-                    </p>
-                </div>
-                {canDecide && (
-                    <Button
-                        variant="outline"
-                        onClick={() => remind.mutate()}
-                        disabled={remind.isPending}
-                        title="Email the families whose offers lapse within three days. Runs nightly too; nobody is warned twice about the same offer."
-                    >
-                        {remind.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <BellRing className="mr-2 h-4 w-4" />
+            <PageHeader
+                title="Admissions"
+                description="Applications, from enquiry to a child on the roll."
+                actions={
+                    <>
+                        {canDecide && (
+                            <Button
+                                variant="outline"
+                                onClick={() => remind.mutate()}
+                                disabled={remind.isPending}
+                                title="Email the families whose offers lapse within three days. Runs nightly too; nobody is warned twice about the same offer."
+                            >
+                                {remind.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <BellRing className="mr-2 h-4 w-4" />
+                                )}
+                                Chase pending offers
+                            </Button>
                         )}
-                        Chase pending offers
-                    </Button>
-                )}
-                {canDecide && (
-                    <Button
-                        variant="outline"
-                        onClick={() => expire.mutate()}
-                        disabled={expire.isPending}
-                        title="Move offers past their deadline to expired, freeing their places"
-                    >
-                        {expire.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <TimerOff className="mr-2 h-4 w-4" />
+                        {canDecide && (
+                            <Button
+                                variant="outline"
+                                onClick={() => expire.mutate()}
+                                disabled={expire.isPending}
+                                title="Move offers past their deadline to expired, freeing their places"
+                            >
+                                {expire.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <TimerOff className="mr-2 h-4 w-4" />
+                                )}
+                                Sweep lapsed offers
+                                {lapsed > 0 && (
+                                    <Badge variant="destructive" className="ml-2">
+                                        {lapsed}
+                                    </Badge>
+                                )}
+                            </Button>
                         )}
-                        Sweep lapsed offers
-                        {lapsed > 0 && (
-                            <Badge variant="destructive" className="ml-2">
-                                {lapsed}
-                            </Badge>
-                        )}
-                    </Button>
-                )}
-            </div>
+                    </>
+                }
+            />
 
             {publicLink && (
                 <Card>
@@ -183,8 +244,8 @@ export default function AdmissionsPage() {
                 ).map(([s, title]) => (
                     <Card
                         key={s}
-                        className="cursor-pointer transition hover:border-primary/50"
-                        onClick={() => setStatus(s)}
+                        className={`cursor-pointer transition hover:border-primary/50 ${status === s ? 'border-primary' : ''}`}
+                        onClick={() => setStatus(status === s ? undefined : s)}
                     >
                         <CardContent className="pt-6">
                             <p className="text-2xl font-semibold">{count(s)}</p>
@@ -194,125 +255,57 @@ export default function AdmissionsPage() {
                 ))}
             </div>
 
-            <div className="flex items-center gap-3">
-                <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="w-56">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All applications</SelectItem>
-                        {[
-                            'APPLIED',
-                            'ASSESSMENT_SCHEDULED',
-                            'ASSESSED',
-                            'OFFERED',
-                            'ACCEPTED',
-                            'ENROLLED',
-                            'WAITLISTED',
-                            'REJECTED',
-                            'OFFER_DECLINED',
-                            'OFFER_EXPIRED',
-                        ].map((s) => (
-                            <SelectItem key={s} value={s}>
-                                {label(s)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-            ) : applications.length === 0 ? (
-                <EmptyState
-                    isError={isError}
-                    subject="the applications"
-                    title="No applications"
-                    description="They will appear here as parents apply, or when you take one in the office."
-                />
-            ) : (
-                <div className="overflow-x-auto rounded-md border">
-                    <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                <th className="px-3 py-2 text-left font-medium">No.</th>
-                                <th className="px-3 py-2 text-left font-medium">Child</th>
-                                <th className="px-3 py-2 text-left font-medium">Applying to</th>
-                                <th className="px-3 py-2 text-left font-medium">Guardian</th>
-                                <th className="px-3 py-2 text-left font-medium">Status</th>
-                                <th className="px-3 py-2 text-left font-medium">Applied</th>
-                                <th className="px-3 py-2"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {applications.map((a) => {
-                                const isLapsed =
-                                    a.status === 'OFFERED' &&
-                                    a.offerExpiresAt &&
-                                    new Date(a.offerExpiresAt).getTime() < Date.now();
-                                return (
-                                    <tr
-                                        key={a.id}
-                                        className="cursor-pointer border-t hover:bg-muted/40"
-                                        onClick={(e) => {
-                                            if (isRowNavigationClick(e)) {
-                                                router.push(`/admissions/${a.id}`);
-                                            }
-                                        }}
-                                    >
-                                        <td className="px-3 py-2 text-muted-foreground">
-                                            {a.applicationNumber}
-                                        </td>
-                                        <td className="px-3 py-2 font-medium">
-                                            {a.firstName} {a.lastName}
-                                        </td>
-                                        <td className="px-3 py-2">
-                                            {a.classLevel?.name ?? '—'}
-                                        </td>
-                                        <td className="px-3 py-2 text-muted-foreground">
-                                            {a.guardianFirstName} {a.guardianLastName}
-                                        </td>
-                                        <td className="px-3 py-2">
-                                            <span
-                                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                    STATUS_STYLE[a.status] ??
-                                                    'bg-muted text-muted-foreground'
-                                                }`}
-                                            >
-                                                {label(a.status)}
-                                            </span>
-                                            {isLapsed && (
-                                                <span
-                                                    className="ml-2 inline-flex items-center gap-1 text-xs text-destructive"
-                                                    title="The deadline has passed — sweep to free the place"
-                                                >
-                                                    <Clock className="h-3 w-3" /> lapsed
-                                                </span>
-                                            )}
-                                            {a.status === 'ENROLLED' && (
-                                                <Check className="ml-2 inline h-3 w-3 text-emerald-600" />
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2 text-muted-foreground">
-                                            {formatDate(a.createdAt)}
-                                        </td>
-                                        <td className="px-3 py-2 text-right">
-                                            <Link
-                                                href={`/admissions/${a.id}`}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            <DataTable
+                columns={columns}
+                data={shown}
+                loading={isLoading}
+                isError={isError}
+                errorSubject="the applications"
+                rowHref={(a) => `/admissions/${a.id}`}
+                searchText={(a) =>
+                    [
+                        a.applicationNumber,
+                        a.firstName,
+                        a.middleName,
+                        a.lastName,
+                        a.guardianFirstName,
+                        a.guardianLastName,
+                        a.guardianPhone,
+                        a.guardianEmail,
+                    ]
+                        .filter(Boolean)
+                        .join(' ')
+                }
+                searchPlaceholder="Search by child, guardian, phone or number…"
+                filters={[
+                    {
+                        id: 'status',
+                        label: 'stages',
+                        value: status,
+                        options: [
+                            ...statusOptions('application'),
+                            { value: 'LAPSED', label: 'Offer lapsed' },
+                        ],
+                    },
+                    { id: 'level', label: 'classes', value: levelId, options: levels },
+                    ...(sessions.length > 1
+                        ? [{ id: 'session', label: 'sessions', value: session, options: sessions }]
+                        : []),
+                ]}
+                onFilterChange={(id, value) =>
+                    id === 'status'
+                        ? setStatus(value)
+                        : id === 'level'
+                          ? setLevelId(value)
+                          : setSession(value)
+                }
+                emptyTitle={filtered ? 'No applications match' : 'No applications'}
+                emptyDescription={
+                    filtered
+                        ? 'Try another stage or class.'
+                        : 'They will appear here as parents apply, or when you take one in the office.'
+                }
+            />
         </div>
     );
 }

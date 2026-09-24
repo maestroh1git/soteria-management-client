@@ -16,6 +16,7 @@ import {
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { filterNavigation } from '@/components/layout/nav-config';
+import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
 
 /**
  * ⌘K. Built from the sidebar's own list and filter, so it offers exactly the
@@ -29,8 +30,9 @@ export function CommandMenu() {
     const [open, setOpen] = React.useState(false);
     const router = useRouter();
     const { setTheme } = useTheme();
-    const { hasRole, tenantOrgType } = useAuth();
-    const groups = filterNavigation(hasRole, tenantOrgType);
+    const { mayReach, tenantOrgType } = useAuth();
+    const { word: learnerWord } = useLearnerTerm();
+    const groups = filterNavigation(mayReach, tenantOrgType, learnerWord({ plural: true, capital: true }));
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {

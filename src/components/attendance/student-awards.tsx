@@ -10,13 +10,7 @@ import { AwardDialog } from './award-dialog';
 import { useCan } from '@/lib/hooks/use-can';
 import { useAwards, useDeleteAward } from '@/lib/hooks/use-attendance';
 import { AWARD_CATEGORY_LABELS, type AwardCategory } from '@/lib/api/attendance';
-
-const longDate = (iso: string) =>
-    new Date(`${iso}T00:00:00`).toLocaleDateString('en-NG', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+import { formatLongDate } from '@/lib/utils/dates';
 
 /** A pupil's awards: the canonical record, and where one gets recorded. */
 export function StudentAwards({
@@ -89,7 +83,7 @@ export function StudentAwards({
                                             {AWARD_CATEGORY_LABELS[
                                                 a.category as AwardCategory
                                             ] ?? a.category}{' '}
-                                            · {longDate(a.awardedOn)}
+                                            · {formatLongDate(a.awardedOn)}
                                         </p>
                                         {a.description && (
                                             <p className="mt-1.5 text-sm text-muted-foreground">

@@ -25,13 +25,8 @@ import {
     useIssueInvoice,
 } from '@/lib/hooks/use-fees';
 import { downloadInvoicePdf, type InvoiceStatus } from '@/lib/api/fees';
-import { useCan } from '@/lib/hooks/use-can';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * One child's bill.
@@ -47,7 +42,6 @@ export default function InvoiceDetailPage() {
     const { data: invoice, isLoading, isError } = useInvoice(params.id);
     const issue = useIssueInvoice();
     const cancel = useCancelInvoice();
-    const canWrite = useCan()('fees.write');
     const [cancelOpen, setCancelOpen] = useState(false);
     const [reason, setReason] = useState('');
 
@@ -79,10 +73,9 @@ export default function InvoiceDetailPage() {
         );
     }
 
-    // The server says which moves the invoice's state allows; the caller's
-    // role says whether they may make them. Both, or no button.
+    // The moves this person may make: the server filters them by the caller.
     const can = (status: string) =>
-        canWrite && invoice.allowedTransitions?.includes(status as InvoiceStatus);
+        invoice.allowedTransitions?.includes(status as InvoiceStatus);
     const charges = invoice.lines.filter((l) => l.kind === 'CHARGE');
     const discounts = invoice.lines.filter((l) => l.kind === 'DISCOUNT');
 
@@ -101,9 +94,12 @@ export default function InvoiceDetailPage() {
                         {invoice.invoiceNumber ?? 'Draft invoice'}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        {invoice.student
-                            ? `${invoice.student.firstName} ${invoice.student.lastName} · ${invoice.student.admissionNumber}`
-                            : ''}
+                        {invoice.student && (
+                            <>
+                                <StudentLink id={invoice.student.id} student={invoice.student} />
+                                {` · ${invoice.student.admissionNumber}`}
+                            </>
+                        )}
                         {invoice.classLevel ? ` · ${invoice.classLevel.name}` : ''}
                         {invoice.term ? ` · ${invoice.term.name}` : ''}
                     </p>
@@ -165,7 +161,7 @@ export default function InvoiceDetailPage() {
                                 <tr key={line.id}>
                                     <td className="px-6 py-3">{line.description}</td>
                                     <td className="px-6 py-3 text-right tabular-nums">
-                                        ₦{money(line.amount)}
+                                        <Money value={line.amount} />
                                     </td>
                                 </tr>
                             ))}
@@ -173,7 +169,7 @@ export default function InvoiceDetailPage() {
                                 <tr key={line.id} className="text-muted-foreground">
                                     <td className="px-6 py-3">{line.description}</td>
                                     <td className="px-6 py-3 text-right tabular-nums">
-                                        −₦{money(line.amount)}
+                                        <Money value={line.amount} deduction />
                                     </td>
                                 </tr>
                             ))}
@@ -182,7 +178,7 @@ export default function InvoiceDetailPage() {
                             <tr>
                                 <td className="px-6 py-3 font-medium">Total</td>
                                 <td className="px-6 py-3 text-right text-lg font-bold tabular-nums">
-                                    ₦{money(invoice.total)}
+                                    <Money value={invoice.total} />
                                 </td>
                             </tr>
                         </tfoot>
@@ -202,7 +198,7 @@ export default function InvoiceDetailPage() {
                 <div>
                     <p className="text-muted-foreground">Concessions</p>
                     <p className="font-medium tabular-nums">
-                        ₦{money(invoice.discounts)}
+                        <Money value={invoice.discounts} />
                     </p>
                 </div>
             </div>

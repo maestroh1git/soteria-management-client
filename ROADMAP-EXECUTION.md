@@ -22,13 +22,65 @@ run in parallel unless a dependency is named.
 |---|---|---|
 | 0 Safety net | **Done** 24 Sep | client CI + lint ratchet + persona tests (this repo); `seed:personas` + audit in CI (API) |
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
-| 2–5 | Not started | — |
+| 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
+| 3 Foundations | **Done** 24 Sep | same branches |
+| 4–5 | Not started | — |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
 plus the four repaired paths walked end to end), and the API's access suite
 passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 15 of them failed there.
+
+### Wave 2 and 3 exit
+
+- **One registry, enforced.** 82 actions in the API's
+  `src/common/access/actions.ts`; all 349 endpoints use `@Can`, with exactly
+  the roles they had before, and a test fails on any raw `@Roles`. The client
+  generates its copy (`npm run sync:actions`); the audit fails when the two
+  differ, when the client names an action that does not exist, or when an
+  exported hook has no caller (25 known ones listed for Wave 5).
+- **Exit test ("change a role once, everything follows"):** route roles are
+  derived from the manifest plus the registry — the same 39 routes and roles
+  as the hand-written map they replaced; `can()` answers from
+  `GET /auth/session`, refetched on focus and after an access change, which
+  also rewrites the middleware's cookie. `hasRole(`, `.systemRoles`, `₦`,
+  locale-specific formatting and API calls from `app/` are lint errors
+  (the last three held flat by the ratchet until Wave 4 moves those screens).
+- **Checks:** persona tests 17/17 against the rebuilt API and client; API
+  unit 808/808, e2e 510 passed (2 skipped) across 45 suites; audit 0
+  findings; client typecheck clean, lint ratchet down from 70 to 51
+  file/rule pairs.
+- **Wave 3 references:** Employees (PageHeader, breadcrumbs), Loans
+  (DataTable v2), Departments (FormDialog, feature folder, hooks), Positions
+  (glossary, copy), the employee record (`?tab=`), payroll and loans
+  (statuses). Money, dates and statuses were converted everywhere, not only on
+  the reference pages: 16 local money helpers, 20 date formatters and 14
+  status maps are gone.
+
+### Found and fixed in Waves 2–3
+
+- **Every tab could be told a list was empty when a filter hid it**, and
+  most lists could not be searched. Every list someone works from now has
+  search and the filters that fit it (§1, S4); invoices and pay runs search
+  on the server, which the API now supports.
+- **Admissions counts read 0** for every stage but the one filtered to.
+- **Imports hid the API's reason** for refusing a file ("Import failed").
+- **Arrears offered Finance a link to a pupil record** it cannot open.
+- **A guardian logging in was sent to the staff dashboard** for the
+  middleware to bounce; login, invites and resets now share one rule.
+- **The department form had no control** for its head or parent department.
+- **`node dist/main` would not start** once a dev script joined the build.
+
+### Left for later waves
+
+- Settings keeps its own tabs (not `?tab=`) until the Setup hub (C4.2).
+- 35 screens still render hand-written tables (the working lists among them
+  with `ListFilters` above); Wave 4 moves each to DataTable with its domain.
+- Payroll and school types still live in `types/api.ts` and the API files
+  (C3.8's type moves happen per domain in Wave 4).
+- `UserLink` was not built: there is no page for a user to link to until
+  Team & access (C4.3).
 
 ### What Wave 1 turned up that the map had not
 
@@ -55,13 +107,14 @@ All of it was fixed in the same pull requests:
   (`AwardService.assertCanGrant`).
 - **Any tenant owner could write the global `permissions` table.** Writes are
   super-admin only.
+- **Any tenant's Owner/Admin could add, edit or delete `countries` and
+  `payroll_settings`**, global tables shared by every tenant. Writes are now
+  super-admin only (API #64), and Settings no longer offers them to anyone
+  else (client #63; since Wave 2, `can('countries.manage')` and
+  `can('settings.manage')`).
 
 ### Found, not fixed (outside Waves 0–1)
 
-- **Any tenant's Owner/Admin can add, edit or delete `countries` and
-  `payroll_settings`**, which are global tables shared by every tenant (no
-  `tenant_id`). Needs a decision: make writes super-admin only, or give each
-  tenant its own settings rows.
 - **Loan approval takes `approverId` from the request body**, so the recorded
   approver is whatever the client sends. The server should use the caller.
 - **Report exports open a bare URL** (`window.open(getExportCsvUrl(…))`), which
@@ -111,7 +164,7 @@ page-by-page table in §8 tracks it.
 | S1 | Header | `<PageHeader title description actions back>`; one `<h1>` style |
 | S2 | Breadcrumb | Generated from the nav tree and record names |
 | S3 | Actions | Rendered only when `can(action)`; destructive ones confirm through `ConfirmDialog` |
-| S4 | Lists | `DataTable`: server pagination, toolbar filters, row click to the record (#58), row action menu named after the subject (#59) |
+| S4 | Lists | `DataTable`: server pagination, toolbar filters, row click to the record (#58), row action menu named after the subject (#59). **Filters:** a search box saying what it searches, plus a filter for each thing people sort that list by — its status (from the registry), the record it belongs to (class, position, account, pay run) and its kind; "No X match" when a filter hides everything. Paged lists filter on the server. |
 | S5 | Tabs | Stored in `?tab=`; back, refresh and shared links keep the place |
 | S6 | States | `LoadingSkeleton`, `EmptyState` (with the next action), `ErrorState` (with retry) |
 | S7 | Money | `<Money>` / `formatMoney()` in the tenant's currency; no `₦` literals |

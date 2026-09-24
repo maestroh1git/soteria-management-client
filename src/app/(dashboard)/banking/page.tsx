@@ -10,12 +10,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/empty-state';
 import { useStatements } from '@/lib/hooks/use-banking';
 import { ImportStatementDialog } from '@/components/banking/import-statement-dialog';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
 
 /**
  * Bank statements, and how far through reconciling each one is.
@@ -86,10 +81,10 @@ export default function BankingPage() {
                                             {s.accountName}
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
-                                            ₦{money(s.openingBalance)}
+                                            <Money value={s.openingBalance} />
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium tabular-nums">
-                                            ₦{money(s.closingBalance)}
+                                            <Money value={s.closingBalance} />
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
                                             {s.unmatchedCount > 0 ? (

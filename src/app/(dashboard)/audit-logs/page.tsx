@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { useAuditLogs, useAuditSummary } from '@/lib/hooks/use-audit';
 import type { AuditFilters, AuditLog } from '@/lib/api/audit';
 import { cn } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils/dates';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -51,13 +52,6 @@ export function CategoryBadge({ category }: { category: string }) {
       {category}
     </span>
   );
-}
-
-function formatTs(ts: string) {
-  return new Date(ts).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
 }
 
 function changedKeys(log: AuditLog): string {
@@ -245,7 +239,7 @@ function LogTable({ filters }: { filters: AuditFilters }) {
           {data.items.map((log) => (
             <tr key={log.id} className="hover:bg-muted/30 transition-colors">
               <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                {formatTs(log.createdAt)}
+                {formatDateTime(log.createdAt)}
               </td>
               <td className="px-4 py-3">
                 {log.userName ? (

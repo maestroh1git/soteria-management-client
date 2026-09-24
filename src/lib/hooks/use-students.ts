@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 import {
     getStudents,
     getStudent,
@@ -13,6 +14,9 @@ import {
     createGuardian,
     linkGuardian,
     getStudentImportOptions,
+    previewStudentImport,
+    commitStudentImport,
+    downloadStudentTemplate,
     getStudentDocuments,
     attachStudentDocument,
     removeStudentDocument,
@@ -193,5 +197,44 @@ export function useRemoveStudentDocument(studentId: string) {
             qc.invalidateQueries({ queryKey: ['students', studentId, 'documents'] });
             toast.success('Document removed');
         },
+    });
+}
+
+/** Read a roster file and say what would happen, changing nothing. */
+export function usePreviewStudentImport() {
+    return useMutation({
+        mutationFn: (file: File) => previewStudentImport(file),
+        onError: (err) => toast.error(getApiErrorMessage(err, 'That file could not be read.')),
+    });
+}
+
+/** Admit the pupils in the file and create their guardians. */
+export function useCommitStudentImport() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (file: File) => commitStudentImport(file),
+        onSuccess: (r) => {
+            qc.invalidateQueries({ queryKey: ['students'] });
+            toast.success(
+                `${r.students} ${r.students === 1 ? 'pupil' : 'pupils'} admitted · ${r.guardiansCreated} new ${r.guardiansCreated === 1 ? 'guardian' : 'guardians'}`,
+            );
+        },
+        onError: (err) => toast.error(getApiErrorMessage(err, 'The import did not complete.')),
+    });
+}
+
+/** The roster template, as a file download. */
+export function useDownloadStudentTemplate() {
+    return useMutation({
+        mutationFn: async () => {
+            const blob = await downloadStudentTemplate();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'student-roster-template.xlsx';
+            a.click();
+            URL.revokeObjectURL(url);
+        },
+        onError: () => toast.error('The template could not be built. Please try again.'),
     });
 }

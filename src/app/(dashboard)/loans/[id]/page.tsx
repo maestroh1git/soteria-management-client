@@ -43,18 +43,16 @@ import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useCan } from '@/lib/hooks/use-can';
 import { LoanStatus, LoanType } from '@/lib/types/enums';
+import { formatDate, formatDateTime } from '@/lib/utils/dates';
+import { formatMoney } from '@/lib/utils/money';
+import { StatusBadge } from '@/components/common/status-badge';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { EmployeeLink } from '@/components/common/entity-link';
 
-const STATUS_CONFIG: Record<LoanStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-    [LoanStatus.PENDING]: { label: 'Pending', variant: 'secondary' },
-    [LoanStatus.APPROVED]: { label: 'Approved', variant: 'default' },
-    [LoanStatus.REJECTED]: { label: 'Rejected', variant: 'destructive' },
-    [LoanStatus.ACTIVE]: { label: 'Active', variant: 'default' },
-    [LoanStatus.FULLY_PAID]: { label: 'Fully Paid', variant: 'outline' },
-    [LoanStatus.DEFAULTED]: { label: 'Defaulted', variant: 'destructive' },
-    [LoanStatus.CANCELLED]: { label: 'Cancelled', variant: 'outline' },
-};
+const LOAN_TABS = ['details', 'repayments', 'history'] as const;
 
 export default function LoanDetailPage() {
+    const [tab, setTab] = useTabParam(LOAN_TABS);
     const params = useParams();
     const router = useRouter();
     const loanId = params.id as string;
@@ -82,11 +80,7 @@ export default function LoanDetailPage() {
     const [approveNotes, setApproveNotes] = useState('');
     const [rejectNotes, setRejectNotes] = useState('');
 
-    const formatDate = (d: string | null) =>
-        d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
-    const formatCurrency = (v: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(v);
 
     const handleApprove = () => {
         if (!user) return;
@@ -134,14 +128,10 @@ export default function LoanDetailPage() {
                         {loan.loanType === LoanType.SALARY_ADVANCE ? 'Salary Advance' : 'Loan'} Details
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        {loan.employee
-                            ? `${loan.employee.firstName} ${loan.employee.lastName}`
-                            : loan.employeeId.substring(0, 8)}
+                        <EmployeeLink id={loan.employeeId} employee={loan.employee} />
                     </p>
                 </div>
-                <Badge variant={STATUS_CONFIG[loan.status].variant} className="text-sm px-3 py-1">
-                    {STATUS_CONFIG[loan.status].label}
-                </Badge>
+                <StatusBadge kind="loan" status={loan.status} className="px-3 py-1 text-sm" />
             </div>
 
             {/* Action buttons */}
@@ -164,7 +154,7 @@ export default function LoanDetailPage() {
                 </Button>
             )}
 
-            <Tabs defaultValue="details">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="repayments">Repayments</TabsTrigger>
@@ -183,19 +173,19 @@ export default function LoanDetailPage() {
                     <CardContent className="space-y-3">
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Loan Amount</span>
-                            <span className="font-semibold">{formatCurrency(Number(loan.amount))}</span>
+                            <span className="font-semibold">{formatMoney(Number(loan.amount))}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Total Repayable</span>
-                            <span className="font-semibold">{formatCurrency(Number(loan.totalRepayable))}</span>
+                            <span className="font-semibold">{formatMoney(Number(loan.totalRepayable))}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Outstanding</span>
-                            <span className="font-semibold text-red-600">{formatCurrency(Number(loan.outstandingBalance))}</span>
+                            <span className="font-semibold text-red-600">{formatMoney(Number(loan.outstandingBalance))}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Monthly Payment</span>
-                            <span className="font-semibold">{formatCurrency(Number(loan.monthlyRepayment))}</span>
+                            <span className="font-semibold">{formatMoney(Number(loan.monthlyRepayment))}</span>
                         </div>
                         {/* Progress bar */}
                         {loan.status === LoanStatus.ACTIVE && (
@@ -354,10 +344,7 @@ export default function LoanDetailPage() {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <ActionBadge action={log.action} />
                                                 <span className="text-xs text-muted-foreground">
-                                                    {new Date(log.createdAt).toLocaleString('en-US', {
-                                                        month: 'short', day: 'numeric', year: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit',
-                                                    })}
+                                                    {formatDateTime(log.createdAt)}
                                                 </span>
                                                 {log.userName && (
                                                     <span className="text-xs text-muted-foreground">· by {log.userName}</span>
@@ -399,7 +386,7 @@ export default function LoanDetailPage() {
                     <DialogHeader>
                         <DialogTitle>Approve Loan</DialogTitle>
                         <DialogDescription>
-                            Approve this {formatCurrency(Number(loan.amount))} {loan.loanType === LoanType.SALARY_ADVANCE ? 'advance' : 'loan'}.
+                            Approve this {formatMoney(Number(loan.amount))} {loan.loanType === LoanType.SALARY_ADVANCE ? 'advance' : 'loan'}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3">
@@ -427,7 +414,7 @@ export default function LoanDetailPage() {
                     <DialogHeader>
                         <DialogTitle>Reject Loan</DialogTitle>
                         <DialogDescription>
-                            Reject this {formatCurrency(Number(loan.amount))} {loan.loanType === LoanType.SALARY_ADVANCE ? 'advance' : 'loan'}.
+                            Reject this {formatMoney(Number(loan.amount))} {loan.loanType === LoanType.SALARY_ADVANCE ? 'advance' : 'loan'}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3">

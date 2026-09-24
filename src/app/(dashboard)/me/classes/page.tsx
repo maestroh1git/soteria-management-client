@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { useMyClasses } from '@/lib/hooks/use-attendance';
+import { formatDayOfWeek } from '@/lib/utils/dates';
 
 /**
  * Where a form teacher lives.
@@ -40,11 +41,7 @@ export default function MyClassesPage() {
     }
 
     const when = data?.date
-        ? new Date(`${data.date}T00:00:00`).toLocaleDateString('en-NG', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-          })
+        ? formatDayOfWeek(data.date)
         : '';
 
     return (

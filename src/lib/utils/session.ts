@@ -72,3 +72,15 @@ export function startSession(session: {
         document.cookie = 'must-change-password=; path=/; max-age=0';
     }
 }
+
+/**
+ * The middleware's copy of the person's roles, rewritten when the session
+ * reports a change (SessionSync) so a route opened or closed to them takes
+ * effect without signing out.
+ */
+export function writeRolesCookie(roles: readonly string[]): void {
+    if (typeof window === 'undefined') return;
+    document.cookie = `user-roles=${encodeURIComponent(
+        JSON.stringify(roles),
+    )}; path=/; max-age=${SESSION_SECONDS}`;
+}

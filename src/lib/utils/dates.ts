@@ -103,3 +103,48 @@ export function shiftDate(dateStr: string, days: number): string {
 export function todayIso(): string {
     return new Date().toISOString().slice(0, 10);
 }
+
+/*
+ * The house styles (ROADMAP-EXECUTION.md, C3.3). Screens used to format dates
+ * themselves in four locales — "Jan 5, 2026", "5 Jan 2026", "05 Jan 2026" and
+ * whatever the browser liked — sometimes on one page. These are the only ones.
+ *
+ *   formatDate        Jan 5, 2026            a record's date
+ *   formatDateTime    Jan 5, 2026, 2:30 PM   when something happened
+ *   formatTime        2:30 PM                a time today
+ *   formatLongDate    5 January 2026         a date worth reading (an award, an offer)
+ *   formatDayOfWeek   Monday 5 January       a school day
+ *   formatSpan        Jan 5 – Jan 9, 2026    leave, a term; one date when they match
+ */
+
+type DateInput = string | Date | null | undefined;
+
+function toDate(value: DateInput): Date | null {
+  if (!value) return null;
+  const date = typeof value === 'string' ? parseISO(value) : value;
+  return isValid(date) ? date : null;
+}
+
+export function formatDateTime(value: DateInput): string {
+  const date = toDate(value);
+  return date ? format(date, 'MMM d, yyyy, h:mm a') : '—';
+}
+
+export function formatTime(value: DateInput): string {
+  const date = toDate(value);
+  return date ? format(date, 'h:mm a') : '—';
+}
+
+export function formatLongDate(value: DateInput): string {
+  const date = toDate(value);
+  return date ? format(date, 'd MMMM yyyy') : '—';
+}
+
+export function formatDayOfWeek(value: DateInput): string {
+  const date = toDate(value);
+  return date ? format(date, 'EEEE d MMMM') : '—';
+}
+
+export function formatSpan(start: string, end: string): string {
+  return start === end ? formatDate(start) : formatDateRange(start, end);
+}

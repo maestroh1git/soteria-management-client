@@ -50,7 +50,8 @@ Each failure names the page and the refused request, e.g.
 ```
 
 That is a screen offering someone data or an action the API will not give
-them. Fix it in one of three places: the route map (`src/lib/auth/route-roles.ts`)
-if they should not reach the page at all, `can()` (`src/lib/auth/actions.ts`)
-if the page should hide the action, or the API's `@Roles` if they should be
-allowed.
+them. Fix it in one of three places: the route manifest
+(`src/lib/auth/route-manifest.ts`) if the page reads the wrong action, `can()`
+(`src/lib/hooks/use-can.ts`) if the page should hide the action, or the API's
+action registry (`src/common/access/actions.ts`, then `npm run sync:actions`
+here) if they should be allowed.

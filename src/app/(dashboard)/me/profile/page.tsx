@@ -61,7 +61,7 @@ export default function MyProfilePage() {
                         <h1 className="text-3xl font-bold tracking-tight">
                             {p.firstName} {p.lastName}
                         </h1>
-                        <StatusBadge status={p.status} />
+                        <StatusBadge kind="employee" status={p.status} />
                     </div>
                     <p className="text-muted-foreground">
                         {p.employeeNumber}
@@ -128,7 +128,7 @@ export default function MyProfilePage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <InfoRow icon={<Hash className="h-4 w-4" />} label="Employee number" value={p.employeeNumber} />
-                        <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Role" value={p.role} />
+                        <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Position" value={p.role} />
                         <InfoRow icon={<Building2 className="h-4 w-4" />} label="Department" value={p.department} />
                         <InfoRow
                             label="Grade"

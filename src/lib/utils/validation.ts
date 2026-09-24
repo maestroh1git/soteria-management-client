@@ -160,16 +160,6 @@ export type CreateGradeValues = z.infer<typeof createGradeSchema>;
 export type CreateEmployeeValues = z.infer<typeof createEmployeeSchema>;
 export type UpdateEmployeeValues = z.infer<typeof updateEmployeeSchema>;
 
-// ── Department schemas ──────────────────────────────────────
-export const createDepartmentSchema = z.object({
-  name: z.string().min(1, 'Department name is required'),
-  description: z.string().optional(),
-  headOfDepartment: z.string().uuid().optional().or(z.literal('')),
-  parentDepartmentId: z.string().uuid().optional().or(z.literal('')),
-});
-
-export type CreateDepartmentValues = z.infer<typeof createDepartmentSchema>;
-
 // ── Role schemas ────────────────────────────────────────────
 export const createRoleSchema = z.object({
   name: z.string().min(1, 'Role name is required'),

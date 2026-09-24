@@ -16,6 +16,7 @@ import {
     type SubmitMark,
 } from '@/lib/api/attendance';
 import { cn } from '@/lib/utils';
+import { formatDayOfWeek } from '@/lib/utils/dates';
 
 interface Draft {
     status: AttendanceStatus;
@@ -251,11 +252,7 @@ export function RegisterScreen({
                 <div>
                     <h1 className="text-xl font-semibold">{data.className}</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        {new Date(`${date}T00:00:00`).toLocaleDateString('en-NG', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                        })}
+                        {formatDayOfWeek(date)}
                         {' · '}
                         {data.termName}
                     </p>

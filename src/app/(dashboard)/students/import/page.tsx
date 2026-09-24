@@ -2,19 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
     Upload,
     FileSpreadsheet,
     AlertTriangle,
     CheckCircle2,
     Loader2,
-    ArrowLeft,
     Download,
     Users,
 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -26,13 +22,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { useStudentImportOptions } from '@/lib/hooks/use-students';
 import {
-    previewStudentImport,
-    commitStudentImport,
-    downloadStudentTemplate,
-    type StudentImportPreview,
-} from '@/lib/api/students';
+    useCommitStudentImport,
+    useDownloadStudentTemplate,
+    usePreviewStudentImport,
+    useStudentImportOptions,
+} from '@/lib/hooks/use-students';
+import type { StudentImportPreview } from '@/lib/api/students';
+import { PageHeader } from '@/components/layout/page-header';
 
 /**
  * Bringing a school's existing roll in from a spreadsheet.
@@ -43,12 +40,14 @@ import {
  */
 export default function ImportStudentsPage() {
     const router = useRouter();
-    const qc = useQueryClient();
 
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<StudentImportPreview | null>(null);
-    const [checking, setChecking] = useState(false);
-    const [importing, setImporting] = useState(false);
+    const previewMutation = usePreviewStudentImport();
+    const commitMutation = useCommitStudentImport();
+    const templateMutation = useDownloadStudentTemplate();
+    const checking = previewMutation.isPending;
+    const importing = commitMutation.isPending;
 
     const { data: options } = useStudentImportOptions();
 
@@ -57,66 +56,27 @@ export default function ImportStudentsPage() {
         setPreview(null); // a new file invalidates the previous check
     };
 
-    const template = async () => {
-        try {
-            const blob = await downloadStudentTemplate();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'student-roster-template.xlsx';
-            a.click();
-            URL.revokeObjectURL(url);
-        } catch {
-            toast.error('Could not build the template');
-        }
+    const template = () => templateMutation.mutate();
+
+    const check = () => {
+        if (!file) return;
+        previewMutation.mutate(file, { onSuccess: (p) => setPreview(p) });
     };
 
-    const check = async () => {
+    const confirm = () => {
         if (!file) return;
-        setChecking(true);
-        try {
-            setPreview(await previewStudentImport(file));
-        } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Could not read that file');
-        } finally {
-            setChecking(false);
-        }
-    };
-
-    const confirm = async () => {
-        if (!file) return;
-        setImporting(true);
-        try {
-            const r = await commitStudentImport(file);
-            toast.success(
-                `${r.students} student(s) imported · ${r.guardiansCreated} new guardian(s)`,
-            );
-            qc.invalidateQueries({ queryKey: ['students'] });
-            router.push('/students');
-        } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Import failed');
-        } finally {
-            setImporting(false);
-        }
+        commitMutation.mutate(file, { onSuccess: () => router.push('/students') });
     };
 
     const blocked = !!preview?.errors.length;
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/students" aria-label="Back to students">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-semibold">Import the roll</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Bring an existing register in from a spreadsheet.
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Import the roll"
+                description="Bring an existing register in from a spreadsheet."
+                crumbs={[{ label: 'Import' }]}
+            />
 
             <Card>
                 <CardHeader>

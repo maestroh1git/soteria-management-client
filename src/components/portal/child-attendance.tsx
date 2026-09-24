@@ -6,13 +6,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { TermStrip } from '@/components/attendance/term-strip';
 import { useChildAttendance } from '@/lib/hooks/use-portal';
 import { ABSENCE_REASON_LABELS, type AbsenceReason } from '@/lib/api/attendance';
-
-const LONG_DATE = (iso: string) =>
-    new Date(`${iso}T00:00:00`).toLocaleDateString('en-NG', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-    });
+import { formatDayOfWeek } from '@/lib/utils/dates';
 
 const STATUS_LABEL: Record<string, string> = {
     PRESENT: 'Present',
@@ -149,7 +143,7 @@ export function ChildAttendance({
                                 >
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium">
-                                            {LONG_DATE(d.date)}
+                                            {formatDayOfWeek(d.date)}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {d.reasonCode

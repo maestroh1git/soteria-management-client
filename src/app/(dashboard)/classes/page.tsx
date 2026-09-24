@@ -2,7 +2,6 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Pencil, Users, CalendarRange, Loader2, ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -59,6 +58,7 @@ import type {
     ClassLevel,
     ClassArm,
 } from '@/lib/api/academics';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 /**
  * The school's shape: the ladder of levels, the classes on each rung, and the
@@ -68,16 +68,15 @@ import type {
  * it — the roll cannot be imported, a child cannot be admitted, and an
  * application cannot name a class.
  */
+const CLASSES_TABS = ['classes', 'session'] as const;
+
 function ClassesPageInner() {
     const canManage = useCan()('academics.manage');
 
     // Which tab is showing lives in the URL, so a deep link (the onboarding
     // "set the academic session" step) can land straight on "Session & terms"
     // instead of always opening on the classes tab.
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const tab = searchParams.get('tab') === 'session' ? 'session' : 'classes';
-    const setTab = (v: string) => router.replace(`/classes?tab=${v}`);
+    const [tab, setTab] = useTabParam(CLASSES_TABS);
 
     const { data: levels = [], isLoading, isError } = useClassLevels();
     const { data: arms = [] } = useClassArms();

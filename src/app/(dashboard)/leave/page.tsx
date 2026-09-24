@@ -37,30 +37,33 @@ import {
 } from '@/lib/hooks/use-leave';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useCan } from '@/lib/hooks/use-can';
-import type { LeaveRequest, LeaveStatus, LeaveType } from '@/lib/types/api';
-
-const STATUS_VARIANT: Record<
-    LeaveStatus,
-    'default' | 'secondary' | 'destructive' | 'outline'
-> = {
-    APPROVED: 'default',
-    PENDING: 'secondary',
-    REJECTED: 'destructive',
-    CANCELLED: 'outline',
-};
-
-function formatRange(start: string, end: string): string {
-    const fmt = (d: string) =>
-        new Date(d).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-        });
-    return start === end ? fmt(start) : `${fmt(start)} — ${fmt(end)}`;
-}
+import type { LeaveRequest, LeaveType } from '@/lib/types/api';
+import { formatSpan } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
+import { EmployeeLink } from '@/components/common/entity-link';
+import { statusOptions } from '@/lib/status/registry';
+import { ListFilters, matches } from '@/components/common/list-filters';
 
 export default function LeavePage() {
-    const { data: requests = [], isLoading } = useLeaveRequests();
+    const { data: allRequests = [], isLoading } = useLeaveRequests();
+    const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState<string>();
+    const [statusFilter, setStatusFilter] = useState<string>();
+    const typeOptions = [
+        ...new Map(
+            allRequests
+                .filter((r) => r.leaveType)
+                .map((r) => [r.leaveType!.id, r.leaveType!.name]),
+        ).entries(),
+    ].map(([value, label]) => ({ value, label }));
+    // Search and type narrow both lists; status only means something in the
+    // history (everything awaiting a decision is, by definition, pending).
+    const requests = allRequests.filter(
+        (r) =>
+            (!typeFilter || r.leaveType?.id === typeFilter) &&
+            (!statusFilter || r.status === 'PENDING' || r.status === statusFilter) &&
+            matches(search, r.employee?.firstName, r.employee?.lastName, r.reason),
+    );
     const [dialogOpen, setDialogOpen] = useState(false);
 
     // Raising leave and authorising it are deliberately separate rights, and
@@ -108,6 +111,22 @@ export default function LeavePage() {
                     </Button>
                 )}
             </div>
+
+            <ListFilters
+                search={search}
+                onSearch={setSearch}
+                searchPlaceholder="Search by employee or reason"
+                filters={[
+                    { id: 'type', label: 'leave types', value: typeFilter, onChange: setTypeFilter, options: typeOptions },
+                    {
+                        id: 'status',
+                        label: 'outcomes',
+                        value: statusFilter,
+                        onChange: setStatusFilter,
+                        options: statusOptions('leave').filter((o) => o.value !== 'PENDING'),
+                    },
+                ]}
+            />
 
             <Card>
                 <CardHeader>
@@ -205,9 +224,7 @@ function RequestTable({
                     {requests.map((request) => (
                         <tr key={request.id} className="border-b">
                             <td className="px-3 py-2">
-                                {request.employee
-                                    ? `${request.employee.firstName} ${request.employee.lastName}`
-                                    : '—'}
+                                <EmployeeLink id={request.employeeId} employee={request.employee} />
                             </td>
                             <td className="px-3 py-2">
                                 {request.leaveType?.name ?? '—'}
@@ -220,15 +237,13 @@ function RequestTable({
                                 )}
                             </td>
                             <td className="px-3 py-2 text-muted-foreground">
-                                {formatRange(request.startDate, request.endDate)}
+                                {formatSpan(request.startDate, request.endDate)}
                             </td>
                             <td className="px-3 py-2 text-right">
                                 {Number(request.days)}
                             </td>
                             <td className="px-3 py-2">
-                                <Badge variant={STATUS_VARIANT[request.status]}>
-                                    {request.status}
-                                </Badge>
+                                <StatusBadge kind="leave" status={request.status} />
                                 {request.decisionNote && (
                                     <span className="block text-xs text-muted-foreground">
                                         {request.decisionNote}

@@ -1,4 +1,4 @@
-import api from './client';
+import api from '@/lib/api/client';
 import type { SalaryComponent } from '@/lib/types/api';
 
 export interface CreateSalaryComponentDto {

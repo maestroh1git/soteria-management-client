@@ -3,7 +3,7 @@
 import type { KeyboardEvent } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DAY_TYPE_LABELS, type DayType, type SchoolDay } from '@/lib/api/attendance';
-import { formatMonthYear } from '@/lib/utils/dates';
+import { formatDayOfWeek, formatMonthYear } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils';
 
 /**
@@ -106,13 +106,7 @@ export function MonthGrid({
                     {days.map((d) => {
                         const isSelected = selected.has(d.calendarDate);
                         const isToday = d.calendarDate === today;
-                        const long = new Date(
-                            `${d.calendarDate}T00:00:00`,
-                        ).toLocaleDateString('en-NG', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                        });
+                        const long = formatDayOfWeek(d.calendarDate);
                         return (
                             <button
                                 key={d.id}

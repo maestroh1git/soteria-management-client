@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { AlertTriangle, Loader2, Play, Info } from 'lucide-react';
+import { AlertTriangle, Loader2, Play, Info, Search } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +30,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/common/empty-state';
-import { useSessions, useTerms } from '@/lib/hooks/use-academics';
+import { useClassLevels, useSessions, useTerms } from '@/lib/hooks/use-academics';
 import {
     useGenerateInvoices,
     useInvoiceRunPreview,
@@ -40,18 +39,10 @@ import {
 } from '@/lib/hooks/use-fees';
 import { useCan } from '@/lib/hooks/use-can';
 import type { InvoiceStatus, InvoiceSummary } from '@/lib/api/fees';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
-
-const STATUS_STYLES: Record<InvoiceStatus, string> = {
-    DRAFT: 'bg-muted text-muted-foreground',
-    ISSUED: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
-    CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
-};
+import { Money } from '@/components/common/money';
+import { statusOf, TONE_CLASS } from '@/lib/status/registry';
+import { InvoiceLink } from '@/components/common/entity-link';
+import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
 
 const PAID_STYLE = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
 const PART_STYLE = 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200';
@@ -75,7 +66,7 @@ function settlementStyle(i: InvoiceSummary): string {
     const label = settlementLabel(i);
     if (label === 'PAID') return PAID_STYLE;
     if (label === 'PART-PAID') return PART_STYLE;
-    return STATUS_STYLES[i.status];
+    return TONE_CLASS[statusOf('invoice', i.status).tone];
 }
 
 /**
@@ -90,6 +81,10 @@ export default function InvoicesPage() {
     const [sessionId, setSessionId] = useState<string>();
     const [termId, setTermId] = useState<string>();
     const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'ALL'>('ALL');
+    const [levelId, setLevelId] = useState<string>('ALL');
+    const [searchText, setSearchText] = useState('');
+    const search = useDebouncedValue(searchText.trim());
+    const { data: levels = [] } = useClassLevels();
     const [runOpen, setRunOpen] = useState(false);
 
     const { data: terms } = useTerms(sessionId);
@@ -97,8 +92,11 @@ export default function InvoicesPage() {
     const { data: invoicePage, isLoading, isError } = useInvoices({
         termId,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
+        classLevelId: levelId === 'ALL' ? undefined : levelId,
+        search: search || undefined,
         page,
     });
+    const filtered = statusFilter !== 'ALL' || levelId !== 'ALL' || !!search;
     // The server returns one page; it used to return every invoice the school
     // had ever issued.
     const invoices = invoicePage?.items;
@@ -120,7 +118,7 @@ export default function InvoicesPage() {
     // table that looks like "nothing billed".
     useEffect(() => {
         setPage(1);
-    }, [termId, statusFilter]);
+    }, [termId, statusFilter, levelId, search]);
     const issueTerm = useIssueTermInvoices();
     // Billing is the finance office's; the Registrar reads what was billed.
     const canWrite = useCan()('fees.write');
@@ -156,6 +154,16 @@ export default function InvoicesPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        placeholder="Pupil, admission or invoice no."
+                        aria-label="Search invoices"
+                        className="pl-9"
+                    />
+                </div>
                 <Select value={sessionId} onValueChange={setSessionId}>
                     <SelectTrigger className="w-44">
                         <SelectValue placeholder="Session" />
@@ -197,6 +205,20 @@ export default function InvoicesPage() {
                     </SelectContent>
                 </Select>
 
+                <Select value={levelId} onValueChange={setLevelId}>
+                    <SelectTrigger className="w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All classes</SelectItem>
+                        {levels.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                                {l.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
                 {canWrite && draftCount > 0 && (
                     <Button
                         variant="outline"
@@ -219,8 +241,12 @@ export default function InvoicesPage() {
                 <EmptyState
                     isError={isError}
                     subject="the invoices"
-                    title="Nothing billed yet"
-                    description="Run the term to create drafts. Nothing is owed until you issue them."
+                    title={filtered ? 'No invoices match' : 'Nothing billed yet'}
+                    description={
+                        filtered
+                            ? 'Try another status, class or search.'
+                            : 'Run the term to create drafts. Nothing is owed until you issue them.'
+                    }
                 />
             ) : (
                 <Card>
@@ -241,12 +267,11 @@ export default function InvoicesPage() {
                                 {invoices.map((invoice) => (
                                     <tr key={invoice.id} className="hover:bg-muted/30">
                                         <td className="px-4 py-3">
-                                            <Link
-                                                href={`/fees/invoices/${invoice.id}`}
-                                                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
-                                            >
-                                                {invoice.invoiceNumber ?? 'Draft'}
-                                            </Link>
+                                            <InvoiceLink
+                                                id={invoice.id}
+                                                number={invoice.invoiceNumber ?? 'Draft'}
+                                                className="text-blue-600 dark:text-blue-400"
+                                            />
                                         </td>
                                         <td className="px-4 py-3">
                                             <div>{invoice.studentName}</div>
@@ -258,15 +283,15 @@ export default function InvoicesPage() {
                                             {invoice.classLevel}
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
-                                            ₦{money(invoice.charges)}
+                                            <Money value={invoice.charges} />
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                                             {Number(invoice.discounts) > 0
-                                                ? `−₦${money(invoice.discounts)}`
+                                                ? <Money value={invoice.discounts} deduction />
                                                 : '—'}
                                         </td>
                                         <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                                            ₦{money(invoice.outstanding ?? invoice.total)}
+                                            <Money value={invoice.outstanding ?? invoice.total} />
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
@@ -396,7 +421,7 @@ function RunDialog({
                                 <CardContent className="pt-6">
                                     <p className="text-xs text-muted-foreground">Total</p>
                                     <p className="text-2xl font-bold tabular-nums">
-                                        ₦{money(preview.total)}
+                                        <Money value={preview.total} />
                                     </p>
                                 </CardContent>
                             </Card>

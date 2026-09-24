@@ -33,6 +33,7 @@ import {
 } from '@/lib/hooks/use-reports';
 import { getExportCsvUrl, getExportExcelUrl } from '@/lib/api/reports';
 import { useCan } from '@/lib/hooks/use-can';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -42,6 +43,9 @@ const MONTHS = [
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
+const REPORT_TABS = ['monthly', 'tax', 'loans', 'departments'] as const;
+const MONTHLY_ONLY = ['monthly'] as const;
+
 export default function ReportsPage() {
     const [month, setMonth] = useState(currentMonth);
     const [year, setYear] = useState(currentYear);
@@ -49,6 +53,7 @@ export default function ReportsPage() {
     // A Viewer reads the monthly summary; tax, loans, department cost and the
     // exports are for Payroll, Finance and the office (the API's lines).
     const detail = useCan()('reports.detail');
+    const [tab, setTab] = useTabParam(detail ? REPORT_TABS : MONTHLY_ONLY);
 
     const {
         data: summary,
@@ -110,7 +115,7 @@ export default function ReportsPage() {
                 )}
             </div>
 
-            <Tabs defaultValue="monthly" className="space-y-6">
+            <Tabs value={tab} onValueChange={setTab} className="space-y-6">
                 <TabsList>
                     <TabsTrigger value="monthly">
                         <BarChart3 className="mr-2 h-4 w-4" />

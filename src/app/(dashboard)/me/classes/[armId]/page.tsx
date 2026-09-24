@@ -19,9 +19,7 @@ import { AwardDialog } from '@/components/attendance/award-dialog';
 import { MedicalAlertsCard } from '@/components/attendance/medical-alerts-card';
 import { useMyClass, useMyClasses } from '@/lib/hooks/use-attendance';
 import { useCan } from '@/lib/hooks/use-can';
-
-const time = (iso: string) =>
-    new Date(iso).toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' });
+import { formatTime } from '@/lib/utils/dates';
 
 /**
  * One class, from the form teacher's side: today's register, who needs a word,
@@ -176,9 +174,9 @@ export default function MyClassPage({
                                 >
                                     <span className="font-medium">{d.pupilName}</span>
                                     <span className="text-muted-foreground tabular-nums">
-                                        {time(d.departedAt)}
+                                        {formatTime(d.departedAt)}
                                         {d.collectedBy ? ` · ${d.collectedBy}` : ''}
-                                        {d.returnedAt ? ` · back ${time(d.returnedAt)}` : ''}
+                                        {d.returnedAt ? ` · back ${formatTime(d.returnedAt)}` : ''}
                                     </span>
                                 </li>
                             ))}

@@ -11,7 +11,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { useCompletenessSummary } from '@/lib/hooks/use-employees';
 
 /**
@@ -27,8 +27,9 @@ import { useCompletenessSummary } from '@/lib/hooks/use-employees';
  * "0 problems" every day teaches people to stop reading that corner.
  */
 export function StaffRecordsWidget() {
-    const { hasRole } = useAuth();
-    const canSee = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const can = useCan();
+    // Shown to the people who can fix the gaps it lists.
+    const canSee = can('employees.manage');
     const { data } = useCompletenessSummary(canSee);
 
     if (!canSee || !data || data.employees === 0) return null;

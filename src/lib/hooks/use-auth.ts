@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/stores/auth-store';
 import { useMyTenant } from './use-tenant';
 import { useHydrated } from './use-hydrated';
+import { routeRolesFor } from '@/lib/auth/route-roles';
 
 const noRole = () => false;
 
@@ -17,6 +18,11 @@ export function useAuth() {
   const token = hydrated ? store.token : null;
   const isAuthenticated = hydrated && store.isAuthenticated;
   const hasRole = hydrated ? store.hasRole : noRole;
+  /** Whether the middleware would let them open this path. The sidebar's test. */
+  const mayReach = (href: string) => {
+    const { roles } = routeRolesFor(href);
+    return !roles || hasRole(roles);
+  };
 
   // Tenant details are no longer embedded in the auth payload — fetch from
   // /tenants/me (query is gated on isAuthenticated inside useMyTenant).
@@ -33,6 +39,7 @@ export function useAuth() {
     logout,
     setError,
     hasRole,
+    mayReach,
 
     // Convenience getters
     fullName: user ? `${user.firstName} ${user.lastName}` : '',

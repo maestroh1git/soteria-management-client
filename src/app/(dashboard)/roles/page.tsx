@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Pencil, Trash2, Loader2, Shield } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,30 +37,26 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import {
-    getRoles,
-    createRole,
-    updateRole,
-    deleteRole,
-    getPermissions,
     type CreateRoleDto,
-} from '@/lib/api/roles';
-import { getDepartments } from '@/lib/api/departments';
+} from '@/features/staff/positions/api';
 import { createRoleSchema, type CreateRoleValues } from '@/lib/utils/validation';
 import { RoleType } from '@/lib/types/enums';
 import type { Role } from '@/lib/types/api';
+import { useDepartments } from '@/features/staff/departments/hooks';
+import {
+    useCreatePosition,
+    useDeletePosition,
+    usePermissionCatalogue,
+    usePositions,
+    useUpdatePosition,
+} from '@/features/staff/positions/hooks';
+import { PageHeader } from '@/components/layout/page-header';
 
-export default function RolesPage() {
-    const qc = useQueryClient();
-    const { data: roles = [], isLoading } = useQuery({
-        queryKey: ['roles'],
-        queryFn: getRoles,
-    });
+export default function PositionsPage() {
+    const { data: roles = [], isLoading } = usePositions();
     // Roles should be grouped under a department (powers the department-scoped
     // role picker on the employee form) — nudge users to create one first.
-    const departmentsQuery = useQuery({
-        queryKey: ['departments'],
-        queryFn: getDepartments,
-    });
+    const departmentsQuery = useDepartments();
     const noDepartments =
         departmentsQuery.data !== undefined && departmentsQuery.data.length === 0;
 
@@ -70,63 +64,34 @@ export default function RolesPage() {
     const [editTarget, setEditTarget] = useState<Role | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
 
-    const createMutation = useMutation({
-        mutationFn: (dto: CreateRoleDto) => createRole(dto),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['roles'] });
-            toast.success('Role created');
-            setDialogOpen(false);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const createMutation = useCreatePosition();
 
-    const updateMutation = useMutation({
-        mutationFn: ({ id, dto }: { id: string; dto: Partial<CreateRoleDto> }) =>
-            updateRole(id, dto),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['roles'] });
-            toast.success('Role updated');
-            setEditTarget(null);
-            setDialogOpen(false);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const updateMutation = useUpdatePosition();
 
-    const delMutation = useMutation({
-        mutationFn: (id: string) => deleteRole(id),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['roles'] });
-            toast.success('Role deleted');
-            setDeleteTarget(null);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const delMutation = useDeletePosition();
 
     if (isLoading) return <LoadingSkeleton variant="table" />;
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Roles</h1>
-                    <p className="text-muted-foreground">
-                        Define positions and permissions
-                    </p>
-                </div>
-                <Button
-                    onClick={() => {
-                        setEditTarget(null);
-                        setDialogOpen(true);
-                    }}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Add Role
-                </Button>
-            </div>
+            <PageHeader
+                title="Positions"
+                description="The jobs in your organisation, and who reports to whom. Someone's access is set on the Team tab in Settings."
+                actions={
+                    <Button
+                        onClick={() => {
+                            setEditTarget(null);
+                            setDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Add position
+                    </Button>
+                }
+            />
 
             {noDepartments && (
                 <PrerequisiteNotice
-                    message="Create a department first, then add roles to it. Departments group your roles and power the department-scoped role picker when adding employees."
+                    message="Create a department first, then add positions to it. The employee form offers the positions in the department you pick."
                     href="/departments"
                     actionLabel="Create a department"
                 />
@@ -189,7 +154,7 @@ export default function RolesPage() {
                         {roles.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="text-center py-12 text-muted-foreground">
-                                    No roles yet. Create one to get started.
+                                    No positions yet. Add the jobs people are hired into.
                                 </td>
                             </tr>
                         )}
@@ -211,9 +176,12 @@ export default function RolesPage() {
                         permissionIds: values.permissionIds,
                     };
                     if (editTarget) {
-                        updateMutation.mutate({ id: editTarget.id, dto });
+                        updateMutation.mutate(
+                            { id: editTarget.id, dto },
+                            { onSuccess: () => { setEditTarget(null); setDialogOpen(false); } },
+                        );
                     } else {
-                        createMutation.mutate(dto);
+                        createMutation.mutate(dto, { onSuccess: () => setDialogOpen(false) });
                     }
                 }}
             />
@@ -221,13 +189,18 @@ export default function RolesPage() {
             <ConfirmDialog
                 open={!!deleteTarget}
                 onOpenChange={(open) => !open && setDeleteTarget(null)}
-                title="Delete Role"
-                description={`Delete "${deleteTarget?.name}"? Employees with this role will need reassignment.`}
-                confirmLabel="Delete"
+                title={`Delete ${deleteTarget?.name ?? 'position'}?`}
+                description="Staff in this position will need another one. This cannot be undone."
+                confirmLabel="Delete position"
                 variant="destructive"
                 loading={delMutation.isPending}
                 onConfirm={async () => {
-                    if (deleteTarget) await delMutation.mutateAsync(deleteTarget.id);
+                    if (!deleteTarget) return;
+                    // A refusal is toasted by the hook; the dialog stays open.
+                    await delMutation.mutateAsync(deleteTarget.id).then(
+                        () => setDeleteTarget(null),
+                        () => undefined,
+                    );
                 }}
             />
         </div>
@@ -247,16 +220,10 @@ function RoleFormDialog({
     isLoading: boolean;
     onSubmit: (values: CreateRoleValues) => void;
 }) {
-    const { data: departments = [] } = useQuery({
-        queryKey: ['departments'],
-        queryFn: getDepartments,
-    });
-    const { data: permissions = [] } = useQuery({
-        queryKey: ['permissions'],
-        queryFn: getPermissions,
-    });
+    const { data: departments = [] } = useDepartments();
+    const { data: permissions = [] } = usePermissionCatalogue();
     // For the reporting line. A role cannot report to itself.
-    const { data: allRoles = [] } = useQuery({ queryKey: ['roles'], queryFn: getRoles });
+    const { data: allRoles = [] } = usePositions();
     const reportingOptions = allRoles.filter((r) => r.id !== role?.id);
 
     const form = useForm<CreateRoleValues>({
@@ -288,9 +255,9 @@ function RoleFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>{role ? 'Edit Role' : 'New Role'}</DialogTitle>
+                    <DialogTitle>{role ? `Edit ${role.name}` : 'Add a position'}</DialogTitle>
                     <DialogDescription>
-                        {role ? 'Update role details and permissions' : 'Define a new position'}
+                        {role ? 'Change the job, where it sits and who it reports to.' : 'A job people are hired into.'}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -315,7 +282,7 @@ function RoleFormDialog({
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Role description" {...field} />
+                                        <Input placeholder="What the job involves" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -537,7 +504,7 @@ function RoleFormDialog({
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600"
                             >
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {role ? 'Update' : 'Create'}
+                                {role ? 'Save changes' : 'Add position'}
                             </Button>
                         </DialogFooter>
                     </form>

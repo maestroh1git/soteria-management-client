@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,12 +35,8 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import {
-    getSalaryComponents,
-    createSalaryComponent,
-    updateSalaryComponent,
-    deleteSalaryComponent,
     type CreateSalaryComponentDto,
-} from '@/lib/api/salary-components';
+} from '@/features/staff/salary-components/api';
 import {
     createSalaryComponentSchema,
     type CreateSalaryComponentValues,
@@ -50,6 +44,13 @@ import {
 import { ComponentType, CalculationType } from '@/lib/types/enums';
 import type { SalaryComponent } from '@/lib/types/api';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { Money } from '@/components/common/money';
+import {
+    useCreateSalaryComponent,
+    useDeleteSalaryComponent,
+    useSalaryComponents,
+    useUpdateSalaryComponent,
+} from '@/features/staff/salary-components/hooks';
 
 const APPLICABILITY_BY_ORG_TYPE: Record<string, string[]> = {
     SCHOOL: ['ALL_STAFF', 'TEACHING_STAFF', 'ADMIN_STAFF', 'SUPERVISORS', 'SUPPORT_STAFF'],
@@ -63,48 +64,18 @@ const APPLICABILITY_BY_ORG_TYPE: Record<string, string[]> = {
 };
 
 export default function SalaryComponentsPage() {
-    const qc = useQueryClient();
     const { tenantOrgType } = useAuth();
-    const { data: components = [], isLoading } = useQuery({
-        queryKey: ['salary-components'],
-        queryFn: () => getSalaryComponents(),
-    });
+    const { data: components = [], isLoading } = useSalaryComponents();
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SalaryComponent | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<SalaryComponent | null>(null);
 
-    const createMutation = useMutation({
-        mutationFn: (dto: CreateSalaryComponentDto) => createSalaryComponent(dto),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['salary-components'] });
-            toast.success('Salary component created');
-            setDialogOpen(false);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const createMutation = useCreateSalaryComponent();
 
-    const updateMutation = useMutation({
-        mutationFn: ({ id, dto }: { id: string; dto: Partial<CreateSalaryComponentDto> }) =>
-            updateSalaryComponent(id, dto),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['salary-components'] });
-            toast.success('Salary component updated');
-            setEditTarget(null);
-            setDialogOpen(false);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const updateMutation = useUpdateSalaryComponent();
 
-    const delMutation = useMutation({
-        mutationFn: (id: string) => deleteSalaryComponent(id),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['salary-components'] });
-            toast.success('Salary component deleted');
-            setDeleteTarget(null);
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
+    const delMutation = useDeleteSalaryComponent();
 
     function openCreate() {
         setEditTarget(null);
@@ -169,7 +140,7 @@ export default function SalaryComponentsPage() {
                                 </td>
                                 <td className="px-4 py-3">
                                     {comp.calculationType === CalculationType.FIXED
-                                        ? `₦${Number(comp.value).toLocaleString()}`
+                                        ? <Money value={comp.value} />
                                         : `${comp.value}%`}
                                     {comp.isBase && Number(comp.value) === 0 && (
                                         <p className="mt-1 max-w-xs text-xs text-amber-600 dark:text-amber-500">
@@ -247,9 +218,12 @@ export default function SalaryComponentsPage() {
                         countryId: values.countryId || undefined,
                     };
                     if (editTarget) {
-                        updateMutation.mutate({ id: editTarget.id, dto });
+                        updateMutation.mutate(
+                            { id: editTarget.id, dto },
+                            { onSuccess: () => { setEditTarget(null); setDialogOpen(false); } },
+                        );
                     } else {
-                        createMutation.mutate(dto);
+                        createMutation.mutate(dto, { onSuccess: () => setDialogOpen(false) });
                     }
                 }}
             />
@@ -263,7 +237,12 @@ export default function SalaryComponentsPage() {
                 variant="destructive"
                 loading={delMutation.isPending}
                 onConfirm={async () => {
-                    if (deleteTarget) await delMutation.mutateAsync(deleteTarget.id);
+                    if (!deleteTarget) return;
+                    // A refusal is toasted by the hook; the dialog stays open.
+                    await delMutation.mutateAsync(deleteTarget.id).then(
+                        () => setDeleteTarget(null),
+                        () => undefined,
+                    );
                 }}
             />
         </div>

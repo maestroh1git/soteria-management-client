@@ -15,20 +15,7 @@ import { useSessions } from '@/lib/hooks/use-academics';
 import { useIncomeStatement } from '@/lib/hooks/use-finance';
 import { useCan } from '@/lib/hooks/use-can';
 import { useFeeSummary } from '@/lib/hooks/use-fees';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
-
-/** The sign belongs outside the symbol: -₦1,000.00, never ₦-1,000.00. */
-const signedMoney = (v: string) => {
-    const formatted = money(v);
-    return formatted.startsWith('-')
-        ? `-₦${formatted.slice(1)}`
-        : `₦${formatted}`;
-};
+import { Money } from '@/components/common/money';
 
 /**
  * Fees in against costs out — the Phase 4 milestone, on the dashboard.
@@ -84,13 +71,13 @@ export function FeesWidget() {
                     <div>
                         <p className="text-xs text-muted-foreground">Billed</p>
                         <p className="text-lg font-semibold tabular-nums">
-                            ₦{money(summary.billed)}
+                            <Money value={summary.billed} />
                         </p>
                     </div>
                     <div>
                         <p className="text-xs text-muted-foreground">Collected</p>
                         <p className="text-lg font-semibold tabular-nums text-green-700 dark:text-green-400">
-                            ₦{money(summary.collected)}
+                            <Money value={summary.collected} />
                             {summary.collectionRate !== null && (
                                 <span className="ml-1 text-xs font-normal text-muted-foreground">
                                     {summary.collectionRate}%
@@ -101,7 +88,7 @@ export function FeesWidget() {
                     <div>
                         <p className="text-xs text-muted-foreground">Outstanding</p>
                         <p className="text-lg font-semibold tabular-nums">
-                            ₦{money(summary.outstanding)}
+                            <Money value={summary.outstanding} />
                             {summary.studentsOwing > 0 && (
                                 <span className="ml-1 text-xs font-normal text-muted-foreground">
                                     {summary.studentsOwing} owing
@@ -118,14 +105,14 @@ export function FeesWidget() {
                                 net !== null && net < 0 ? 'text-red-600' : ''
                             }`}
                         >
-                            {income ? signedMoney(income.net) : '—'}
+                            {income ? <Money value={income.net} /> : '—'}
                         </p>
                     </div>
                 </div>
 
                 {Number(summary.unallocatedCredit) > 0 && (
                     <p className="text-xs text-muted-foreground">
-                        ₦{money(summary.unallocatedCredit)} received and not yet applied
+                        <Money value={summary.unallocatedCredit} /> received and not yet applied
                         to a bill.
                     </p>
                 )}

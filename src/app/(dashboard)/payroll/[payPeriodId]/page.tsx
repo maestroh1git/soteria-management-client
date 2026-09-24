@@ -16,6 +16,7 @@ import {
     AlertTriangle,
     Trash2,
     X,
+    Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -68,13 +69,11 @@ import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
 import { PaymentFileCard } from '@/components/payroll/payment-file-card';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
 import type { Salary, SalaryFilters, PayrollProcessResult } from '@/lib/types/api';
-
-const SALARY_STATUS_CONFIG: Record<SalaryStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-    [SalaryStatus.DRAFT]: { label: 'Draft', variant: 'secondary' },
-    [SalaryStatus.APPROVED]: { label: 'Approved', variant: 'default' },
-    [SalaryStatus.PAID]: { label: 'Paid', variant: 'outline' },
-    [SalaryStatus.CANCELLED]: { label: 'Cancelled', variant: 'destructive' },
-};
+import { formatDate } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
+import { EmployeeLink } from '@/components/common/entity-link';
+import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
 
 export default function PayrollWorkspacePage() {
     const params = useParams();
@@ -91,8 +90,22 @@ export default function PayrollWorkspacePage() {
     // Filters & pagination
     const [statusFilter, setStatusFilter] = useState<SalaryStatus | undefined>();
     const [page, setPage] = useState(1);
+    const [searchText, setSearchText] = useState('');
+    const search = useDebouncedValue(searchText.trim());
+    const [searched, setSearched] = useState(search);
+    // A new search starts from page 1 (set during render, not in an effect).
+    if (searched !== search) {
+        setSearched(search);
+        setPage(1);
+    }
 
-    const filters: SalaryFilters = { payPeriodId, status: statusFilter, page, limit: 20 };
+    const filters: SalaryFilters = {
+        payPeriodId,
+        status: statusFilter,
+        search: search || undefined,
+        page,
+        limit: 20,
+    };
 
     // Queries
     const {
@@ -141,8 +154,6 @@ export default function PayrollWorkspacePage() {
     const salaries = salariesResponse?.items ?? [];
     const totalPages = salariesResponse?.totalPages ?? 1;
 
-    const formatDate = (d: string) =>
-        new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 
     // Summary stats — from the period-wide status summary, falling back to the
@@ -374,7 +385,17 @@ export default function PayrollWorkspacePage() {
             )}
 
             {/* Filter & Bulk Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        placeholder="Name or staff number"
+                        aria-label="Search this run"
+                        className="pl-9"
+                    />
+                </div>
                 <Select
                     value={statusFilter ?? 'all'}
                     onValueChange={(v) => {
@@ -387,8 +408,8 @@ export default function PayrollWorkspacePage() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All statuses</SelectItem>
-                        {Object.entries(SALARY_STATUS_CONFIG).map(([key, cfg]) => (
-                            <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                        {statusOptions('salary').map(({ value, label }) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -493,7 +514,6 @@ export default function PayrollWorkspacePage() {
                             </thead>
                             <tbody>
                                 {salaries.map((sal) => {
-                                    const cfg = SALARY_STATUS_CONFIG[sal.status];
                                     return (
                                         <tr key={sal.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="px-4 py-3">
@@ -505,9 +525,7 @@ export default function PayrollWorkspacePage() {
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 font-medium">
-                                                {sal.employee
-                                                    ? `${sal.employee.firstName} ${sal.employee.lastName}`
-                                                    : sal.employeeId.substring(0, 8)}
+                                                <EmployeeLink id={sal.employeeId} employee={sal.employee} />
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <CurrencyDisplay amount={Number(sal.grossSalary)} />
@@ -519,7 +537,7 @@ export default function PayrollWorkspacePage() {
                                                 <CurrencyDisplay amount={Number(sal.netSalary)} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                                                <StatusBadge kind="salary" status={sal.status} />
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex justify-end gap-1">
@@ -768,7 +786,7 @@ export default function PayrollWorkspacePage() {
                             Salary Details
                             {viewSalary?.employee && (
                                 <span className="block text-sm font-normal text-muted-foreground">
-                                    {viewSalary.employee.firstName} {viewSalary.employee.lastName}
+                                    <EmployeeLink id={viewSalary.employeeId} employee={viewSalary.employee} />
                                 </span>
                             )}
                         </SheetTitle>
@@ -858,9 +876,7 @@ export default function PayrollWorkspacePage() {
                             <div className="space-y-2 border-t pt-4 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Status</span>
-                                    <Badge variant={SALARY_STATUS_CONFIG[viewSalary.status].variant}>
-                                        {SALARY_STATUS_CONFIG[viewSalary.status].label}
-                                    </Badge>
+                                    <StatusBadge kind="salary" status={viewSalary.status} />
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Calculated</span>

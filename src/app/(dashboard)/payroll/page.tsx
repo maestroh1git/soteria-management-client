@@ -8,12 +8,8 @@ import {
     CalendarDays,
     Plus,
     ChevronRight,
-    Clock,
-    CheckCircle2,
-    AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
     Dialog,
     DialogContent,
@@ -40,12 +36,9 @@ import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice'
 import { createPayPeriodSchema, type CreatePayPeriodValues } from '@/lib/utils/validation';
 import type { PayPeriodFilters } from '@/lib/types/api';
 import { PayPeriodStatus } from '@/lib/types/enums';
-
-const STATUS_CONFIG: Record<PayPeriodStatus, { label: string; variant: 'default' | 'secondary' | 'outline'; icon: typeof Clock }> = {
-    [PayPeriodStatus.OPEN]: { label: 'Open', variant: 'default', icon: Clock },
-    [PayPeriodStatus.PROCESSING]: { label: 'Processing', variant: 'secondary', icon: AlertCircle },
-    [PayPeriodStatus.CLOSED]: { label: 'Closed', variant: 'outline', icon: CheckCircle2 },
-};
+import { formatDate } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
@@ -86,8 +79,6 @@ export default function PayrollPage() {
         });
     };
 
-    const formatDate = (d: string) =>
-        new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     return (
         <div className="space-y-6">
@@ -140,9 +131,7 @@ export default function PayrollPage() {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Badge variant={STATUS_CONFIG[currentPeriod.status].variant}>
-                                {STATUS_CONFIG[currentPeriod.status].label}
-                            </Badge>
+                            <StatusBadge kind="payPeriod" status={currentPeriod.status} />
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </div>
                     </CardContent>
@@ -165,8 +154,8 @@ export default function PayrollPage() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All statuses</SelectItem>
-                        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                            <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                        {statusOptions('payPeriod').map(({ value, label }) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -223,7 +212,6 @@ export default function PayrollPage() {
                         </thead>
                         <tbody>
                             {periods.map((period) => {
-                                const cfg = STATUS_CONFIG[period.status];
                                 const isCurrent = currentPeriod?.id === period.id;
                                 return (
                                     <tr
@@ -248,7 +236,7 @@ export default function PayrollPage() {
                                             {formatDate(period.paymentDate)}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                                            <StatusBadge kind="payPeriod" status={period.status} />
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />

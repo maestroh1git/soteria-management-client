@@ -38,12 +38,7 @@ import {
     useDeleteBudget,
 } from '@/lib/hooks/use-finance';
 import { useDepartmentsList } from '@/lib/hooks/use-onboarding';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = v.split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
 
 /**
  * What was intended, against what the ledger says happened.
@@ -161,15 +156,15 @@ export default function BudgetsPage() {
                                     </div>
 
                                     <div className="grid gap-4 sm:grid-cols-4">
-                                        <Figure label="Budget" value={money(v.budgeted)} />
-                                        <Figure label="Spent" value={money(v.actual)} />
+                                        <Figure label="Budget" value={v.budgeted} />
+                                        <Figure label="Spent" value={v.actual} />
                                         <Figure
                                             label={v.overBudget ? 'Over by' : 'Left'}
-                                            value={money(
+                                            value={
                                                 v.overBudget
                                                     ? v.remaining.replace('-', '')
-                                                    : v.remaining,
-                                            )}
+                                                    : v.remaining
+                                            }
                                             tone={v.overBudget ? 'text-destructive' : undefined}
                                         />
                                         <div>
@@ -213,7 +208,7 @@ function Figure({
                 {label}
             </p>
             <p className={`text-lg font-semibold tabular-nums ${tone ?? ''}`}>
-                ₦{value}
+                <Money value={value} />
             </p>
         </div>
     );

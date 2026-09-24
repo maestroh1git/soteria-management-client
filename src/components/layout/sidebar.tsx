@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { filterNavigation } from './nav-config';
+import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
 
 
 const ORG_TYPE_LABEL: Record<string, string> = {
@@ -26,7 +27,8 @@ const ORG_TYPE_LABEL: Record<string, string> = {
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { tenantName, tenantOrgType, hasRole } = useAuth();
+    const { tenantName, tenantOrgType, mayReach } = useAuth();
+    const { word: learnerWord } = useLearnerTerm();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
     const { data: branding } = useBranding();
     const logoUrl = brandingImageUrl(branding?.logoUrl);
@@ -34,7 +36,7 @@ export function Sidebar() {
 
     const orgSubtitle = tenantOrgType ? (ORG_TYPE_LABEL[tenantOrgType] ?? 'Payroll System') : 'Payroll System';
 
-    const filteredNavigation = filterNavigation(hasRole, tenantOrgType);
+    const filteredNavigation = filterNavigation(mayReach, tenantOrgType, learnerWord({ plural: true, capital: true }));
 
     return (
         <aside

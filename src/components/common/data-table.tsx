@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { isRowNavigationClick } from '@/lib/utils/row-click';
 import {
     ColumnDef,
     ColumnFiltersState,
+    RowData,
     SortingState,
     VisibilityState,
     flexRender,
@@ -40,6 +42,18 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 // Types
 // ============================================================
 
+declare module '@tanstack/react-table' {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    interface ColumnMeta<TData extends RowData, TValue> {
+        /** Under 640px, rows become cards: this column is the card's title. */
+        cardTitle?: boolean;
+        /** Leave this column off the card (it repeats the title, or is a control). */
+        hideOnCard?: boolean;
+        /** Right-align (figures). */
+        align?: 'right';
+    }
+}
+
 export interface DataTableFilterOption {
     label: string;
     value: string;
@@ -49,6 +63,8 @@ export interface DataTableFilter {
     id: string;
     label: string;
     options: DataTableFilterOption[];
+    /** The selected value, when the page holds the filter (undefined = all). */
+    value?: string;
 }
 
 export interface DataTablePagination {
@@ -62,6 +78,12 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     searchKey?: string;
+    /**
+     * Search the loaded rows by this text (a name, a number). For lists the
+     * API returns whole; a paginated list searches on the server through
+     * `onSearchChange` instead.
+     */
+    searchText?: (row: TData) => string;
     searchPlaceholder?: string;
     filters?: DataTableFilter[];
     pagination?: DataTablePagination;
@@ -77,6 +99,16 @@ interface DataTableProps<TData, TValue> {
      * adds neither a second tab stop nor a control with no accessible name.
      */
     onRowClick?: (row: TData) => void;
+    /**
+     * Where a row leads. A plain click on the row goes there; the row's own
+     * link (put one in the title cell or `rowActions`) is the keyboard path
+     * and the one a modified click opens in a new tab.
+     */
+    rowHref?: (row: TData) => string;
+    /** A trailing cell per row: a menu, a chevron link. */
+    rowActions?: (row: TData) => ReactNode;
+    /** Cap the height and keep the header in view while the rows scroll. */
+    maxHeight?: string;
     bulkActions?: React.ReactNode;
     loading?: boolean;
     emptyTitle?: string;
@@ -100,6 +132,7 @@ export function DataTable<TData, TValue>({
     columns,
     data,
     searchKey,
+    searchText,
     searchPlaceholder = 'Search...',
     filters = [],
     pagination,
@@ -110,6 +143,9 @@ export function DataTable<TData, TValue>({
     enableRowSelection = false,
     onRowSelectionChange,
     onRowClick,
+    rowHref,
+    rowActions,
+    maxHeight,
     bulkActions,
     loading = false,
     emptyTitle = 'No results found',
@@ -124,8 +160,13 @@ export function DataTable<TData, TValue>({
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [searchValue, setSearchValue] = useState('');
 
+    const needle = searchText && !onSearchChange ? searchValue.trim().toLowerCase() : '';
+    const shown = needle
+        ? data.filter((row) => searchText!(row).toLowerCase().includes(needle))
+        : data;
+
     const table = useReactTable({
-        data,
+        data: shown,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -140,7 +181,7 @@ export function DataTable<TData, TValue>({
             if (onRowSelectionChange) {
                 const selectedRows = Object.keys(newSelection)
                     .filter((key) => newSelection[key])
-                    .map((key) => data[parseInt(key)]);
+                    .map((key) => shown[parseInt(key)]);
                 onRowSelectionChange(selectedRows);
             }
         },
@@ -171,18 +212,31 @@ export function DataTable<TData, TValue>({
         (key) => rowSelection[key],
     ).length;
 
-    const handleRowClick = useCallback(
-        (e: React.MouseEvent<HTMLTableRowElement>, row: TData) => {
-            if (onRowClick && isRowNavigationClick(e)) onRowClick(row);
-        },
-        [onRowClick],
+    const router = useRouter();
+    const openRow = rowHref
+        ? (row: TData) => router.push(rowHref(row))
+        : onRowClick;
+    const handleRowClick = (e: React.MouseEvent<HTMLElement>, row: TData) => {
+        if (openRow && isRowNavigationClick(e)) openRow(row);
+    };
+    const colCount = columns.length + (rowActions ? 1 : 0);
+    const rows = table.getRowModel().rows;
+    const empty = (
+        <EmptyState
+            isError={isError}
+            subject={errorSubject}
+            title={emptyTitle}
+            description={emptyDescription}
+            actionLabel={emptyAction?.label}
+            onAction={emptyAction?.onClick}
+        />
     );
 
     return (
         <div className="space-y-4">
             {/* Toolbar: search + filters */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                {(searchKey || onSearchChange) && (
+                {(searchKey || onSearchChange || searchText) && (
                     <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -196,6 +250,9 @@ export function DataTable<TData, TValue>({
                 {filters.map((filter) => (
                     <Select
                         key={filter.id}
+                        {...(filter.value !== undefined || 'value' in filter
+                            ? { value: filter.value ?? 'all' }
+                            : {})}
                         onValueChange={(value) =>
                             onFilterChange?.(filter.id, value === 'all' ? undefined : value)
                         }
@@ -225,14 +282,30 @@ export function DataTable<TData, TValue>({
                 </div>
             )}
 
-            {/* Table */}
-            <div className="rounded-md border">
+            {/* Table (from 640px up) */}
+            <div
+                className="hidden rounded-md border sm:block"
+                style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
+            >
                 <Table>
-                    <TableHeader>
+                    <TableHeader
+                        className={
+                            maxHeight
+                                ? 'sticky top-0 z-10 bg-background shadow-[0_1px_0_var(--border)]'
+                                : undefined
+                        }
+                    >
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id}>
+                                    <TableHead
+                                        key={header.id}
+                                        className={
+                                            header.column.columnDef.meta?.align === 'right'
+                                                ? 'text-right'
+                                                : undefined
+                                        }
+                                    >
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
@@ -241,6 +314,7 @@ export function DataTable<TData, TValue>({
                                             )}
                                     </TableHead>
                                 ))}
+                                {rowActions && <TableHead aria-label="Actions" />}
                             </TableRow>
                         ))}
                     </TableHeader>
@@ -249,49 +323,51 @@ export function DataTable<TData, TValue>({
                             // Loading skeleton rows
                             Array.from({ length: 5 }).map((_, i) => (
                                 <TableRow key={`skeleton-${i}`}>
-                                    {columns.map((_, j) => (
+                                    {Array.from({ length: colCount }).map((_, j) => (
                                         <TableCell key={`skeleton-${i}-${j}`}>
                                             <Skeleton className="h-5 w-full" />
                                         </TableCell>
                                     ))}
                                 </TableRow>
                             ))
-                        ) : table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
+                        ) : rows.length ? (
+                            rows.map((row) => (
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && 'selected'}
-                                    className={onRowClick ? 'cursor-pointer' : undefined}
+                                    className={openRow ? 'cursor-pointer' : undefined}
                                     onClick={
-                                        onRowClick
+                                        openRow
                                             ? (e) => handleRowClick(e, row.original)
                                             : undefined
                                     }
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell
+                                            key={cell.id}
+                                            className={
+                                                cell.column.columnDef.meta?.align === 'right'
+                                                    ? 'text-right'
+                                                    : undefined
+                                            }
+                                        >
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext(),
                                             )}
                                         </TableCell>
                                     ))}
+                                    {rowActions && (
+                                        <TableCell className="w-10 text-right">
+                                            {rowActions(row.original)}
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-48"
-                                >
-                                    <EmptyState
-                                        isError={isError}
-                                        subject={errorSubject}
-                                        title={emptyTitle}
-                                        description={emptyDescription}
-                                        actionLabel={emptyAction?.label}
-                                        onAction={emptyAction?.onClick}
-                                    />
+                                <TableCell colSpan={colCount} className="h-48">
+                                    {empty}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -299,9 +375,61 @@ export function DataTable<TData, TValue>({
                 </Table>
             </div>
 
+            {/* Cards (under 640px): a table this wide cannot be read on a phone */}
+            <div className="space-y-2 sm:hidden">
+                {loading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={`card-skeleton-${i}`} className="h-24 w-full" />
+                    ))
+                ) : rows.length ? (
+                    rows.map((row) => {
+                        const cells = row.getVisibleCells();
+                        const title = cells.find((c) => c.column.columnDef.meta?.cardTitle);
+                        return (
+                            <div
+                                key={row.id}
+                                className={`rounded-lg border bg-card p-3 ${openRow ? 'cursor-pointer active:bg-muted/50' : ''}`}
+                                onClick={openRow ? (e) => handleRowClick(e, row.original) : undefined}
+                            >
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 font-medium">
+                                        {title &&
+                                            flexRender(title.column.columnDef.cell, title.getContext())}
+                                    </div>
+                                    {rowActions?.(row.original)}
+                                </div>
+                                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                                    {cells
+                                        .filter(
+                                            (c) =>
+                                                c !== title &&
+                                                !c.column.columnDef.meta?.hideOnCard &&
+                                                c.column.id !== 'select',
+                                        )
+                                        .map((c) => (
+                                            <div key={c.id} className="min-w-0">
+                                                <dt className="text-xs text-muted-foreground">
+                                                    {typeof c.column.columnDef.header === 'string'
+                                                        ? c.column.columnDef.header
+                                                        : c.column.id}
+                                                </dt>
+                                                <dd className="truncate">
+                                                    {flexRender(c.column.columnDef.cell, c.getContext())}
+                                                </dd>
+                                            </div>
+                                        ))}
+                                </dl>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="rounded-lg border p-6">{empty}</div>
+                )}
+            </div>
+
             {/* Pagination */}
             {pagination && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
                             Showing{' '}
@@ -313,6 +441,7 @@ export function DataTable<TData, TValue>({
                             {Math.min(pagination.page * pagination.limit, pagination.total)}{' '}
                             of {pagination.total}
                         </span>
+                        {onLimitChange && (
                         <Select
                             value={String(pagination.limit)}
                             onValueChange={(value) => onLimitChange?.(parseInt(value))}
@@ -328,6 +457,7 @@ export function DataTable<TData, TValue>({
                                 ))}
                             </SelectContent>
                         </Select>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button

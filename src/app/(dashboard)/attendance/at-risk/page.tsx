@@ -14,6 +14,8 @@ import {
 import { EmptyState } from '@/components/common/empty-state';
 import { useCurrentSession, useTerms } from '@/lib/hooks/use-academics';
 import { useAtRisk } from '@/lib/hooks/use-attendance';
+import { StudentLink } from '@/components/common/entity-link';
+import { ListFilters, matches } from '@/components/common/list-filters';
 
 /**
  * Pupils whose attendance has fallen.
@@ -32,6 +34,16 @@ export default function AtRiskPage() {
     const activeTerm = termId ?? terms.find((t) => t.isCurrent)?.id ?? terms[0]?.id;
 
     const { data, isLoading, isError } = useAtRisk({ termId: activeTerm, threshold });
+    const [search, setSearch] = useState('');
+    const [className, setClassName] = useState<string>();
+    const classes = [...new Set((data?.items ?? []).map((p) => p.className))]
+        .sort()
+        .map((c) => ({ value: c, label: c }));
+    const pupils = (data?.items ?? []).filter(
+        (p) =>
+            (!className || p.className === className) &&
+            matches(search, p.firstName, p.lastName, p.admissionNumber, p.guardianName, p.guardianPhone),
+    );
 
     return (
         <div className="space-y-6">
@@ -90,6 +102,14 @@ export default function AtRiskPage() {
                         {data.total} {data.total === 1 ? 'pupil' : 'pupils'} of{' '}
                         {data.teachingDays} teaching days so far.
                     </p>
+                    <ListFilters
+                        search={search}
+                        onSearch={setSearch}
+                        searchPlaceholder="Pupil, admission no. or guardian"
+                        filters={[
+                            { id: 'class', label: 'classes', value: className, onChange: setClassName, options: classes },
+                        ]}
+                    />
                     <div className="overflow-x-auto rounded-lg border">
                         <table className="w-full min-w-[640px] text-sm">
                             <caption className="sr-only">
@@ -115,12 +135,21 @@ export default function AtRiskPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.items.map((p) => (
+                                {pupils.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                            Nobody in this class or search.
+                                        </td>
+                                    </tr>
+                                )}
+                                {pupils.map((p) => (
                                     <tr key={p.studentId} className="border-b last:border-0">
                                         <td className="px-4 py-3">
-                                            <span className="font-medium">
-                                                {p.lastName}, {p.firstName}
-                                            </span>
+                                            <StudentLink
+                                                id={p.studentId}
+                                                name={`${p.lastName}, ${p.firstName}`}
+                                                className="font-medium"
+                                            />
                                             <span className="block text-xs tabular-nums text-muted-foreground">
                                                 {p.admissionNumber}
                                             </span>
