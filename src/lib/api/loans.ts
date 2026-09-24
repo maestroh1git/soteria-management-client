@@ -17,7 +17,6 @@ export interface CreateAdvanceDto {
 }
 
 export interface LoanApprovalDto {
-  approverId: string;
   notes?: string;
 }
 

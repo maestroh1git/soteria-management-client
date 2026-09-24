@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 import {
   generatePayslip,
   generateBulkPayslips,
@@ -15,6 +16,7 @@ import {
   getLoanPortfolio,
   getDepartmentCost,
   getYearEndReport,
+  downloadReport,
 } from '@/lib/api/reports';
 import { getSalaries } from '@/lib/api/payroll';
 
@@ -162,5 +164,20 @@ export function useRecentSalaries(limit = 5, enabled = true) {
     queryKey: ['payroll', 'salaries', 'recent', limit],
     queryFn: () => getSalaries({ limit }),
     enabled,
+  });
+}
+
+/** Download a report (CSV or Excel) with the login attached. */
+export function useDownloadReport() {
+  return useMutation({
+    mutationFn: ({
+      format,
+      filters,
+    }: {
+      format: 'csv' | 'excel';
+      filters: Parameters<typeof downloadReport>[1];
+    }) => downloadReport(format, filters),
+    onError: (err) =>
+      toast.error(getApiErrorMessage(err, 'The report could not be downloaded.')),
   });
 }

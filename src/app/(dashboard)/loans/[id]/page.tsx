@@ -8,10 +8,7 @@ import {
     XCircle,
     Banknote,
     Calendar,
-    User,
-    Clock,
     DollarSign,
-    Percent,
     Hash,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,7 +37,6 @@ import {
 } from '@/lib/hooks/use-loans';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
-import { useAuth } from '@/lib/hooks/use-auth';
 import { useCan } from '@/lib/hooks/use-can';
 import { LoanStatus, LoanType } from '@/lib/types/enums';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
@@ -56,7 +52,6 @@ export default function LoanDetailPage() {
     const params = useParams();
     const router = useRouter();
     const loanId = params.id as string;
-    const { user } = useAuth();
     const can = useCan();
 
     const { data: loan, isLoading, isError } = useLoan(loanId);
@@ -83,9 +78,8 @@ export default function LoanDetailPage() {
 
 
     const handleApprove = () => {
-        if (!user) return;
         approveMutation.mutate(
-            { id: loanId, dto: { approverId: user.id, notes: approveNotes || undefined } },
+            { id: loanId, dto: { notes: approveNotes || undefined } },
             { onSuccess: () => { setShowApprove(false); setApproveNotes(''); } },
         );
     };

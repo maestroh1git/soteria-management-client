@@ -14,7 +14,6 @@ export interface ProcessPayrollDto {
 }
 
 export interface SalaryApprovalDto {
-  approverId: string;
   notes?: string;
 }
 
@@ -29,7 +28,6 @@ export interface BulkPaymentDto {
 
 export interface BulkApprovalDto {
   salaryIds: string[];
-  approverId: string;
   notes?: string;
 }
 

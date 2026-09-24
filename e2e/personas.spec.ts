@@ -183,3 +183,26 @@ test.describe('Paths repaired in Wave 1', () => {
         });
     });
 });
+
+test.describe('Fixed after Wave 3', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('Report exports download with the login attached', () => {
+        test.skip(!has('admin'), 'no admin persona');
+        test.use({ storageState: storageFor('admin') });
+
+        // They used to open a bare URL in a new tab, which carries no token:
+        // every export was a 401 page instead of a file.
+        test('CSV arrives as a file', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/reports');
+            await settle(page);
+            const [file] = await Promise.all([
+                page.waitForEvent('download'),
+                page.getByRole('button', { name: /^csv$/i }).click(),
+            ]);
+            expect(file.suggestedFilename()).toMatch(/\.csv$/);
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});

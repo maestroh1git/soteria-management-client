@@ -15,7 +15,6 @@ import {
     CreditCard,
     AlertTriangle,
     Trash2,
-    X,
     Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -64,7 +63,6 @@ import {
     useDiscardDraftRun,
 } from '@/lib/hooks/use-payroll';
 import { useCan } from '@/lib/hooks/use-can';
-import { useAuth } from '@/lib/hooks/use-auth';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
 import { PaymentFileCard } from '@/components/payroll/payment-file-card';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
@@ -81,7 +79,6 @@ export default function PayrollWorkspacePage() {
     const payPeriodId = params.payPeriodId as string;
     // Processing, approving and paying are three different people's rights,
     // and the API draws the same lines. Each button asks for its own.
-    const { user } = useAuth();
     const can = useCan();
     const canProcess = can('payroll.process');
     const canApprove = can('payroll.approve');
@@ -204,9 +201,9 @@ export default function PayrollWorkspacePage() {
     };
 
     const handleApprove = () => {
-        if (!approveTarget || !user) return;
+        if (!approveTarget) return;
         approveMutation.mutate(
-            { id: approveTarget.id, dto: { approverId: user.id, notes: approveNotes || undefined } },
+            { id: approveTarget.id, dto: { notes: approveNotes || undefined } },
             { onSuccess: () => { setShowApprove(false); setApproveTarget(null); setApproveNotes(''); } },
         );
     };
@@ -230,9 +227,9 @@ export default function PayrollWorkspacePage() {
         .map((s) => s.id);
 
     const handleBulkApprove = () => {
-        if (!user || selectedDraftIds.length === 0) return;
+        if (selectedDraftIds.length === 0) return;
         bulkApproveMutation.mutate(
-            { salaryIds: selectedDraftIds, approverId: user.id },
+            { salaryIds: selectedDraftIds },
             { onSuccess: () => setSelected(new Set()) },
         );
     };

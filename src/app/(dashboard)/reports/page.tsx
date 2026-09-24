@@ -6,7 +6,6 @@ import {
     BarChart3,
     DollarSign,
     Users,
-    TrendingUp,
     Download,
     FileSpreadsheet,
     Building,
@@ -31,9 +30,9 @@ import {
     useLoanPortfolio,
     useDepartmentCost,
 } from '@/lib/hooks/use-reports';
-import { getExportCsvUrl, getExportExcelUrl } from '@/lib/api/reports';
 import { useCan } from '@/lib/hooks/use-can';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { useDownloadReport } from '@/lib/hooks/use-reports';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -53,6 +52,7 @@ export default function ReportsPage() {
     // A Viewer reads the monthly summary; tax, loans, department cost and the
     // exports are for Payroll, Finance and the office (the API's lines).
     const detail = useCan()('reports.detail');
+    const download = useDownloadReport();
     const [tab, setTab] = useTabParam(detail ? REPORT_TABS : MONTHLY_ONLY);
 
     const {
@@ -98,7 +98,13 @@ export default function ReportsPage() {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(getExportCsvUrl({ month, year, reportType: 'monthly-summary' }), '_blank')}
+                            disabled={download.isPending}
+                            onClick={() =>
+                                download.mutate({
+                                    format: 'csv',
+                                    filters: { month, year, reportType: 'monthly-summary' },
+                                })
+                            }
                         >
                             <Download className="mr-2 h-4 w-4" />
                             CSV
@@ -106,7 +112,13 @@ export default function ReportsPage() {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(getExportExcelUrl({ month, year, reportType: 'monthly-summary' }), '_blank')}
+                            disabled={download.isPending}
+                            onClick={() =>
+                                download.mutate({
+                                    format: 'excel',
+                                    filters: { month, year, reportType: 'monthly-summary' },
+                                })
+                            }
                         >
                             <FileSpreadsheet className="mr-2 h-4 w-4" />
                             Excel
