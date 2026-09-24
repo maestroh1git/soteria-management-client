@@ -9,14 +9,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { filterNavigation } from './nav-config';
+import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
 
 export function MobileSidebar() {
     const pathname = usePathname();
     const { mayReach, tenantOrgType } = useAuth();
+    const { word: learnerWord } = useLearnerTerm();
     const { mobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
 
     // The same list and the same filter as the desktop rail — see nav-config.
-    const filteredNavigation = filterNavigation(mayReach, tenantOrgType);
+    const filteredNavigation = filterNavigation(mayReach, tenantOrgType, learnerWord({ plural: true, capital: true }));
 
     return (
         <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>

@@ -195,7 +195,7 @@ export default function ImportStaffPage() {
                                             <th className="px-3 py-2 text-left font-medium">#</th>
                                             <th className="px-3 py-2 text-left font-medium">Name</th>
                                             <th className="px-3 py-2 text-left font-medium">Grade</th>
-                                            <th className="px-3 py-2 text-left font-medium">Role</th>
+                                            <th className="px-3 py-2 text-left font-medium">Position</th>
                                             <th className="px-3 py-2 text-right font-medium">
                                                 Contractual
                                             </th>

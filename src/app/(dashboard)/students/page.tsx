@@ -16,6 +16,8 @@ import type { Student } from '@/lib/api/students';
 import { ClassLink } from '@/components/common/entity-link';
 import { statusOptions } from '@/lib/status/registry';
 import { useClassArms } from '@/lib/hooks/use-academics';
+import { PageHeader } from '@/components/layout/page-header';
+import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
 
 /**
  * The pupil roster.
@@ -27,6 +29,7 @@ export default function StudentsPage() {
     const router = useRouter();
     const can = useCan();
     const canManage = can('students.manage');
+    const { word: learner } = useLearnerTerm();
 
     const [status, setStatus] = useState('all');
     const [classArmId, setClassArmId] = useState<string>();
@@ -132,26 +135,26 @@ export default function StudentsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Students</h1>
-                    <p className="text-muted-foreground">The school roll</p>
-                </div>
-                {canManage && (
-                    <div className="flex gap-2">
-                        <Link href="/students/import">
-                            <Button variant="outline">
-                                <Upload className="mr-2 h-4 w-4" /> Import
-                            </Button>
-                        </Link>
-                        <Link href="/students/new">
-                            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                                <Plus className="mr-2 h-4 w-4" /> Admit student
-                            </Button>
-                        </Link>
-                    </div>
-                )}
-            </div>
+            <PageHeader
+                title={learner({ plural: true, capital: true })}
+                description="The school roll"
+                actions={
+                    canManage && (
+                        <>
+                            <Link href="/students/import">
+                                <Button variant="outline">
+                                    <Upload className="mr-2 h-4 w-4" /> Import
+                                </Button>
+                            </Link>
+                            <Link href="/students/new">
+                                <Button>
+                                    <Plus className="mr-2 h-4 w-4" /> Admit a {learner()}
+                                </Button>
+                            </Link>
+                        </>
+                    )
+                }
+            />
 
             <DataTable
                 columns={columns}
@@ -159,7 +162,7 @@ export default function StudentsPage() {
                 loading={isLoading}
                 isError={isError}
                 errorSubject="the roll"
-                searchPlaceholder="Search by name or admission number…"
+                searchPlaceholder="Name or admission number"
                 onSearchChange={setSearch}
                 filters={[
                     {

@@ -75,7 +75,7 @@ export default function EmployeeDetailPage({
             <PageHeader
                 title={`${employee.firstName} ${employee.lastName}`}
                 badge={<StatusBadge kind="employee" status={employee.status} />}
-                description={`${employee.employeeNumber} · ${employee.role?.name ?? 'No role'}`}
+                description={`${employee.employeeNumber} · ${employee.role?.name ?? 'No position'}`}
                 crumbs={[{ label: `${employee.firstName} ${employee.lastName}` }]}
                 actions={
                     canManageEmployee && (
@@ -158,7 +158,7 @@ export default function EmployeeDetailPage({
                                 <InfoRow label="Employee #" value={employee.employeeNumber} />
                                 <InfoRow
                                     icon={<Briefcase className="h-4 w-4" />}
-                                    label="Role"
+                                    label="Position"
                                     value={employee.role?.name ?? '—'}
                                 />
                                 {employee.role?.department && (

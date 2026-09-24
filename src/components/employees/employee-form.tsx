@@ -185,9 +185,9 @@ export function EmployeeForm({
     if (noRoles) {
         return (
             <PrerequisiteNotice
-                message="You need at least one role before adding employees — every employee must be assigned one."
+                message="Add at least one position first — everyone on the staff list holds one."
                 href="/roles"
-                actionLabel="Create a role"
+                actionLabel="Add a position"
             />
         );
     }
@@ -631,7 +631,7 @@ export function EmployeeForm({
                                 name="roleId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Role *</FormLabel>
+                                        <FormLabel>Position *</FormLabel>
                                         <Select
                                             onValueChange={field.onChange}
                                             value={field.value}
@@ -642,7 +642,7 @@ export function EmployeeForm({
                                                     <SelectValue
                                                         placeholder={
                                                             departmentFilter
-                                                                ? 'Select a role'
+                                                                ? 'Select a position'
                                                                 : 'Select a department first'
                                                         }
                                                     />

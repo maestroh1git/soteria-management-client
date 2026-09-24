@@ -100,7 +100,7 @@ export default function EmployeesPage() {
         },
         {
             accessorKey: 'role',
-            header: 'Role',
+            header: 'Position',
             cell: ({ row }) => (
                 <span className="text-sm">{row.original.role?.name ?? '—'}</span>
             ),
@@ -218,7 +218,7 @@ export default function EmployeesPage() {
                             {needsRole ? (
                                 <Button
                                     disabled
-                                    title="Create a role first"
+                                    title="Add a position first"
                                     className="bg-gradient-to-r from-blue-600 to-indigo-600"
                                 >
                                     <Plus className="mr-2 h-4 w-4" /> Add Employee
@@ -237,9 +237,9 @@ export default function EmployeesPage() {
 
             {needsRole && (
                 <PrerequisiteNotice
-                    message="Employees must be assigned a role. Create at least one role before adding employees."
+                    message="Everyone on the staff list holds a position. Add at least one before adding staff."
                     href="/roles"
-                    actionLabel="Create a role"
+                    actionLabel="Add a position"
                 />
             )}
 

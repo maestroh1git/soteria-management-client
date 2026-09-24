@@ -50,8 +50,9 @@ import {
     usePositions,
     useUpdatePosition,
 } from '@/features/staff/positions/hooks';
+import { PageHeader } from '@/components/layout/page-header';
 
-export default function RolesPage() {
+export default function PositionsPage() {
     const { data: roles = [], isLoading } = usePositions();
     // Roles should be grouped under a department (powers the department-scoped
     // role picker on the employee form) — nudge users to create one first.
@@ -73,27 +74,24 @@ export default function RolesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Roles</h1>
-                    <p className="text-muted-foreground">
-                        Define positions and permissions
-                    </p>
-                </div>
-                <Button
-                    onClick={() => {
-                        setEditTarget(null);
-                        setDialogOpen(true);
-                    }}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Add Role
-                </Button>
-            </div>
+            <PageHeader
+                title="Positions"
+                description="The jobs in your organisation, and who reports to whom. Someone's access is set on the Team tab in Settings."
+                actions={
+                    <Button
+                        onClick={() => {
+                            setEditTarget(null);
+                            setDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Add position
+                    </Button>
+                }
+            />
 
             {noDepartments && (
                 <PrerequisiteNotice
-                    message="Create a department first, then add roles to it. Departments group your roles and power the department-scoped role picker when adding employees."
+                    message="Create a department first, then add positions to it. The employee form offers the positions in the department you pick."
                     href="/departments"
                     actionLabel="Create a department"
                 />
@@ -156,7 +154,7 @@ export default function RolesPage() {
                         {roles.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="text-center py-12 text-muted-foreground">
-                                    No roles yet. Create one to get started.
+                                    No positions yet. Add the jobs people are hired into.
                                 </td>
                             </tr>
                         )}
@@ -191,9 +189,9 @@ export default function RolesPage() {
             <ConfirmDialog
                 open={!!deleteTarget}
                 onOpenChange={(open) => !open && setDeleteTarget(null)}
-                title="Delete Role"
-                description={`Delete "${deleteTarget?.name}"? Employees with this role will need reassignment.`}
-                confirmLabel="Delete"
+                title={`Delete ${deleteTarget?.name ?? 'position'}?`}
+                description="Staff in this position will need another one. This cannot be undone."
+                confirmLabel="Delete position"
                 variant="destructive"
                 loading={delMutation.isPending}
                 onConfirm={async () => {
@@ -257,9 +255,9 @@ function RoleFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>{role ? 'Edit Role' : 'New Role'}</DialogTitle>
+                    <DialogTitle>{role ? `Edit ${role.name}` : 'Add a position'}</DialogTitle>
                     <DialogDescription>
-                        {role ? 'Update role details and permissions' : 'Define a new position'}
+                        {role ? 'Change the job, where it sits and who it reports to.' : 'A job people are hired into.'}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -284,7 +282,7 @@ function RoleFormDialog({
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Role description" {...field} />
+                                        <Input placeholder="What the job involves" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -506,7 +504,7 @@ function RoleFormDialog({
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600"
                             >
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {role ? 'Update' : 'Create'}
+                                {role ? 'Save changes' : 'Add position'}
                             </Button>
                         </DialogFooter>
                     </form>

@@ -67,6 +67,7 @@ import type { Country, User } from '@/lib/types/api';
 import type { PayrollSetting } from '@/lib/api/settings';
 import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
 import { StatusBadge } from '@/components/common/status-badge';
+import { LearnerTermSetting } from '@/components/settings/learner-term-setting';
 
 // ── Schemas ─────────────────────────────────────────────────
 
@@ -732,6 +733,9 @@ export default function SettingsPage() {
                 {/* ─── Organization ─────────────────────────────────── */}
                 {canManageTeam && (
                     <TabsContent value="organization" className="space-y-6">
+                        {tenantOrgType === 'SCHOOL' && (
+                            <LearnerTermSetting canEdit={can('organisation.manage')} />
+                        )}
                         {tenantLoading ? (
                             <LoadingSkeleton rows={6} />
                         ) : (
