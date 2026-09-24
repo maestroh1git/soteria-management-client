@@ -17,6 +17,7 @@ import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { filterNavigation } from '@/components/layout/nav-config';
 import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
+import { useSetupSections } from '@/features/setup/use-setup-sections';
 
 /**
  * ⌘K. Built from the sidebar's own list and filter, so it offers exactly the
@@ -33,6 +34,9 @@ export function CommandMenu() {
     const { mayReach, tenantOrgType } = useAuth();
     const { word: learnerWord } = useLearnerTerm();
     const groups = filterNavigation(mayReach, tenantOrgType, learnerWord({ plural: true, capital: true }));
+    // Setup is one entry in the sidebar; here each of its pages is a place
+    // you can jump to by name ("positions", "tax rules").
+    const setup = useSetupSections();
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -66,6 +70,20 @@ export function CommandMenu() {
                             >
                                 <item.icon className="mr-2 h-4 w-4" />
                                 <span>{item.title}</span>
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                ))}
+                {setup.map((section) => (
+                    <CommandGroup key={section.title} heading={`Setup · ${section.title}`}>
+                        {section.links.map((l) => (
+                            <CommandItem
+                                key={l.href}
+                                value={`Setup ${section.title} ${l.title}`}
+                                onSelect={() => runCommand(() => router.push(l.href))}
+                            >
+                                <l.icon className="mr-2 h-4 w-4" />
+                                <span>{l.title}</span>
                             </CommandItem>
                         ))}
                     </CommandGroup>

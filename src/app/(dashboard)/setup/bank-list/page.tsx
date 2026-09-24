@@ -25,6 +25,7 @@ import {
 } from '@/lib/hooks/use-banks';
 import { useCan } from '@/lib/hooks/use-can';
 import type { Bank } from '@/lib/api/banks';
+import { PageHeader } from '@/components/layout/page-header';
 
 const EMPTY = { name: '', code: '' };
 
@@ -82,22 +83,20 @@ export default function BanksPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Banks</h1>
-                    <p className="text-sm text-muted-foreground">
-                        The institutions staff are paid at. The standard list is built in;
-                        add any bank it does not yet name.
-                    </p>
-                </div>
-                {canManage && (
-                    <Button onClick={startAdd} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add bank
-                    </Button>
-                )}
-            </div>
+            <PageHeader
+                title="Bank list"
+                description="The institutions staff are paid at. The standard list is built in; add any bank it does not yet name."
+                actions={
+                    <>
+                        {canManage && (
+                            <Button onClick={startAdd} className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                Add bank
+                            </Button>
+                        )}
+                    </>
+                }
+            />
 
             {/* Search */}
             <div className="relative max-w-sm">

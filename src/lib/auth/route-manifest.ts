@@ -19,6 +19,7 @@ import type { Action } from './actions';
 export type RouteNeed = Action | readonly Action[] | 'signedIn' | 'guardians';
 
 export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
+  // Me and Home
   '/': 'signedIn',
   '/me': 'signedIn',
   '/me/classes': 'signedIn',
@@ -27,46 +28,20 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/portal': 'guardians',
   '/admin': 'platform.read',
 
-  // Organisation
-  '/settings': 'organisation.manage',
-  '/audit-logs': 'audit.read',
-  '/events': 'events.read',
-
-  // Staff
+  // People
   '/employees': 'employees.read',
-  '/departments': 'departments.manage',
-  '/roles': 'positions.manage',
-  '/grades': 'grades.manage',
-  '/banks': 'banks.read',
-  '/salary-components': 'salaryComponents.read',
-  '/leave': 'leave.read',
-
-  // Pay
-  '/payroll': 'payPeriods.read',
-  '/payslips': 'payslips.read',
-  '/loans': 'loans.read',
-  '/tax-rules': 'tax.read',
-  '/reports': 'reports.monthly',
-
-  // Money
-  '/ledger': 'ledger.read',
-  '/expenses': 'expenses.read',
-  '/budgets': 'budgets.read',
-  '/banking': 'banking.reconcile',
-  '/fees': 'fees.read',
-  '/fees/arrears': 'fees.read',
-  '/fees/invoices': 'fees.read',
-  '/fees/payments': 'fees.read',
-
-  // School
   '/students': 'students.read',
-  // Set up by the registrar; read by every Educator for the classes they
-  // teach and the pupils they recognise.
-  '/classes': ['academics.manage', 'awards.grant'],
+
+  // Admissions
   '/admissions': 'admissions.read',
   // Its own entry, not inherited from /admissions: deciding what the school
   // asks is a registrar's call, and the API draws the same line.
   '/admissions/question-sets': 'admissions.setQuestions',
+
+  // School day
+  // Set up by the registrar; read by every Educator for the classes they
+  // teach and the pupils they recognise.
+  '/classes': ['academics.manage', 'awards.grant'],
   // The register and the day's departures.
   '/attendance': 'attendance.departures.read',
   // The people who make the calls: Educators and the attendance office.
@@ -76,4 +51,61 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/attendance/calendar': 'attendance.report',
   '/attendance/gate': 'attendance.gate',
   '/awards': 'awards.read',
+
+  // Pay
+  '/payroll': 'payPeriods.read',
+  '/payslips': 'payslips.read',
+  '/loans': 'loans.read',
+  '/leave': 'leave.read',
+
+  // Money
+  '/fees': 'fees.read',
+  '/fees/arrears': 'fees.read',
+  '/fees/invoices': 'fees.read',
+  '/fees/payments': 'fees.read',
+  '/expenses': 'expenses.read',
+  '/budgets': 'budgets.read',
+  '/banking': 'banking.reconcile',
+  '/ledger': 'ledger.read',
+
+  // Insight
+  '/reports': 'reports.monthly',
+  '/audit-logs': 'audit.read',
+
+  // Setup: the hub admits anyone who may open one of its sections; each
+  // section keeps its own entry, so the hub never shows a door that is shut.
+  '/setup': [
+    'organisation.manage',
+    'events.read',
+    'departments.manage',
+    'positions.manage',
+    'grades.manage',
+    'banks.read',
+    'salaryComponents.read',
+    'tax.read',
+    'academics.manage',
+  ],
+  '/setup/organisation': 'organisation.manage',
+  '/setup/events': 'events.read',
+  '/setup/departments': 'departments.manage',
+  '/setup/positions': 'positions.manage',
+  '/setup/grades': 'grades.manage',
+  '/setup/bank-list': 'banks.read',
+  '/setup/salary-components': 'salaryComponents.read',
+  '/setup/tax-rules': 'tax.read',
+};
+
+/**
+ * Where pages used to live (Wave 4 moved them). next.config.ts redirects each,
+ * so bookmarks and links in old emails keep working.
+ */
+export const MOVED_ROUTES: Record<string, string> = {
+  '/settings': '/setup/organisation',
+  '/events': '/setup/events',
+  '/departments': '/setup/departments',
+  '/roles': '/setup/positions',
+  '/grades': '/setup/grades',
+  '/banks': '/setup/bank-list',
+  '/salary-components': '/setup/salary-components',
+  '/tax-rules': '/setup/tax-rules',
 };

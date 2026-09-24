@@ -41,10 +41,21 @@ for (const persona of personas.filter((p) => p.key !== 'parent')) {
             const problems = watch(page);
             await page.goto('/');
             await settle(page);
-            const hrefs = await page
+            const hrefs: string[] = await page
                 .locator('aside nav a[href]')
                 .evaluateAll((as) => as.map((a) => a.getAttribute('href') as string));
             expect(hrefs.length, 'a sidebar with something in it').toBeGreaterThan(0);
+
+            // Setup is one sidebar entry standing for many pages; open each
+            // one this person is shown there, too.
+            if (hrefs.includes('/setup')) {
+                await page.goto('/setup');
+                await settle(page);
+                const setupLinks = await page
+                    .locator('main a[data-setup-link]')
+                    .evaluateAll((as) => as.map((a) => a.getAttribute('href') as string));
+                hrefs.push(...setupLinks.filter((h) => !hrefs.includes(h)));
+            }
 
             const failures: string[] = [];
             for (const href of ['/', ...hrefs.filter((h) => h !== '/')]) {
@@ -205,4 +216,23 @@ test.describe('Fixed after Wave 3', () => {
             expect(problems, problems.join('\n')).toEqual([]);
         });
     });
+});
+
+test.describe('Wave 4: pages that moved into Setup', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+    test.skip(!has('admin'), 'no admin persona');
+    test.use({ storageState: storageFor('admin') });
+
+    // Bookmarks and links in old emails keep working.
+    for (const [from, to] of [
+        ['/settings', '/setup/organisation'],
+        ['/roles', '/setup/positions'],
+        ['/banks', '/setup/bank-list'],
+    ]) {
+        test(`${from} lands on ${to}`, async ({ page }) => {
+            await page.goto(from);
+            await expect(page).toHaveURL(new RegExp(`${to}$`));
+            await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('Setup');
+        });
+    }
 });

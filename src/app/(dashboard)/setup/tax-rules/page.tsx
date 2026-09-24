@@ -48,6 +48,7 @@ import type { TaxRule, TaxBracket } from '@/lib/types/api';
 import { TaxRuleType, TaxBase, TAX_BASE_LABEL } from '@/lib/types/enums';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate } from '@/lib/utils/dates';
+import { PageHeader } from '@/components/layout/page-header';
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
@@ -277,21 +278,20 @@ export default function TaxRulesPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Tax Rules</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Configure flat-rate and progressive tax rules applied during payroll.
-                    </p>
-                </div>
-                {canManage && (
-                    <Button onClick={openCreate} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        New Tax Rule
-                    </Button>
-                )}
-            </div>
+            <PageHeader
+                title="Tax rules"
+                description="Configure flat-rate and progressive tax rules applied during payroll."
+                actions={
+                    <>
+                        {canManage && (
+                            <Button onClick={openCreate} className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                New Tax Rule
+                            </Button>
+                        )}
+                    </>
+                }
+            />
 
             {/* List */}
             {isLoading ? (
@@ -483,7 +483,7 @@ export default function TaxRulesPage() {
 
                                     {fields.length === 0 && (
                                         <p className="text-xs text-muted-foreground text-center py-3 border rounded-md">
-                                            No brackets yet — click "Add Bracket" to define the progressive tiers.
+                                            No brackets yet — click “Add Bracket” to define the progressive tiers.
                                         </p>
                                     )}
 

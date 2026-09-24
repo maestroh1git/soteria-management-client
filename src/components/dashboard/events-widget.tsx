@@ -107,7 +107,7 @@ export function EventsWidget() {
                 </CardTitle>
                 {canManage && (
                     <Link
-                        href="/events"
+                        href="/setup/events"
                         className="-my-1 flex min-h-[24px] items-center gap-0.5 py-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
                     >
                         Manage <ArrowRight className="h-3 w-3" />
@@ -136,7 +136,7 @@ export function EventsWidget() {
                         </p>
                         {canManage && (
                             <Link
-                                href="/events"
+                                href="/setup/events"
                                 className="mt-1 inline-flex min-h-[24px] items-center py-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
                             >
                                 Create an event

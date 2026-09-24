@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +35,7 @@ import {
 } from '@/lib/hooks/use-grades';
 import { createGradeSchema, type CreateGradeValues } from '@/lib/utils/validation';
 import type { Grade } from '@/lib/types/api';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function GradesPage() {
     const { data: grades = [], isLoading } = useGrades(true);
@@ -61,21 +61,20 @@ export default function GradesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Grades</h1>
-                    <p className="text-muted-foreground">
-                        Pay bands that payroll rules apply to — exemptions and
-                        contributions are set per grade
-                    </p>
-                </div>
-                <Button
-                    onClick={openCreate}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Add Grade
-                </Button>
-            </div>
+            <PageHeader
+                title="Grades"
+                description="Pay bands that payroll rules apply to — exemptions and contributions are set per grade"
+                actions={
+                    <>
+                        <Button
+                            onClick={openCreate}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Add Grade
+                        </Button>
+                    </>
+                }
+            />
 
             <div className="rounded-md border bg-white dark:bg-slate-950">
                 <table className="w-full text-sm">

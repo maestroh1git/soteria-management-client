@@ -106,7 +106,7 @@ export default function PayrollPage() {
             {missingComponents && (
                 <PrerequisiteNotice
                     message="Add salary components so payroll can calculate gross and net pay."
-                    href="/salary-components"
+                    href="/setup/salary-components"
                     actionLabel="Add components"
                 />
             )}

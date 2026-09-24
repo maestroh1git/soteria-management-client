@@ -76,7 +76,7 @@ export default function PositionsPage() {
         <div className="space-y-6">
             <PageHeader
                 title="Positions"
-                description="The jobs in your organisation, and who reports to whom. Someone's access is set on the Team tab in Settings."
+                description="The jobs in your organisation, and who reports to whom. Someone's access is set in Setup, under Organisation & access."
                 actions={
                     <Button
                         onClick={() => {
@@ -92,7 +92,7 @@ export default function PositionsPage() {
             {noDepartments && (
                 <PrerequisiteNotice
                     message="Create a department first, then add positions to it. The employee form offers the positions in the department you pick."
-                    href="/departments"
+                    href="/setup/departments"
                     actionLabel="Create a department"
                 />
             )}

@@ -24,7 +24,8 @@ run in parallel unless a dependency is named.
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
-| 4–5 | Not started | — |
+| 4 Reorganise | **In progress**: C4.1 navigation and C4.2 Setup done | branch `claude/zealous-keller-5aeha8` |
+| 5 | Not started | — |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -72,9 +73,35 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 - **The department form had no control** for its head or parent department.
 - **`node dist/main` would not start** once a dev script joined the build.
 
+### Wave 4 so far
+
+- **Two findings fixed first.** Loan, salary and bulk approval recorded the
+  approver the browser sent; they now record the signed-in user (the field is
+  accepted and ignored until old clients are gone). Report exports opened a
+  URL without the login and were always a 401; they now download through the
+  API client. Both have tests.
+- **C4.1 Navigation.** Me · Home · People · Admissions · School day · Pay ·
+  Money · Insight · Setup, one tree for the sidebar, mobile drawer and ⌘K
+  (which also lists every Setup page by name).
+- **C4.2 Setup.** `/setup` is one door to Organisation (organisation & access,
+  events), Structure (departments, positions, grades), Pay rules (salary
+  components, tax rules, bank list) and School year (sessions & terms,
+  classes, calendar); each person sees only the pages they may open. Eight
+  pages moved under `/setup/*`; the old URLs redirect permanently
+  (`MOVED_ROUTES`, next.config.ts), and every moved page has a Setup
+  breadcrumb.
+- **Found on the way:** the audit's sidebar check matched single quotes only,
+  and the sidebar uses double quotes, so it had never checked anything. It
+  now reads both, plus the Setup sections.
+- **Checks:** persona tests 21/21 (each persona also opens every Setup page
+  they are shown; old URLs land on the new ones); API unit 808/808, e2e 512
+  passed (2 skipped); audit 0; lint ratchet 45 file/rule pairs.
+- **Next in Wave 4:** C4.3 Team & access (splits Organisation & access),
+  then the record hubs C4.4–C4.7.
+
 ### Left for later waves
 
-- Settings keeps its own tabs (not `?tab=`) until the Setup hub (C4.2).
+- Organisation & access (the old Settings) keeps its own tabs (not `?tab=`) until C4.3 splits Team & access out of it.
 - 35 screens still render hand-written tables (the working lists among them
   with `ListFilters` above); Wave 4 moves each to DataTable with its domain.
 - Payroll and school types still live in `types/api.ts` and the API files
