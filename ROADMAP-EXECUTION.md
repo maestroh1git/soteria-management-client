@@ -75,8 +75,8 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 ### Left for later waves
 
 - Settings keeps its own tabs (not `?tab=`) until the Setup hub (C4.2).
-- 33 lists still render hand-written tables with `ListFilters` above them;
-  Wave 4 moves each to DataTable as its domain moves into `features/`.
+- 35 screens still render hand-written tables (the working lists among them
+  with `ListFilters` above); Wave 4 moves each to DataTable with its domain.
 - Payroll and school types still live in `types/api.ts` and the API files
   (C3.8's type moves happen per domain in Wave 4).
 - `UserLink` was not built: there is no page for a user to link to until
