@@ -1,12 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  getUsers,
-  getUser,
-  createUser,
-  updateUser,
-  deleteUser,
-  changePassword,
+    getUser,
+    createUser,
+    updateUser,
+    changePassword,
 } from '@/lib/api/users';
 import type {
   CreateUserDto,
@@ -14,13 +12,6 @@ import type {
   ChangePasswordDto,
 } from '@/lib/api/users';
 import { SESSION_KEY } from './use-session';
-
-export function useUsers() {
-  return useQuery({
-    queryKey: ['users'],
-    queryFn: getUsers,
-  });
-}
 
 export function useUser(id: string) {
   return useQuery({
@@ -56,20 +47,6 @@ export function useUpdateUser() {
     },
     onError: (error: { message?: string }) =>
       toast.error(error.message || 'Failed to update user'),
-  });
-}
-
-export function useDeleteUser() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => deleteUser(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['users'] });
-      qc.invalidateQueries({ queryKey: SESSION_KEY });
-      toast.success('User deactivated');
-    },
-    onError: (error: { message?: string }) =>
-      toast.error(error.message || 'Failed to deactivate user'),
   });
 }
 

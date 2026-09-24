@@ -60,6 +60,11 @@ export async function updateUser(
   return (await api.patch(`/users/${id}`, data)) as unknown as User;
 }
 
+/** A pending invite, sent again with a new link (the old one stops working). */
+export async function resendInvite(id: string): Promise<InviteResponse> {
+  return (await api.post(`/users/${id}/resend-invite`)) as unknown as InviteResponse;
+}
+
 export async function deleteUser(id: string): Promise<User> {
   return (await api.delete(`/users/${id}`)) as unknown as User;
 }

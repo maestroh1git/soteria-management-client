@@ -35,6 +35,12 @@ export const STATUSES = {
     ACTIVE: e('Active', 'done'),
     INACTIVE: e('Inactive', 'neutral'),
   },
+  /** A login: signed in before, invited and waiting, or switched off. */
+  account: {
+    ACTIVE: e('Active', 'done'),
+    INVITED: e('Invite sent', 'waiting'),
+    INACTIVE: e('Deactivated', 'neutral'),
+  },
   employee: {
     ACTIVE: e('Active', 'done'),
     INACTIVE: e('Inactive', 'neutral'),

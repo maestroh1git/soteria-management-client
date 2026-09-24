@@ -1,5 +1,6 @@
 import {
   Hourglass,
+  KeyRound,
   Briefcase,
   Building,
   Building2,
@@ -36,10 +37,16 @@ export const SETUP_SECTIONS: SetupSection[] = [
     title: 'Organisation',
     links: [
       {
-        title: 'Organisation & access',
-        description: 'Profile, compliance, branding, and who on the team can do what.',
+        title: 'Organisation',
+        description: 'Profile, compliance numbers, branding and shared reference data.',
         href: '/setup/organisation',
         icon: Building,
+      },
+      {
+        title: 'Team & access',
+        description: 'Who can sign in, what each may do, and invites still waiting.',
+        href: '/setup/team',
+        icon: KeyRound,
       },
       {
         title: 'Events',

@@ -76,6 +76,7 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   // section keeps its own entry, so the hub never shows a door that is shut.
   '/setup': [
     'organisation.manage',
+    'users.manage',
     'events.read',
     'departments.manage',
     'positions.manage',
@@ -86,6 +87,7 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
     'academics.manage',
   ],
   '/setup/organisation': 'organisation.manage',
+  '/setup/team': 'users.manage',
   '/setup/events': 'events.read',
   '/setup/departments': 'departments.manage',
   '/setup/positions': 'positions.manage',

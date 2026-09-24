@@ -275,3 +275,31 @@ test.describe('Sidebar sections fold, and one link is current', () => {
         await expect(sidebar.getByRole('link', { name: 'Reports' })).toBeVisible();
     });
 });
+
+test.describe('Team & access', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+    test.skip(!has('admin'), 'no admin persona');
+    test.use({ storageState: storageFor('admin') });
+
+    test('lists who can sign in, and narrows by access', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/setup/team');
+        await settle(page);
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText('Team & access');
+        const rows = page.locator('main table tbody tr');
+        const all = await rows.count();
+        expect(all).toBeGreaterThan(1);
+        // The access chips are a view by access: one click narrows the list.
+        await page.getByRole('button', { name: /^Approver \d+$/ }).click();
+        await expect(rows).not.toHaveCount(all);
+        await expect(page.locator('main table tbody')).toContainText('Approver');
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+
+    test('the organisation page no longer carries the team', async ({ page }) => {
+        await page.goto('/setup/organisation');
+        await settle(page);
+        await expect(page.getByRole('tab', { name: /team/i })).toHaveCount(0);
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText('Organisation');
+    });
+});
