@@ -236,3 +236,42 @@ test.describe('Wave 4: pages that moved into Setup', () => {
         });
     }
 });
+
+test.describe('Sidebar sections fold, and one link is current', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+    test.skip(!has('admin'), 'no admin persona');
+    test.use({ storageState: storageFor('admin') });
+
+    test('only the closest link is marked current', async ({ page }) => {
+        const sidebar = page.locator('aside nav');
+        await page.goto('/fees/invoices');
+        await settle(page);
+        // Fees (/fees) and Invoices (/fees/invoices) both used to light up.
+        await expect(sidebar.locator('a[aria-current="page"]')).toHaveCount(1);
+        await expect(sidebar.locator('a[aria-current="page"]')).toHaveText('Invoices');
+        await page.goto('/me/classes');
+        await settle(page);
+        await expect(sidebar.locator('a[aria-current="page"]')).toHaveText('My Classes');
+    });
+
+    test('a folded section stays folded, and opens when you go into it', async ({ page }) => {
+        const sidebar = page.locator('aside nav');
+        await page.goto('/fees/invoices');
+        await settle(page);
+        const insight = sidebar.getByRole('button', { name: /insight/i });
+        await insight.click();
+        await expect(insight).toHaveAttribute('aria-expanded', 'false');
+        await expect(sidebar.getByRole('link', { name: 'Reports' })).toBeHidden();
+
+        await page.reload();
+        await settle(page);
+        await expect(sidebar.getByRole('button', { name: /insight/i })).toHaveAttribute('aria-expanded', 'false');
+        // The section holding the page you are on is open.
+        await expect(sidebar.getByRole('link', { name: 'Invoices' })).toBeVisible();
+
+        await page.goto('/reports');
+        await settle(page);
+        await expect(sidebar.getByRole('button', { name: /insight/i })).toHaveAttribute('aria-expanded', 'true');
+        await expect(sidebar.getByRole('link', { name: 'Reports' })).toBeVisible();
+    });
+});
