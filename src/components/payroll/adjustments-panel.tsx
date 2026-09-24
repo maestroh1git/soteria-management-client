@@ -38,6 +38,7 @@ import type {
     PayrollAdjustment,
 } from '@/lib/types/api';
 import { StatusBadge } from '@/components/common/status-badge';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 const TYPE_LABEL: Record<AdjustmentType, string> = {
     EARNING: 'One-off earning',
@@ -159,13 +160,12 @@ function AdjustmentRow({
     onDelete: () => void;
     busy: boolean;
 }) {
-    const employeeName = adjustment.employee
-        ? `${adjustment.employee.firstName} ${adjustment.employee.lastName}`
-        : '—';
 
     return (
         <tr className="border-b">
-            <td className="px-3 py-2">{employeeName}</td>
+            <td className="px-3 py-2">
+                <EmployeeLink id={adjustment.employeeId} employee={adjustment.employee} />
+            </td>
             <td className="px-3 py-2 text-muted-foreground">
                 {TYPE_LABEL[adjustment.type]}
             </td>

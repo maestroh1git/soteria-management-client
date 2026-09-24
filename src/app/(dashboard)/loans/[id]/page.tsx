@@ -47,6 +47,7 @@ import { formatDate, formatDateTime } from '@/lib/utils/dates';
 import { formatMoney } from '@/lib/utils/money';
 import { StatusBadge } from '@/components/common/status-badge';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 const LOAN_TABS = ['details', 'repayments', 'history'] as const;
 
@@ -127,9 +128,7 @@ export default function LoanDetailPage() {
                         {loan.loanType === LoanType.SALARY_ADVANCE ? 'Salary Advance' : 'Loan'} Details
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        {loan.employee
-                            ? `${loan.employee.firstName} ${loan.employee.lastName}`
-                            : loan.employeeId.substring(0, 8)}
+                        <EmployeeLink id={loan.employeeId} employee={loan.employee} />
                     </p>
                 </div>
                 <StatusBadge kind="loan" status={loan.status} className="px-3 py-1 text-sm" />

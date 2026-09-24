@@ -22,13 +22,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { DataTable } from '@/components/common/data-table';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
@@ -40,9 +33,9 @@ import { useCan } from '@/lib/hooks/use-can';
 import { useRolesList } from '@/lib/hooks/use-onboarding';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import { EmployeeStatus } from '@/lib/types/enums';
 import { formatDate } from '@/lib/utils/dates';
 import type { Employee } from '@/lib/types/api';
+import { statusOptions } from '@/lib/status/registry';
 
 export default function EmployeesPage() {
     const router = useRouter();
@@ -52,15 +45,17 @@ export default function EmployeesPage() {
     // Only nudge on a *confirmed* empty roles list (data defined ⇒ the request
     // succeeded); a 403 leaves data undefined and shows nothing rather than a
     // false "create a role" prompt.
-    const rolesQuery = useRolesList(canManage);
+    const rolesQuery = useRolesList(can('positions.read'));
     const needsRole =
         canManage && rolesQuery.data !== undefined && rolesQuery.data.length === 0;
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [roleFilter, setRoleFilter] = useState<string>();
     const [search, setSearch] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
 
     const { data: employees = [], isLoading, isError } = useEmployees({
         status: statusFilter !== 'all' ? statusFilter : undefined,
+        roleId: roleFilter,
         search: search || undefined,
     });
 
@@ -92,6 +87,7 @@ export default function EmployeesPage() {
         {
             id: 'name',
             header: 'Name',
+            meta: { cardTitle: true },
             accessorFn: (row) => `${row.firstName} ${row.lastName}`,
             cell: ({ row }) => (
                 <div>
@@ -247,31 +243,36 @@ export default function EmployeesPage() {
                 />
             )}
 
-            <div className="flex items-center gap-3">
-                <Select
-                    value={statusFilter}
-                    onValueChange={setStatusFilter}
-                >
-                    <SelectTrigger className="w-44">
-                        <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        {Object.values(EmployeeStatus).map((s) => (
-                            <SelectItem key={s} value={s}>
-                                {s.replace(/_/g, ' ')}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
             <DataTable
                 columns={columns}
                 data={employees}
                 loading={isLoading}
                 searchPlaceholder="Search by name or email..."
                 onSearchChange={setSearch}
+                filters={[
+                    {
+                        id: 'status',
+                        label: 'statuses',
+                        value: statusFilter === 'all' ? undefined : statusFilter,
+                        options: statusOptions('employee'),
+                    },
+                    // Everyone who reaches this page may read positions
+                    // (positions.read ⊇ employees.read).
+                    {
+                        id: 'role',
+                        label: 'positions',
+                        value: roleFilter,
+                        options: (rolesQuery.data ?? []).map((r) => ({
+                            value: r.id,
+                            label: r.name,
+                        })),
+                    },
+                ]}
+                onFilterChange={(id, value) =>
+                    id === 'status'
+                        ? setStatusFilter(value ?? 'all')
+                        : setRoleFilter(value)
+                }
                 isError={isError}
                 errorSubject="the employees"
                 emptyTitle="No employees found"

@@ -26,6 +26,7 @@ import {
 } from '@/lib/hooks/use-fees';
 import { downloadInvoicePdf, type InvoiceStatus } from '@/lib/api/fees';
 import { Money } from '@/components/common/money';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * One child's bill.
@@ -93,9 +94,12 @@ export default function InvoiceDetailPage() {
                         {invoice.invoiceNumber ?? 'Draft invoice'}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        {invoice.student
-                            ? `${invoice.student.firstName} ${invoice.student.lastName} · ${invoice.student.admissionNumber}`
-                            : ''}
+                        {invoice.student && (
+                            <>
+                                <StudentLink id={invoice.student.id} student={invoice.student} />
+                                {` · ${invoice.student.admissionNumber}`}
+                            </>
+                        )}
                         {invoice.classLevel ? ` · ${invoice.classLevel.name}` : ''}
                         {invoice.term ? ` · ${invoice.term.name}` : ''}
                     </p>

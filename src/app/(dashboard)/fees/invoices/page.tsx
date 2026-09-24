@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { AlertTriangle, Loader2, Play, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -42,6 +41,7 @@ import { useCan } from '@/lib/hooks/use-can';
 import type { InvoiceStatus, InvoiceSummary } from '@/lib/api/fees';
 import { Money } from '@/components/common/money';
 import { statusOf, TONE_CLASS } from '@/lib/status/registry';
+import { InvoiceLink } from '@/components/common/entity-link';
 
 const PAID_STYLE = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
 const PART_STYLE = 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200';
@@ -231,12 +231,11 @@ export default function InvoicesPage() {
                                 {invoices.map((invoice) => (
                                     <tr key={invoice.id} className="hover:bg-muted/30">
                                         <td className="px-4 py-3">
-                                            <Link
-                                                href={`/fees/invoices/${invoice.id}`}
-                                                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
-                                            >
-                                                {invoice.invoiceNumber ?? 'Draft'}
-                                            </Link>
+                                            <InvoiceLink
+                                                id={invoice.id}
+                                                number={invoice.invoiceNumber ?? 'Draft'}
+                                                className="text-blue-600 dark:text-blue-400"
+                                            />
                                         </td>
                                         <td className="px-4 py-3">
                                             <div>{invoice.studentName}</div>

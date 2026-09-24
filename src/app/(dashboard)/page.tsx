@@ -48,6 +48,7 @@ import {
     ResponsiveContainer,
     Cell,
 } from 'recharts';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -480,9 +481,7 @@ export default function DashboardPage() {
                                     {recentSalaries.items.map((salary) => (
                                         <TableRow key={salary.id}>
                                             <TableCell className="font-medium">
-                                                {salary.employee
-                                                    ? `${salary.employee.firstName} ${salary.employee.lastName}`
-                                                    : salary.employeeId}
+                                                <EmployeeLink id={salary.employeeId} employee={salary.employee} />
                                             </TableCell>
                                             <TableCell>
                                                 {salary.payPeriod?.name ?? salary.payPeriodId}

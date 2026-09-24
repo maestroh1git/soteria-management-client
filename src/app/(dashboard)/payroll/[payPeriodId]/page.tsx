@@ -71,6 +71,7 @@ import type { Salary, SalaryFilters, PayrollProcessResult } from '@/lib/types/ap
 import { formatDate } from '@/lib/utils/dates';
 import { StatusBadge } from '@/components/common/status-badge';
 import { statusOptions } from '@/lib/status/registry';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 export default function PayrollWorkspacePage() {
     const params = useParams();
@@ -498,9 +499,7 @@ export default function PayrollWorkspacePage() {
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 font-medium">
-                                                {sal.employee
-                                                    ? `${sal.employee.firstName} ${sal.employee.lastName}`
-                                                    : sal.employeeId.substring(0, 8)}
+                                                <EmployeeLink id={sal.employeeId} employee={sal.employee} />
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <CurrencyDisplay amount={Number(sal.grossSalary)} />
@@ -761,7 +760,7 @@ export default function PayrollWorkspacePage() {
                             Salary Details
                             {viewSalary?.employee && (
                                 <span className="block text-sm font-normal text-muted-foreground">
-                                    {viewSalary.employee.firstName} {viewSalary.employee.lastName}
+                                    <EmployeeLink id={viewSalary.employeeId} employee={viewSalary.employee} />
                                 </span>
                             )}
                         </SheetTitle>

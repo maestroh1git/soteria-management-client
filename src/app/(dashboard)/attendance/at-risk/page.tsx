@@ -14,6 +14,7 @@ import {
 import { EmptyState } from '@/components/common/empty-state';
 import { useCurrentSession, useTerms } from '@/lib/hooks/use-academics';
 import { useAtRisk } from '@/lib/hooks/use-attendance';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * Pupils whose attendance has fallen.
@@ -118,9 +119,11 @@ export default function AtRiskPage() {
                                 {data.items.map((p) => (
                                     <tr key={p.studentId} className="border-b last:border-0">
                                         <td className="px-4 py-3">
-                                            <span className="font-medium">
-                                                {p.lastName}, {p.firstName}
-                                            </span>
+                                            <StudentLink
+                                                id={p.studentId}
+                                                name={`${p.lastName}, ${p.firstName}`}
+                                                className="font-medium"
+                                            />
                                             <span className="block text-xs tabular-nums text-muted-foreground">
                                                 {p.admissionNumber}
                                             </span>

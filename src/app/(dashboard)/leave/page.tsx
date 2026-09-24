@@ -40,6 +40,7 @@ import { useCan } from '@/lib/hooks/use-can';
 import type { LeaveRequest, LeaveType } from '@/lib/types/api';
 import { formatSpan } from '@/lib/utils/dates';
 import { StatusBadge } from '@/components/common/status-badge';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 export default function LeavePage() {
     const { data: requests = [], isLoading } = useLeaveRequests();
@@ -187,9 +188,7 @@ function RequestTable({
                     {requests.map((request) => (
                         <tr key={request.id} className="border-b">
                             <td className="px-3 py-2">
-                                {request.employee
-                                    ? `${request.employee.firstName} ${request.employee.lastName}`
-                                    : '—'}
+                                <EmployeeLink id={request.employeeId} employee={request.employee} />
                             </td>
                             <td className="px-3 py-2">
                                 {request.leaveType?.name ?? '—'}

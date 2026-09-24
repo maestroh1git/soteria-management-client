@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Loader2, Phone } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,7 @@ import { useCan } from '@/lib/hooks/use-can';
 import { useCollectionByTerm, useDebtors } from '@/lib/hooks/use-fees';
 import { Money } from '@/components/common/money';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { StudentLink } from '@/components/common/entity-link';
 
 /** Blank rather than a zero, so the eye lands on the buckets that matter. */
 const cell = (v: string) =>
@@ -143,12 +143,13 @@ export default function ArrearsPage() {
                                             {debtors.rows.map((row) => (
                                                 <tr key={row.studentId} className="hover:bg-muted/30">
                                                     <td className="px-4 py-3">
-                                                        <Link
-                                                            href={`/students/${row.studentId}`}
-                                                            className="font-medium hover:underline"
-                                                        >
-                                                            {row.studentName}
-                                                        </Link>
+                                                        {/* Finance chases the debt and may not open the
+                                                            pupil's record; the registrar may. */}
+                                                        <StudentLink
+                                                            id={row.studentId}
+                                                            name={row.studentName}
+                                                            className="font-medium"
+                                                        />
                                                         <div className="text-xs text-muted-foreground">
                                                             {row.admissionNumber} · {row.classLevel}
                                                         </div>

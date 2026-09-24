@@ -50,6 +50,7 @@ import { PayslipStatus, PayPeriodStatus } from '@/lib/types/enums';
 import { formatDate } from '@/lib/utils/dates';
 import { StatusBadge } from '@/components/common/status-badge';
 import { statusOptions } from '@/lib/status/registry';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 export default function PayslipsPage() {
     const [selectedPeriod, setSelectedPeriod] = useState<string>('');
@@ -308,9 +309,7 @@ export default function PayslipsPage() {
                                         return (
                                             <tr key={payslip.id} className="border-b transition-colors hover:bg-muted/50">
                                                 <td className="px-4 py-3 font-medium">
-                                                    {payslip.employee
-                                                        ? `${payslip.employee.firstName} ${payslip.employee.lastName}`
-                                                        : payslip.employeeId.substring(0, 8)}
+                                                    <EmployeeLink id={payslip.employeeId} employee={payslip.employee} />
                                                 </td>
                                                 <td className="hidden md:table-cell px-4 py-3 text-muted-foreground">
                                                     {payslip.fileName || '—'}
