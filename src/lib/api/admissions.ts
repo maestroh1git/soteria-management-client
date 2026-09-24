@@ -257,11 +257,14 @@ export interface InterviewTemplate {
     active: boolean;
     createdAt: string;
     questions?: InterviewQuestion[];
-    /**
-     * How many sittings were booked against this set. What makes retiring one
-     * legible: a set with interviews behind it is kept, not deleted.
-     */
+    /** Sittings that have happened. What a set is kept for. */
     interviewsRun: number;
+    /**
+     * Sittings still to come. Retiring a set does not cancel these and does
+     * not change what they ask, so these are the families who will still be
+     * asked questions the school has just stopped asking.
+     */
+    interviewsBooked: number;
 }
 
 /** What was said at one sitting, in the words it was asked in. */
