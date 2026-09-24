@@ -70,6 +70,31 @@ function interviewsRun(count: number): string {
     return count === 1 ? '1 interview was' : `${count} interviews were`;
 }
 
+/** "1 interview is", "4 interviews are" — for the ones still to come. */
+function stillBooked(count: number): string {
+    return count === 1 ? '1 interview is' : `${count} interviews are`;
+}
+
+/**
+ * What a registrar needs to know before standing a set down.
+ *
+ * Retiring does not cancel a booked sitting, and does not change what it
+ * asks: the questions survive, and a sitting is answered against the set it
+ * was booked against. Those families will still be asked questions the school
+ * has just stopped asking — true and defensible, but only if somebody is told
+ * before they press the button rather than after.
+ */
+function StillBookedWarning({ count }: { count: number }) {
+    if (count === 0) return null;
+    return (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+            {stillBooked(count)} already booked against it. Those will still
+            ask its questions — retiring a set does not change what a family
+            was told they would be asked.
+        </p>
+    );
+}
+
 const SITTING_STYLE: Record<string, string> = {
     SCHEDULED: 'text-blue-600 dark:text-blue-400',
     COMPLETED: 'text-green-700 dark:text-green-400',
@@ -143,7 +168,8 @@ function InterviewsDisclosure({
     open: boolean;
     onToggle: () => void;
 }) {
-    if (template.interviewsRun === 0) return null;
+    const total = template.interviewsRun + template.interviewsBooked;
+    if (total === 0) return null;
 
     return (
         <div className="mt-4 border-t pt-3">
@@ -158,7 +184,12 @@ function InterviewsDisclosure({
                 ) : (
                     <ChevronRight className="h-4 w-4" />
                 )}
-                {interviewsRun(template.interviewsRun)} run against it
+                {template.interviewsRun > 0
+                    ? `${interviewsRun(template.interviewsRun)} run against it`
+                    : `${stillBooked(template.interviewsBooked)} booked against it`}
+                {template.interviewsRun > 0 &&
+                    template.interviewsBooked > 0 &&
+                    `, ${template.interviewsBooked} still booked`}
             </button>
             {open && (
                 <div className="mt-2">
@@ -402,6 +433,14 @@ export default function QuestionSetsPage() {
                                 : 'A set cannot be edited once published — to change what the school ' +
                                   'asks, publish another.'}
                         </DialogDescription>
+                        {/* Publishing retires the incumbent, so it carries the
+                            same consequence as pressing Retire — and it is the
+                            path a school will actually take. */}
+                        {active && (
+                            <StillBookedWarning
+                                count={active.interviewsBooked}
+                            />
+                        )}
                     </DialogHeader>
 
                     <div className="space-y-4">
@@ -554,6 +593,9 @@ export default function QuestionSetsPage() {
                                 : 'Interviews booked after this will carry notes and a recommendation ' +
                                   'only, until another set is published.'}
                         </DialogDescription>
+                        <StillBookedWarning
+                            count={retiring?.interviewsBooked ?? 0}
+                        />
                     </DialogHeader>
                     <DialogFooter>
                         <Button
