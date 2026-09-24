@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { LoanType } from '@/lib/types/enums';
 import {
   getMyEmployee,
   getMyCompleteness,
@@ -13,6 +14,8 @@ import {
   requestOwnLeave,
   cancelOwnLeave,
   getMyLoans,
+  requestMyLoan,
+  type RequestMyLoanDto,
   type RequestOwnLeaveDto,
   type UpdateMyDetailsDto,
 } from '@/lib/api/self-service';
@@ -103,6 +106,25 @@ export function useMyLoans() {
     queryKey: ['me', 'loans'],
     queryFn: getMyLoans,
     retry: false,
+  });
+}
+
+/** Ask for a loan or advance (roadmap 5.6); it waits for an approver. */
+export function useRequestMyLoan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: RequestMyLoanDto) => requestMyLoan(dto),
+    onSuccess: (loan) => {
+      qc.invalidateQueries({ queryKey: ['me', 'loans'] });
+      // The loans list and the approvers' inbox live under other keys.
+      qc.invalidateQueries({ queryKey: ['loans'] });
+      qc.invalidateQueries({ queryKey: ['approvals'] });
+      toast.success(
+        loan.loanType === LoanType.SALARY_ADVANCE
+          ? 'Advance requested. An approver will decide it.'
+          : 'Loan requested. An approver will decide it.',
+      );
+    },
   });
 }
 

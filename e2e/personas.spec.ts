@@ -379,3 +379,130 @@ test.describe('Approvals inbox', () => {
         });
     });
 });
+
+/** Open the first record a list links to, e.g. `/employees/<id>`. */
+async function openFirst(page: Page, list: string, prefix: string) {
+    await page.goto(list);
+    await settle(page);
+    const href = await page
+        .locator(`main a[href^="${prefix}"]`)
+        .evaluateAll((as, p) => {
+            const ids = as
+                .map((a) => a.getAttribute('href') as string)
+                .filter((h) => /^[0-9a-f-]{36}/.test(h.slice(p.length)));
+            return ids[0] ?? null;
+        }, prefix);
+    expect(href, `a record linked from ${list}`).not.toBeNull();
+    await page.goto(href!.split('?')[0]);
+    await settle(page);
+}
+
+/** Every tab on a record, clicked in turn: their names, and anything refused. */
+async function clickEveryTab(page: Page, problems: string[]) {
+    const tabs = page.locator('main [role="tablist"]').first().getByRole('tab');
+    const names = (await tabs.allInnerTexts()).map((t) => t.replace(/\s*\(\d+\)$/, '').trim());
+    for (let i = 0; i < names.length; i++) {
+        await tabs.nth(i).click();
+        await settle(page);
+    }
+    expect(problems, problems.join('\n')).toEqual([]);
+    return names;
+}
+
+test.describe('Record hubs (C4.4–C4.6)', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('a Payroll Officer on a staff record', () => {
+        test.skip(!has('payroll'), 'no payroll persona');
+        test.use({ storageState: storageFor('payroll') });
+
+        test('sees every part of their employment as a tab, and each loads', async ({ page }) => {
+            const problems = watch(page);
+            await openFirst(page, '/employees', '/employees/');
+            const names = await clickEveryTab(page, problems);
+            expect(names).toEqual(['Overview', 'Pay setup', 'Bank', 'Payslips', 'Loans', 'Leave', 'History']);
+        });
+    });
+
+    test.describe('an Admin on a staff record', () => {
+        test.skip(!has('admin'), 'no admin persona');
+        test.use({ storageState: storageFor('admin') });
+
+        test('also sees their sign-in and access', async ({ page }) => {
+            const problems = watch(page);
+            await openFirst(page, '/employees', '/employees/');
+            const names = await clickEveryTab(page, problems);
+            expect(names).toContain('Access');
+        });
+    });
+
+    test.describe('a Registrar on a pupil record', () => {
+        test.skip(!has('registrar'), 'no registrar persona');
+        test.use({ storageState: storageFor('registrar') });
+
+        test('reads the account and the admission, and may invite a parent', async ({ page }) => {
+            const problems = watch(page);
+            await openFirst(page, '/students', '/students/');
+            const names = await clickEveryTab(page, problems);
+            expect(names).toEqual(['Bio', 'Guardians', 'Fees', 'Medical', 'Documents', 'Admission']);
+        });
+    });
+
+    test.describe('an Educator on a pupil record', () => {
+        test.skip(!has('educator'), 'no educator persona');
+        test.use({ storageState: storageFor('educator') });
+
+        test('reads their attendance and awards, not their fees', async ({ page }) => {
+            const problems = watch(page);
+            await openFirst(page, '/students', '/students/');
+            const names = await clickEveryTab(page, problems);
+            expect(names).toContain('Class & attendance');
+            expect(names).toContain('Awards');
+            expect(names).not.toContain('Fees');
+        });
+    });
+
+    test.describe('an Approver on a pay run', () => {
+        test.skip(!has('approver'), 'no approver persona');
+        test.use({ storageState: storageFor('approver') });
+
+        test('checks the variance and the adjustments, and nothing that is not theirs', async ({ page }) => {
+            const problems = watch(page);
+            await openFirst(page, '/payroll', '/payroll/');
+            const names = await clickEveryTab(page, problems);
+            expect(names).toEqual(['Salaries', 'Adjustments', 'Variance']);
+        });
+    });
+
+    test.describe('a Payroll Officer', () => {
+        test.skip(!has('payroll'), 'no payroll persona');
+        test.use({ storageState: storageFor('payroll') });
+
+        test('finds payslips on the run, and the old page takes them there', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/payslips');
+            await page.waitForURL(/\/payroll\/[0-9a-f-]{36}\?tab=payslips/);
+            await settle(page);
+            await expect(page.getByRole('tab', { name: 'Payslips', selected: true })).toBeVisible();
+            await expect(page.locator('aside nav').getByRole('link', { name: 'Payslips' })).toHaveCount(0);
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});
+
+test.describe('My Pay (5.6)', () => {
+    test.skip(!personas.some((p) => p.key === 'employee'), 'no employee persona');
+    test.use({ storageState: storageFor('employee') });
+
+    test('an employee can ask for a loan or an advance', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/me');
+        await settle(page);
+        await page.getByRole('button', { name: /ask for a loan or advance/i }).click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog.getByRole('heading', { name: /ask for a loan or advance/i })).toBeVisible();
+        await expect(dialog.getByLabel('Amount')).toBeVisible();
+        await dialog.getByRole('button', { name: /cancel/i }).click();
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+});

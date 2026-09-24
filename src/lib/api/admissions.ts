@@ -59,14 +59,15 @@ export interface EnrolmentPreview {
 
 export async function getApplications(filters?: {
     status?: string;
+    /** The application that became this pupil. */
+    studentId?: string;
 }): Promise<AdmissionApplication[]> {
-    const qs =
-        filters?.status && filters.status !== 'all'
-            ? `?status=${filters.status}`
-            : '';
-    return (await api.get(
-        `/admissions/applications${qs}`,
-    )) as unknown as AdmissionApplication[];
+    const params: Record<string, string> = {};
+    if (filters?.status && filters.status !== 'all') params.status = filters.status;
+    if (filters?.studentId) params.studentId = filters.studentId;
+    return (await api.get('/admissions/applications', {
+        params,
+    })) as unknown as AdmissionApplication[];
 }
 
 export async function getApplication(

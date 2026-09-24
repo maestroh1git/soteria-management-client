@@ -29,7 +29,7 @@ import {
 } from '../api/admissions';
 
 export function useApplications(
-    filters?: { status?: string },
+    filters?: { status?: string; studentId?: string },
     enabled = true,
 ) {
     return useQuery({

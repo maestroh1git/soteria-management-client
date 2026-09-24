@@ -24,8 +24,8 @@ run in parallel unless a dependency is named.
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
-| 4 Reorganise | **In progress**: C4.1, C4.2, C4.3, C4.7, C4.9 done | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.3 done with the Fees hub; the report exports half of 5.7 | same |
+| 4 Reorganise | **In progress**: C4.1–C4.7 and C4.9 done; C4.8, C4.10, C4.11 left | branch `claude/zealous-keller-5aeha8` |
+| 5 Finish | **In progress**: 5.1–5.3, 5.6, 5.9 done; 5.4 the pupil half; the report exports half of 5.7 | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -120,18 +120,47 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   the record.
 - **Checks:** persona tests 29/29; API unit 808/808, e2e 523 passed (2
   skipped); audit 0 (16 hooks still unbuilt, down from 25); lint ratchet 44.
-- **Next in Wave 4:** the record hubs C4.4 (staff), C4.5 (pupil), C4.6
-  (pay run), then C4.8 Today, C4.10 persona homes, C4.11 portal and console.
+- **C4.4 Staff record**: Overview · Pay setup · Bank · Payslips · Loans ·
+  Leave · Access · History, each tab shown to whoever may read it. Loans
+  opens the new-loan form with the person chosen; Access invites, changes
+  access, resends and shows activity for this one person.
+- **C4.5 Pupil record**: Bio · Guardians · Class & attendance · Fees ·
+  Awards · Medical · Documents · Admission, under the shared PageHeader.
+  - **5.4 (the pupil half)**: the term's rate, lates, absences and streaks,
+    a strip of every marked day, each absence or late with its reason. The
+    class week grid and the Educator's own-class export go with C4.8.
+  - Fees: owed, unapplied credit, optional fees, concessions (raise one
+    here) and the statement. Admission: the application the pupil came in
+    on (`GET /admissions/applications?studentId=`).
+  - **5.9 (D4)**: `POST /users/guardians/:id/invite` (`guardians.invite`:
+    Owner, Admin, Registrar) only ever creates a PARENT login, and only for
+    a guardian of a pupil here; Invite to portal uses it.
+- **C4.6 Pay run**: Salaries · Adjustments · Payslips · Bank file · Ledger
+  check · Variance. Payslips moved onto the run; Variance reads
+  `GET /payroll/variance/:id`, which nothing called. `/payslips` lands on
+  the latest run's Payslips tab and left the sidebar.
+- **5.6 Loan requests**: My Pay lists loans owed or waiting and offers
+  "Ask for a loan or advance" (`POST /me/loans`, interest-free, PENDING,
+  the borrower from the token).
+- **Nobody decides their own loan or leave**: the API refuses it (403) and
+  the approvals inbox, loan page and leave list show it as yours.
+- **Found by the new persona tests:** an Approver opening a pay run was
+  refused the staff list (the raise-adjustment form loaded it for
+  everyone); pay runs could only be opened with a mouse. Both fixed.
+- **Checks:** persona tests 36/36 (each record's every tab, per persona);
+  API unit 811/811, e2e 532 passed (2 skipped); audit 0 (12 hooks still
+  unbuilt); lint ratchet 41.
+- **Next in Wave 4:** C4.8 Today (with 5.4's class week grid and export),
+  C4.10 persona homes, C4.11 portal and console.
 
 ### Left for later waves
 
-- Organisation & access (the old Settings) keeps its own tabs (not `?tab=`) until C4.3 splits Team & access out of it.
 - 35 screens still render hand-written tables (the working lists among them
   with `ListFilters` above); Wave 4 moves each to DataTable with its domain.
 - Payroll and school types still live in `types/api.ts` and the API files
   (C3.8's type moves happen per domain in Wave 4).
-- `UserLink` was not built: there is no page for a user to link to until
-  Team & access (C4.3).
+- `UserLink` was not built: a login is shown on its staff record's Access
+  tab, so links go to the staff record.
 
 ### What Wave 1 turned up that the map had not
 

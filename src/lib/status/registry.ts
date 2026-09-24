@@ -134,6 +134,12 @@ export const STATUSES = {
     VERIFIED: e('Verified', 'done'),
     REJECTED: e('Rejected', 'problem'),
   },
+  attendance: {
+    PRESENT: e('Present', 'done'),
+    LATE: e('Late', 'waiting'),
+    ABSENT: e('Absent', 'problem'),
+    EXCUSED: e('Excused', 'neutral'),
+  },
   student: {
     ACTIVE: e('Active', 'done'),
     GRADUATED: e('Graduated', 'neutral'),

@@ -44,13 +44,15 @@ export function InviteDialog({
     onLink: (link: { name: string; url: string }) => void;
 }) {
     const invite = useInvite();
+    // Opened from one person's record, the choice is already made.
+    const only = staff.length === 1 ? staff[0].id : '';
     const form = useForm<InviteValues>({
         resolver: zodResolver(inviteSchema),
-        defaultValues: { employeeId: '', access: ['EMPLOYEE'] },
+        defaultValues: { employeeId: only, access: ['EMPLOYEE'] },
     });
     useEffect(() => {
-        if (open) form.reset({ employeeId: '', access: ['EMPLOYEE'] });
-    }, [open, form]);
+        if (open) form.reset({ employeeId: only, access: ['EMPLOYEE'] });
+    }, [open, form, only]);
 
     return (
         <FormDialog

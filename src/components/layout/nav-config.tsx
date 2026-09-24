@@ -11,7 +11,6 @@ import {
   Wallet,
   Calculator,
   Receipt,
-  FileText,
   BarChart3,
   Settings,
   Shield,
@@ -121,8 +120,9 @@ export const navigation: NavGroup[] = [
   {
     label: "Pay",
     items: [
+      // Salaries, adjustments, payslips, the bank file, the ledger check and
+      // the variance are tabs of each run now (C4.6).
       { title: "Pay runs", href: "/payroll", icon: Calculator },
-      { title: "Payslips", href: "/payslips", icon: FileText },
       { title: "Loans & advances", href: "/loans", icon: Receipt },
       { title: "Leave", href: "/leave", icon: CalendarDays },
     ],

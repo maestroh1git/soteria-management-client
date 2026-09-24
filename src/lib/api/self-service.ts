@@ -168,3 +168,16 @@ export async function cancelOwnLeave(id: string): Promise<LeaveRequest> {
 export async function getMyLoans(): Promise<Loan[]> {
   return (await api.get('/me/loans')) as unknown as Loan[];
 }
+
+export interface RequestMyLoanDto {
+  kind: 'LOAN' | 'ADVANCE';
+  amount: number;
+  /** Loans only; an advance is repaid next payday. */
+  termMonths?: number;
+  reason: string;
+}
+
+/** Ask for a loan or advance for myself; the borrower is the token. */
+export async function requestMyLoan(dto: RequestMyLoanDto): Promise<Loan> {
+  return (await api.post('/me/loans', dto)) as unknown as Loan;
+}

@@ -216,6 +216,11 @@
     "FINANCE_ADMIN",
     "VIEWER"
   ],
+  "guardians.invite": [
+    "tenant_owner",
+    "ADMIN",
+    "admissions.registrar"
+  ],
   "leave.decide": [
     "tenant_owner",
     "ADMIN",

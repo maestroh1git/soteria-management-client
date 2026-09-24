@@ -35,6 +35,7 @@ import {
     useRejectLoan,
     useDisburseLoan,
 } from '@/lib/hooks/use-loans';
+import { useMyEmployeeId } from '@/lib/hooks/use-session';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { useCan } from '@/lib/hooks/use-can';
@@ -67,6 +68,7 @@ export default function LoanDetailPage() {
     } = useEntityHistory('Loan', loanId);
 
     const approveMutation = useApproveLoan();
+    const myEmployeeId = useMyEmployeeId();
     const rejectMutation = useRejectLoan();
     const disburseMutation = useDisburseLoan();
 
@@ -129,7 +131,12 @@ export default function LoanDetailPage() {
             </div>
 
             {/* Action buttons */}
-            {loan.status === LoanStatus.PENDING && can('loans.decide') && (
+            {loan.status === LoanStatus.PENDING && can('loans.decide') && loan.employeeId === myEmployeeId && (
+                <p className="text-sm text-muted-foreground">
+                    This is your own request, so another approver decides it.
+                </p>
+            )}
+            {loan.status === LoanStatus.PENDING && can('loans.decide') && loan.employeeId !== myEmployeeId && (
                 <div className="flex gap-2">
                     <Button onClick={() => setShowApprove(true)}>
                         <CheckCircle2 className="mr-2 h-4 w-4" />

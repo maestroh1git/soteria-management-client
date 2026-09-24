@@ -148,3 +148,34 @@ export async function downloadPaymentFile(
   link.click();
   URL.revokeObjectURL(url);
 }
+
+/** One person's take-home against the run before. */
+export interface EmployeeVariance {
+  employeeId: string;
+  employeeName: string;
+  employeeNumber: string;
+  currentNet: number;
+  previousNet: number | null;
+  delta: number | null;
+  percentChange: number | null;
+  flagged: boolean;
+  reason: string;
+}
+
+export interface VarianceReport {
+  payPeriodId: string;
+  comparedTo: { payPeriodId: string; name: string } | null;
+  thresholdPercent: number;
+  flaggedCount: number;
+  entries: EmployeeVariance[];
+}
+
+/**
+ * Net pay against the previous run, flagging anyone who moved more than the
+ * threshold: what an approver checks before approving.
+ */
+export async function getVariance(payPeriodId: string, threshold?: number): Promise<VarianceReport> {
+  return (await api.get(`/payroll/variance/${payPeriodId}`, {
+    params: threshold ? { threshold } : {},
+  })) as unknown as VarianceReport;
+}
