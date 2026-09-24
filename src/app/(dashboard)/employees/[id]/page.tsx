@@ -25,6 +25,10 @@ import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
 import { PageHeader } from '@/components/layout/page-header';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { PayslipsTab } from '@/features/staff/record/payslips-tab';
+import { LoansTab } from '@/features/staff/record/loans-tab';
+import { LeaveTab } from '@/features/staff/record/leave-tab';
+import { AccessTab } from '@/features/staff/record/access-tab';
 
 export default function EmployeeDetailPage({
     params,
@@ -43,15 +47,31 @@ export default function EmployeeDetailPage({
     const canManageSalary = can('employees.manage');
     // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
     const canManageEmployee = can('employees.manage');
+    const canReadPayslips = can('payslips.read');
+    const canReadLoans = can('loans.read');
+    const canReadLeave = can('leave.read');
+    const canManageAccess = can('users.manage');
     const { data: employee, isLoading, isError } = useEmployee(id);
+    // The staff record hub (C4.4): one person, every part of their employment.
     // In the URL, so the completeness panel (and any link) can send the user to
     // the tab a gap is actually fixed on. Tabs they may not see are not tabs.
     const tabs = useMemo(
         () =>
-            canViewSensitive
-                ? (['overview', 'salary', 'bank', 'history'] as const)
-                : (['overview', 'history'] as const),
-        [canViewSensitive],
+            (
+                [
+                    ['overview', true],
+                    ['pay', canViewSensitive],
+                    ['bank', canViewSensitive],
+                    ['payslips', canReadPayslips],
+                    ['loans', canReadLoans],
+                    ['leave', canReadLeave],
+                    ['access', canManageAccess],
+                    ['history', true],
+                ] as const
+            )
+                .filter(([, shown]) => shown)
+                .map(([t]) => t),
+        [canViewSensitive, canReadPayslips, canReadLoans, canReadLeave, canManageAccess],
     );
     const [tab, setTab] = useTabParam<(typeof tabs)[number]>(tabs);
     const {
@@ -90,15 +110,12 @@ export default function EmployeeDetailPage({
             />
 
             <Tabs value={tab} onValueChange={setTab}>
-                <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    {canViewSensitive && (
-                        <TabsTrigger value="salary">Salary Components</TabsTrigger>
-                    )}
-                    {canViewSensitive && (
-                        <TabsTrigger value="bank">Bank Details</TabsTrigger>
-                    )}
-                    <TabsTrigger value="history">History</TabsTrigger>
+                <TabsList className="h-auto flex-wrap justify-start">
+                    {tabs.map((t) => (
+                        <TabsTrigger key={t} value={t}>
+                            {TAB_LABELS[t]}
+                        </TabsTrigger>
+                    ))}
                 </TabsList>
 
                 {/* ── Overview Tab ── */}
@@ -256,9 +273,9 @@ export default function EmployeeDetailPage({
                     </div>
                 </TabsContent>
 
-                {/* ── Salary Components Tab ── */}
+                {/* ── Pay setup: the salary lines ── */}
                 {canViewSensitive && (
-                <TabsContent value="salary" className="space-y-4">
+                <TabsContent value="pay" className="space-y-4">
                     <SalaryComponentsPanel employeeId={id} canEdit={canManageSalary} />
                 </TabsContent>
                 )}
@@ -272,6 +289,30 @@ export default function EmployeeDetailPage({
                         canEdit={canManageBank}
                     />
                 </TabsContent>
+                )}
+
+                {canReadPayslips && (
+                    <TabsContent value="payslips">
+                        <PayslipsTab employeeId={id} />
+                    </TabsContent>
+                )}
+
+                {canReadLoans && (
+                    <TabsContent value="loans">
+                        <LoansTab employeeId={id} canCreate={can('loans.create')} />
+                    </TabsContent>
+                )}
+
+                {canReadLeave && (
+                    <TabsContent value="leave">
+                        <LeaveTab employeeId={id} />
+                    </TabsContent>
+                )}
+
+                {canManageAccess && (
+                    <TabsContent value="access">
+                        <AccessTab employee={employee} />
+                    </TabsContent>
                 )}
 
                 {/* ── History Tab ── */}
@@ -337,6 +378,17 @@ export default function EmployeeDetailPage({
         </div>
     );
 }
+
+const TAB_LABELS: Record<string, string> = {
+    overview: 'Overview',
+    pay: 'Pay setup',
+    bank: 'Bank',
+    payslips: 'Payslips',
+    loans: 'Loans',
+    leave: 'Leave',
+    access: 'Access',
+    history: 'History',
+};
 
 /** Enum member → something a person reads. */
 function humanise(value: string) {

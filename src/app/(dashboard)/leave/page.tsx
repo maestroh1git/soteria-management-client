@@ -36,6 +36,7 @@ import {
     useUpdateLeaveType,
 } from '@/lib/hooks/use-leave';
 import { useEmployees } from '@/lib/hooks/use-employees';
+import { useMyEmployeeId } from '@/lib/hooks/use-session';
 import { useCan } from '@/lib/hooks/use-can';
 import type { LeaveRequest, LeaveType } from '@/lib/types/api';
 import { formatSpan } from '@/lib/utils/dates';
@@ -207,6 +208,8 @@ function RequestTable({
     onReject: (id: string) => void;
     onCancel: (id: string) => void;
 }) {
+    // Your own leave is another approver's to decide.
+    const myEmployeeId = useMyEmployeeId();
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -252,7 +255,7 @@ function RequestTable({
                             </td>
                             <td className="px-3 py-2">
                                 <div className="flex items-center justify-end gap-1">
-                                    {request.status === 'PENDING' && canApprove && (
+                                    {request.status === 'PENDING' && canApprove && request.employeeId !== myEmployeeId && (
                                         <>
                                             <Button
                                                 variant="ghost"

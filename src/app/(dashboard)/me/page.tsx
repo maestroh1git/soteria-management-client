@@ -1,9 +1,9 @@
 'use client';
 
-import { Download, Loader2, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Loader2, AlertCircle, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CurrencyDisplay } from '@/components/common/currency-display';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
@@ -15,6 +15,10 @@ import {
     useDownloadMyPayslip,
 } from '@/lib/hooks/use-self-service';
 import type { ApiError } from '@/lib/types/api';
+import { LoanType } from '@/lib/types/enums';
+import { StatusBadge } from '@/components/common/status-badge';
+import { formatDate } from '@/lib/utils/dates';
+import { RequestLoanDialog } from '@/features/me/request-loan-dialog';
 
 function errorMessage(error: unknown): string {
     const message = (error as ApiError)?.message;
@@ -27,6 +31,7 @@ export default function MyPayPage() {
     const { data: ytd } = useMyYtd();
     const { data: loans = [] } = useMyLoans();
     const download = useDownloadMyPayslip();
+    const [asking, setAsking] = useState(false);
 
     if (employeeQuery.isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -53,7 +58,8 @@ export default function MyPayPage() {
     }
 
     const me = employeeQuery.data!;
-    const activeLoans = loans.filter((l) => l.status === 'ACTIVE');
+    // Owed, or on its way to being owed.
+    const currentLoans = loans.filter((l) => ['PENDING', 'APPROVED', 'ACTIVE'].includes(l.status));
 
     return (
         <div className="space-y-6">
@@ -112,41 +118,60 @@ export default function MyPayPage() {
                 </Card>
             )}
 
-            {activeLoans.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Outstanding loans</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {activeLoans.map((loan) => (
+            {/* Loans and advances: what is owed, what is waiting, and the
+                way to ask (roadmap 5.6). */}
+            <Card>
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+                    <CardTitle className="text-lg">Loans and advances</CardTitle>
+                    <Button size="sm" variant="outline" onClick={() => setAsking(true)}>
+                        <Plus className="mr-2 h-4 w-4" /> Ask for a loan or advance
+                    </Button>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {currentLoans.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                            Nothing owed and nothing waiting.
+                        </p>
+                    ) : (
+                        currentLoans.map((loan) => (
                             <div
                                 key={loan.id}
-                                className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
+                                className="flex items-center justify-between gap-3 border-b pb-3 last:border-0 last:pb-0"
                             >
                                 <div>
-                                    <p className="text-sm font-medium">{loan.loanType}</p>
+                                    <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                                        {loan.loanType === LoanType.SALARY_ADVANCE
+                                            ? 'Salary advance'
+                                            : `Loan over ${loan.termMonths} months`}
+                                        <StatusBadge kind="loan" status={loan.status} />
+                                    </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {loan.monthlyRepayment != null && (
-                                            <>
-                                                <CurrencyDisplay
-                                                    amount={loan.monthlyRepayment}
-                                                />{' '}
-                                                deducted monthly
-                                            </>
+                                        {loan.status === 'PENDING' ? (
+                                            <>Asked {formatDate(loan.applicationDate)}</>
+                                        ) : (
+                                            loan.monthlyRepayment != null && (
+                                                <>
+                                                    <CurrencyDisplay amount={loan.monthlyRepayment} />{' '}
+                                                    deducted monthly
+                                                </>
+                                            )
                                         )}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <CurrencyDisplay amount={loan.outstandingBalance} />
+                                    <CurrencyDisplay
+                                        amount={loan.status === 'PENDING' ? loan.amount : loan.outstandingBalance}
+                                    />
                                     <p className="text-xs text-muted-foreground">
-                                        outstanding
+                                        {loan.status === 'PENDING' ? 'asked for' : 'outstanding'}
                                     </p>
                                 </div>
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+                        ))
+                    )}
+                </CardContent>
+            </Card>
+            <RequestLoanDialog open={asking} onOpenChange={setAsking} />
 
             <Card>
                 <CardHeader>

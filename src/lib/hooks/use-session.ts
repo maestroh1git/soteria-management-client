@@ -52,3 +52,13 @@ export function SessionSync() {
 
     return null;
 }
+
+/**
+ * The caller's own employee record, if their login has one. Decisions about
+ * it (their own leave, their own loan) are for another approver; the API
+ * refuses them, and screens hide the buttons to match.
+ */
+export function useMyEmployeeId(): string | null {
+    const { data } = useSession();
+    return data?.identity.employeeId ?? null;
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -57,7 +58,10 @@ import { PageHeader } from '@/components/layout/page-header';
 
 export default function LoansPage() {
     const [filters, setFilters] = useState<LoanFilters>({});
-    const [showLoanForm, setShowLoanForm] = useState(false);
+    // `?new=<employeeId>` arrives from a staff record's Loans tab: open the
+    // form with that person already chosen.
+    const preset = useSearchParams().get('new') ?? '';
+    const [showLoanForm, setShowLoanForm] = useState(!!preset);
     const [showAdvanceForm, setShowAdvanceForm] = useState(false);
 
     const { data: loans, isLoading, isError } = useLoans(filters);
@@ -72,12 +76,12 @@ export default function LoansPage() {
 
     const loanForm = useForm<CreateLoanValues>({
         resolver: zodResolver(createLoanSchema),
-        defaultValues: { employeeId: '', amount: 0, interestRate: 0, termMonths: 12, reason: '' },
+        defaultValues: { employeeId: preset, amount: 0, interestRate: 0, termMonths: 12, reason: '' },
     });
 
     const advanceForm = useForm<CreateAdvanceValues>({
         resolver: zodResolver(createAdvanceSchema),
-        defaultValues: { employeeId: '', amount: 0, reason: '' },
+        defaultValues: { employeeId: preset, amount: 0, reason: '' },
     });
 
     const onSubmitLoan = (values: CreateLoanValues) => {
