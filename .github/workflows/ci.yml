@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# ROADMAP-EXECUTION.md, C0.1. The client had no CI; every later wave is a
+# refactor, so this comes first. The persona smoke tests (npm run
+# test:personas) need a running API and a seeded school, so they run locally —
+# see e2e/README.md.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Fails on any lint problem that is new or has grown, not on the debt
+      # recorded in .eslint-baseline.json. See scripts/lint-ratchet.mjs.
+      - name: Lint (ratcheted)
+        run: npm run lint:ratchet
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.invalid/api

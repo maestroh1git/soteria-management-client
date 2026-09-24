@@ -16,7 +16,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { useEmployees } from '@/lib/hooks/use-employees';
 import {
     Dialog,
     DialogContent,
@@ -37,7 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/common/empty-state';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import {
     useClassLevels,
     useClassArms,
@@ -52,6 +51,7 @@ import {
     useUpdateTerm,
     useUpdateClassLevel,
     useUpdateClassArm,
+    useEducatorOptions,
 } from '@/lib/hooks/use-academics';
 import type {
     AcademicSession,
@@ -69,8 +69,7 @@ import type {
  * application cannot name a class.
  */
 function ClassesPageInner() {
-    const { hasRole } = useAuth();
-    const canManage = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+    const canManage = useCan()('academics.manage');
 
     // Which tab is showing lives in the URL, so a deep link (the onboarding
     // "set the academic session" step) can land straight on "Session & terms"
@@ -115,8 +114,10 @@ function ClassesPageInner() {
     });
 
     // Only serving staff can hold a class. A former teacher left on an arm is
-    // how a register ends up with nobody able to take it.
-    const { data: staff = [] } = useEmployees({ status: 'ACTIVE' });
+    // how a register ends up with nobody able to take it. The picker's own
+    // endpoint, not the staff list: a Registrar manages classes and may not
+    // read the HR record, and the list 403'd for them.
+    const { data: staff = [] } = useEducatorOptions(canManage);
 
     /*
      * Not every employee is an educator, and a picker that offers the bursar
@@ -134,13 +135,9 @@ function ClassesPageInner() {
      * register, is not locked out by our guess about their org chart.
      */
     const isEducator = (e: (typeof staff)[number]) =>
-        e.role?.department?.name?.toLowerCase() === 'academics';
+        e.department?.toLowerCase() === 'academics';
     const educators = staff.filter(isEducator);
     const others = staff.filter((e) => !isEducator(e));
-    const teacherName = (id: string) => {
-        const e = staff.find((x) => x.id === id);
-        return e ? `${e.firstName} ${e.lastName}` : null;
-    };
     const [session, setSession] = useState({
         name: '',
         startDate: '',
@@ -320,8 +317,7 @@ function ClassesPageInner() {
                                                             >
                                                                 ·{' '}
                                                                 {a.formTeacherId
-                                                                    ? (teacherName(a.formTeacherId) ??
-                                                                      'educator set')
+                                                                    ? (a.formTeacherName ?? 'educator set')
                                                                     : 'no educator'}
                                                             </span>
                                                             <ArrowRight className="h-3 w-3" />
@@ -658,8 +654,8 @@ function ClassesPageInner() {
                                             <SelectLabel>Academics</SelectLabel>
                                             {educators.map((e) => (
                                                 <SelectItem key={e.id} value={e.id}>
-                                                    {e.firstName} {e.lastName}
-                                                    {e.role?.name ? ` — ${e.role.name}` : ''}
+                                                    {e.name}
+                                                    {e.role ? ` — ${e.role}` : ''}
                                                 </SelectItem>
                                             ))}
                                         </SelectGroup>
@@ -669,8 +665,8 @@ function ClassesPageInner() {
                                             <SelectLabel>Other staff</SelectLabel>
                                             {others.map((e) => (
                                                 <SelectItem key={e.id} value={e.id}>
-                                                    {e.firstName} {e.lastName}
-                                                    {e.role?.name ? ` — ${e.role.name}` : ''}
+                                                    {e.name}
+                                                    {e.role ? ` — ${e.role}` : ''}
                                                 </SelectItem>
                                             ))}
                                         </SelectGroup>

@@ -36,7 +36,7 @@ import {
     useUpdateLeaveType,
 } from '@/lib/hooks/use-leave';
 import { useEmployees } from '@/lib/hooks/use-employees';
-import { useAuthStore } from '@/stores/auth-store';
+import { useCan } from '@/lib/hooks/use-can';
 import type { LeaveRequest, LeaveStatus, LeaveType } from '@/lib/types/api';
 
 const STATUS_VARIANT: Record<
@@ -63,11 +63,11 @@ export default function LeavePage() {
     const { data: requests = [], isLoading } = useLeaveRequests();
     const [dialogOpen, setDialogOpen] = useState(false);
 
-    const user = useAuthStore((s) => s.user);
-    // Raising leave and authorising it are deliberately separate rights.
-    const canApprove = (user?.systemRoles ?? []).some((r) =>
-        ['tenant_owner', 'ADMIN', 'APPROVER'].includes(r),
-    );
+    // Raising leave and authorising it are deliberately separate rights, and
+    // the API draws the same lines.
+    const can = useCan();
+    const canApprove = can('leave.decide');
+    const canRaise = can('leave.raise');
 
     const approveMutation = useApproveLeaveRequest();
     const rejectMutation = useRejectLeaveRequest();
@@ -99,12 +99,14 @@ export default function LeavePage() {
                         deducted automatically on the next payroll run.
                     </p>
                 </div>
-                <Button
-                    onClick={() => setDialogOpen(true)}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Request Leave
-                </Button>
+                {canRaise && (
+                    <Button
+                        onClick={() => setDialogOpen(true)}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Request Leave
+                    </Button>
+                )}
             </div>
 
             <Card>
@@ -127,6 +129,7 @@ export default function LeavePage() {
                         <RequestTable
                             requests={pending}
                             canApprove={canApprove}
+                            canCancel={canRaise}
                             busy={busy}
                             onApprove={(id) => approveMutation.mutate({ id })}
                             onReject={(id) => rejectMutation.mutate({ id })}
@@ -149,6 +152,7 @@ export default function LeavePage() {
                         <RequestTable
                             requests={decided}
                             canApprove={false}
+                            canCancel={canRaise}
                             busy={busy}
                             onApprove={() => undefined}
                             onReject={() => undefined}
@@ -158,9 +162,11 @@ export default function LeavePage() {
                 </CardContent>
             </Card>
 
-            <LeaveTypesCard />
+            <LeaveTypesCard canManage={can('leave.types.manage')} />
 
-            <RequestLeaveDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+            {canRaise && (
+                <RequestLeaveDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+            )}
         </div>
     );
 }
@@ -168,6 +174,7 @@ export default function LeavePage() {
 function RequestTable({
     requests,
     canApprove,
+    canCancel,
     busy,
     onApprove,
     onReject,
@@ -175,6 +182,7 @@ function RequestTable({
 }: {
     requests: LeaveRequest[];
     canApprove: boolean;
+    canCancel: boolean;
     busy: boolean;
     onApprove: (id: string) => void;
     onReject: (id: string) => void;
@@ -253,7 +261,8 @@ function RequestTable({
                                             </Button>
                                         </>
                                     )}
-                                    {request.status !== 'CANCELLED' &&
+                                    {canCancel &&
+                                        request.status !== 'CANCELLED' &&
                                         request.status !== 'REJECTED' && (
                                             <Button
                                                 variant="ghost"
@@ -473,7 +482,7 @@ function RequestLeaveDialog({
  * Leave had nowhere to add one: the create and update hooks existed and were
  * wired to no screen, so the only way in was the API.
  */
-function LeaveTypesCard() {
+function LeaveTypesCard({ canManage }: { canManage: boolean }) {
     const { data: types = [] } = useLeaveTypes(true);
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<LeaveType | null>(null);
@@ -497,9 +506,11 @@ function LeaveTypesCard() {
                         taken; paid ones do not.
                     </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={openAdd}>
-                    <Plus className="mr-2 h-4 w-4" /> Add type
-                </Button>
+                {canManage && (
+                    <Button variant="outline" size="sm" onClick={openAdd}>
+                        <Plus className="mr-2 h-4 w-4" /> Add type
+                    </Button>
+                )}
             </CardHeader>
             <CardContent>
                 {types.length === 0 ? (
@@ -536,13 +547,15 @@ function LeaveTypesCard() {
                                         {t.description ? ` · ${t.description}` : ''}
                                     </p>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openEdit(t)}
-                                >
-                                    Edit
-                                </Button>
+                                {canManage && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => openEdit(t)}
+                                    >
+                                        Edit
+                                    </Button>
+                                )}
                             </div>
                         ))}
                     </div>

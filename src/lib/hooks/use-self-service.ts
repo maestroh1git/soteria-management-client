@@ -8,6 +8,7 @@ import {
   downloadMyPayslip,
   getMyYtd,
   getMyLeaveBalances,
+  getMyLeaveTypes,
   getMyLeaveRequests,
   requestOwnLeave,
   cancelOwnLeave,
@@ -77,6 +78,14 @@ export function useMyLeaveBalances(year?: number) {
   return useQuery({
     queryKey: ['me', 'leave-balances', year],
     queryFn: () => getMyLeaveBalances(year),
+    retry: false,
+  });
+}
+
+export function useMyLeaveTypes() {
+  return useQuery({
+    queryKey: ['me', 'leave-types'],
+    queryFn: getMyLeaveTypes,
     retry: false,
   });
 }

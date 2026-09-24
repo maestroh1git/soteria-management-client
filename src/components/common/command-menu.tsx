@@ -2,21 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import {
-    Calculator,
-    Calendar,
-    CreditCard,
-    Settings,
-    Smile,
-    User,
-    Users,
-    Briefcase,
-    Building2,
-    FileText,
-    BarChart3,
-    Receipt,
-    LayoutDashboard,
-} from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 
 import {
     CommandDialog,
@@ -28,11 +14,23 @@ import {
     CommandSeparator,
 } from '@/components/ui/command';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { filterNavigation } from '@/components/layout/nav-config';
 
+/**
+ * ⌘K. Built from the sidebar's own list and filter, so it offers exactly the
+ * pages the sidebar does for this person.
+ *
+ * It used to be a hand-written list of twelve payroll-era pages, shown to
+ * everyone: no school, finance or self-service pages, and a teacher who used it
+ * landed on "unauthorized" (system map, finding A7).
+ */
 export function CommandMenu() {
     const [open, setOpen] = React.useState(false);
     const router = useRouter();
     const { setTheme } = useTheme();
+    const { hasRole, tenantOrgType } = useAuth();
+    const groups = filterNavigation(hasRole, tenantOrgType);
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -53,85 +51,36 @@ export function CommandMenu() {
 
     return (
         <CommandDialog open={open} onOpenChange={setOpen}>
-            <CommandInput placeholder="Type a command or search..." />
+            <CommandInput placeholder="Go to a page…" />
             <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup heading="Suggestions">
-                    <CommandItem onSelect={() => runCommand(() => router.push('/'))}>
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/payroll'))}>
-                        <Calculator className="mr-2 h-4 w-4" />
-                        <span>Payroll</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/employees'))}>
-                        <Users className="mr-2 h-4 w-4" />
-                        <span>Employees</span>
-                    </CommandItem>
-                </CommandGroup>
+                <CommandEmpty>No page by that name.</CommandEmpty>
+                {groups.map((group) => (
+                    <CommandGroup key={group.label} heading={group.label}>
+                        {group.items.map((item) => (
+                            <CommandItem
+                                key={item.href}
+                                value={`${group.label} ${item.title}`}
+                                onSelect={() => runCommand(() => router.push(item.href))}
+                            >
+                                <item.icon className="mr-2 h-4 w-4" />
+                                <span>{item.title}</span>
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                ))}
                 <CommandSeparator />
-                <CommandGroup heading="Finance">
-                    <CommandItem onSelect={() => runCommand(() => router.push('/payroll'))}>
-                        <Calculator className="mr-2 h-4 w-4" />
-                        <span>Payroll</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/salary-components'))}>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        <span>Salary Components</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/loans'))}>
-                        <Receipt className="mr-2 h-4 w-4" />
-                        <span>Loans</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/tax-rules'))}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        <span>Tax Rules</span>
-                    </CommandItem>
-                </CommandGroup>
-                <CommandGroup heading="People">
-                    <CommandItem onSelect={() => runCommand(() => router.push('/employees'))}>
-                        <Users className="mr-2 h-4 w-4" />
-                        <span>Employees</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/roles'))}>
-                        <Briefcase className="mr-2 h-4 w-4" />
-                        <span>Roles</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/departments'))}>
-                        <Building2 className="mr-2 h-4 w-4" />
-                        <span>Departments</span>
-                    </CommandItem>
-                </CommandGroup>
-                <CommandGroup heading="Reporting">
-                    <CommandItem onSelect={() => runCommand(() => router.push('/payslips'))}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        <span>Payslips</span>
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => router.push('/reports'))}>
-                        <BarChart3 className="mr-2 h-4 w-4" />
-                        <span>Reports</span>
-                    </CommandItem>
-                </CommandGroup>
-                <CommandSeparator />
-                <CommandGroup heading="Settings">
-                    <CommandItem onSelect={() => runCommand(() => router.push('/settings'))}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </CommandItem>
-                </CommandGroup>
                 <CommandGroup heading="Theme">
                     <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
-                        <Smile className="mr-2 h-4 w-4" />
-                        <span>Light Mode</span>
+                        <Sun className="mr-2 h-4 w-4" />
+                        <span>Light mode</span>
                     </CommandItem>
                     <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
-                        <Smile className="mr-2 h-4 w-4" />
-                        <span>Dark Mode</span>
+                        <Moon className="mr-2 h-4 w-4" />
+                        <span>Dark mode</span>
                     </CommandItem>
                     <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
-                        <Smile className="mr-2 h-4 w-4" />
-                        <span>System Mode</span>
+                        <Monitor className="mr-2 h-4 w-4" />
+                        <span>Match my system</span>
                     </CommandItem>
                 </CommandGroup>
             </CommandList>

@@ -32,6 +32,7 @@ import {
     useRecordPayment,
     useVoidPayment,
 } from '@/lib/hooks/use-fees';
+import { useCan } from '@/lib/hooks/use-can';
 import { downloadReceiptPdf } from '@/lib/api/fees';
 
 const money = (v: string) => {
@@ -61,6 +62,9 @@ const METHODS = [
  */
 export default function PaymentsPage() {
     const [recordOpen, setRecordOpen] = useState(false);
+    // Recording and voiding money is the finance office's; the Registrar
+    // reads receipts and can hand a parent a copy.
+    const canWrite = useCan()('fees.write');
     const { data: payments, isLoading, isError } = usePayments();
     const voidPayment = useVoidPayment();
     const [voidTarget, setVoidTarget] = useState<string | null>(null);
@@ -75,10 +79,12 @@ export default function PaymentsPage() {
                         Money received, and what it settled.
                     </p>
                 </div>
-                <Button onClick={() => setRecordOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Record a payment
-                </Button>
+                {canWrite && (
+                    <Button onClick={() => setRecordOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Record a payment
+                    </Button>
+                )}
             </div>
 
             {isLoading ? (
@@ -163,16 +169,18 @@ export default function PaymentsPage() {
                                                     >
                                                         <Download className="h-4 w-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setVoidTarget(p.id);
-                                                            setVoidReason('');
-                                                        }}
-                                                    >
-                                                        Void
-                                                    </Button>
+                                                    {canWrite && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setVoidTarget(p.id);
+                                                                setVoidReason('');
+                                                            }}
+                                                        >
+                                                            Void
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             )}
                                         </td>
@@ -184,7 +192,9 @@ export default function PaymentsPage() {
                 </Card>
             )}
 
-            <RecordPaymentDialog open={recordOpen} onOpenChange={setRecordOpen} />
+            {canWrite && (
+                <RecordPaymentDialog open={recordOpen} onOpenChange={setRecordOpen} />
+            )}
 
             <Dialog
                 open={!!voidTarget}

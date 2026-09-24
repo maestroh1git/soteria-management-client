@@ -30,6 +30,7 @@ import {
 import { DAY_TYPE_LABELS, type DayType } from '@/lib/api/attendance';
 import { shiftDate, toInputDate } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils';
+import { useCan } from '@/lib/hooks/use-can';
 import { DAY_CELL, MonthGrid } from './month-grid';
 
 const DAY_TYPES = Object.keys(DAY_TYPE_LABELS) as DayType[];
@@ -77,6 +78,9 @@ export function CalendarScreen({
     const { data: days = [], isLoading, isError } = useCalendar(activeTerm);
     const generate = useGenerateCalendar();
     const setDays = useSetCalendarDays();
+    // Staff read the calendar; the office writes it. For readers a day is not
+    // selectable, so the edit bar never appears.
+    const canManage = useCan()('attendance.calendar.manage');
 
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [anchor, setAnchor] = useState<string | null>(null);
@@ -151,6 +155,7 @@ export function CalendarScreen({
 
     const pick = useCallback(
         (date: string, extend: boolean) => {
+            if (!canManage) return;
             const from = extend && anchor ? order.indexOf(anchor) : -1;
             const to = order.indexOf(date);
             if (from >= 0 && to >= 0) {
@@ -169,7 +174,7 @@ export function CalendarScreen({
             if (!extend) setAnchor(date);
             setFocusDate(date);
         },
-        [anchor, order, selected],
+        [anchor, canManage, order, selected],
     );
 
     const onCellKeyDown = useCallback(
@@ -233,19 +238,21 @@ export function CalendarScreen({
                             </SelectContent>
                         </Select>
                     </div>
-                    <Button
-                        onClick={() => activeTerm && generate.mutate(activeTerm)}
-                        disabled={generate.isPending || isLoading || isError}
-                        variant={days.length ? 'outline' : 'default'}
-                        className="h-10"
-                    >
-                        {generate.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <CalendarPlus className="mr-2 h-4 w-4" />
-                        )}
-                        {days.length ? 'Fill any missing dates' : 'Generate calendar'}
-                    </Button>
+                    {canManage && (
+                        <Button
+                            onClick={() => activeTerm && generate.mutate(activeTerm)}
+                            disabled={generate.isPending || isLoading || isError}
+                            variant={days.length ? 'outline' : 'default'}
+                            className="h-10"
+                        >
+                            {generate.isPending ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <CalendarPlus className="mr-2 h-4 w-4" />
+                            )}
+                            {days.length ? 'Fill any missing dates' : 'Generate calendar'}
+                        </Button>
+                    )}
                     {/* Right-aligned only while it shares the row. Wrapped onto its
                         own line, ml-auto left it floating against the right margin
                         with everything else ranged left. */}
@@ -304,9 +311,11 @@ export function CalendarScreen({
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                        Click a day to select it, shift-click to take the run between.
-                        Arrow keys move, Enter selects, Escape clears. A dot marks a day
-                        that carries a note.
+                        {canManage
+                            ? 'Click a day to select it, shift-click to take the run between. ' +
+                              'Arrow keys move, Enter selects, Escape clears. '
+                            : ''}
+                        A dot marks a day that carries a note.
                     </p>
 
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

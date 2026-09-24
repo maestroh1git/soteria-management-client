@@ -40,7 +40,8 @@ import {
 } from '@/lib/hooks/use-loans';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { LoanStatus, LoanType } from '@/lib/types/enums';
 
 const STATUS_CONFIG: Record<LoanStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -57,7 +58,8 @@ export default function LoanDetailPage() {
     const params = useParams();
     const router = useRouter();
     const loanId = params.id as string;
-    const user = useAuthStore((s) => s.user);
+    const { user } = useAuth();
+    const can = useCan();
 
     const { data: loan, isLoading, isError } = useLoan(loanId);
     const {
@@ -143,7 +145,7 @@ export default function LoanDetailPage() {
             </div>
 
             {/* Action buttons */}
-            {loan.status === LoanStatus.PENDING && (
+            {loan.status === LoanStatus.PENDING && can('loans.decide') && (
                 <div className="flex gap-2">
                     <Button onClick={() => setShowApprove(true)}>
                         <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -155,7 +157,7 @@ export default function LoanDetailPage() {
                     </Button>
                 </div>
             )}
-            {loan.status === LoanStatus.APPROVED && (
+            {loan.status === LoanStatus.APPROVED && can('loans.disburse') && (
                 <Button onClick={handleDisburse} disabled={disburseMutation.isPending}>
                     <Banknote className="mr-2 h-4 w-4" />
                     {disburseMutation.isPending ? 'Disbursing…' : 'Disburse Loan'}

@@ -38,6 +38,7 @@ import {
     useInvoices,
     useIssueTermInvoices,
 } from '@/lib/hooks/use-fees';
+import { useCan } from '@/lib/hooks/use-can';
 import type { InvoiceStatus, InvoiceSummary } from '@/lib/api/fees';
 
 const money = (v: string) => {
@@ -121,6 +122,8 @@ export default function InvoicesPage() {
         setPage(1);
     }, [termId, statusFilter]);
     const issueTerm = useIssueTermInvoices();
+    // Billing is the finance office's; the Registrar reads what was billed.
+    const canWrite = useCan()('fees.write');
 
     useEffect(() => {
         if (!sessionId && sessions?.length) {
@@ -144,10 +147,12 @@ export default function InvoicesPage() {
                         What each child owes for the term.
                     </p>
                 </div>
-                <Button onClick={() => setRunOpen(true)} disabled={!termId}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Bill the term
-                </Button>
+                {canWrite && (
+                    <Button onClick={() => setRunOpen(true)} disabled={!termId}>
+                        <Play className="mr-2 h-4 w-4" />
+                        Bill the term
+                    </Button>
+                )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -192,7 +197,7 @@ export default function InvoicesPage() {
                     </SelectContent>
                 </Select>
 
-                {draftCount > 0 && (
+                {canWrite && draftCount > 0 && (
                     <Button
                         variant="outline"
                         onClick={() => termId && issueTerm.mutate(termId)}
@@ -315,12 +320,14 @@ export default function InvoicesPage() {
                 </Card>
             )}
 
-            <RunDialog
-                open={runOpen}
-                onOpenChange={setRunOpen}
-                termId={termId}
-                termName={terms?.find((t) => t.id === termId)?.name}
-            />
+            {canWrite && (
+                <RunDialog
+                    open={runOpen}
+                    onOpenChange={setRunOpen}
+                    termId={termId}
+                    termName={terms?.find((t) => t.id === termId)?.name}
+                />
+            )}
         </div>
     );
 }

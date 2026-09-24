@@ -411,9 +411,10 @@ export function useCollectionByTerm(sessionId?: string) {
     });
 }
 
-export function useFeeSummary(termId?: string) {
+export function useFeeSummary(termId?: string, enabled = true) {
     return useQuery({
         queryKey: ['fees', 'summary', termId],
         queryFn: () => getFeeSummary(termId),
+        enabled,
     });
 }

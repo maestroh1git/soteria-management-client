@@ -37,6 +37,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEmployees } from '@/lib/hooks/use-employees';
+import { useCan } from '@/lib/hooks/use-can';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { CurrencyDisplay } from '@/components/common/currency-display';
@@ -71,7 +72,10 @@ export default function LoansPage() {
     const applyAdvanceMutation = useApplyForAdvance();
 
     // Staff are chosen by name here, as everywhere else in the app.
-    const { data: employees = [] } = useEmployees({ status: 'ACTIVE' });
+    // Raising a loan is Payroll's job; deciding it is an Approver's. The
+    // staff list only feeds the "new loan" forms, so only they load it.
+    const canCreate = useCan()('loans.create');
+    const { data: employees = [] } = useEmployees({ status: 'ACTIVE' }, canCreate);
 
     const loanForm = useForm<CreateLoanValues>({
         resolver: zodResolver(createLoanSchema),
@@ -118,16 +122,18 @@ export default function LoansPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Loans & Advances</h1>
                     <p className="text-muted-foreground">Manage employee loans and salary advances</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowAdvanceForm(true)}>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Salary Advance
-                    </Button>
-                    <Button onClick={() => setShowLoanForm(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Loan
-                    </Button>
-                </div>
+                {canCreate && (
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setShowAdvanceForm(true)}>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Salary Advance
+                        </Button>
+                        <Button onClick={() => setShowLoanForm(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Loan
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Summary Cards */}
@@ -206,9 +212,13 @@ export default function LoansPage() {
                     isError={isError}
                     subject="the loans"
                     title="No loans"
-                    description="Create a loan or salary advance to get started."
-                    actionLabel="New Loan"
-                    onAction={() => setShowLoanForm(true)}
+                    description={
+                        canCreate
+                            ? 'Create a loan or salary advance to get started.'
+                            : 'No loans or salary advances have been raised yet.'
+                    }
+                    actionLabel={canCreate ? 'New Loan' : undefined}
+                    onAction={canCreate ? () => setShowLoanForm(true) : undefined}
                 />
             ) : (
                 <div className="rounded-lg border bg-card">

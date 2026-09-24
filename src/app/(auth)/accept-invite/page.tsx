@@ -84,20 +84,7 @@ function AcceptInviteForm() {
 
             // Accepting activates the account and signs them in — apply the
             // session exactly as login does, then land them inside.
-            localStorage.setItem('auth-token', res.token);
-            useAuthStore.setState({
-                user: res.user,
-                token: res.token,
-                isAuthenticated: true,
-            });
-
-            const maxAge = 60 * 60 * 24 * 7;
-            document.cookie = `auth-token=true; path=/; max-age=${maxAge}`;
-            if (res.user?.systemRoles) {
-                document.cookie = `user-roles=${encodeURIComponent(
-                    JSON.stringify(res.user.systemRoles),
-                )}; path=/; max-age=${maxAge}`;
-            }
+            useAuthStore.getState().applySession(res);
 
             // A parent has no dashboard. Send them where they belong rather
             // than letting the middleware bounce them off a forbidden page.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { StatCard } from '@/components/common/stat-card';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
@@ -68,13 +69,14 @@ export default function DashboardPage() {
      * reports endpoints actually accept, so nothing is requested that would come
      * back 403.
      */
-    const seesPayroll = hasRole([
-        'tenant_owner',
-        'ADMIN',
-        'PAYROLL_OFFICER',
-        'FINANCE_ADMIN',
-        'VIEWER',
-    ]);
+    const can = useCan();
+    const seesPayroll = can('reports.monthly');
+    // Each block below asks for its own report, and each report has its own
+    // audience on the API. One shared flag asked for all five and got three
+    // 403s for a Viewer, one for a Payroll Officer and one for Finance.
+    const canYearEnd = can('reports.yearEnd');
+    const canDetail = can('reports.detail');
+    const canSalaries = can('payroll.readSalaries');
 
     // A plain member of staff — the EMPLOYEE role and nothing that runs the
     // school or the payroll. The admin dashboard below is not theirs to read;
@@ -104,7 +106,7 @@ export default function DashboardPage() {
         data: yearEnd,
         isLoading: loadingYearEnd,
         isError: yearEndFailed,
-    } = useYearEndReport(currentYear, seesPayroll);
+    } = useYearEndReport(currentYear, canYearEnd);
 
     /**
      * Which month this dashboard is reporting on.
@@ -143,17 +145,17 @@ export default function DashboardPage() {
         data: loanPortfolio,
         isLoading: loadingLoans,
         isError: loansFailed,
-    } = useLoanPortfolio(seesPayroll);
+    } = useLoanPortfolio(canDetail);
     const {
         data: departmentCost,
         isLoading: loadingDept,
         isError: deptFailed,
-    } = useDepartmentCost(displayMonth, currentYear, seesPayroll);
+    } = useDepartmentCost(displayMonth, currentYear, canDetail);
     const {
         data: recentSalaries,
         isLoading: loadingRecent,
         isError: recentFailed,
-    } = useRecentSalaries(5, seesPayroll);
+    } = useRecentSalaries(5, canSalaries);
 
     const isLoading =
         seesPayroll &&
@@ -296,18 +298,22 @@ export default function DashboardPage() {
                     subtitle={`${MONTH_LABELS[displayMonth - 1]} ${currentYear} gross`}
                     icon={Calculator}
                 />
-                <StatCard
-                    title="Active Loans"
-                    value={loanPortfolio?.totalActiveLoans ?? 0}
-                    subtitle="Outstanding loans"
-                    icon={Receipt}
-                />
-                <StatCard
-                    title="Outstanding Balance"
-                    value={loanPortfolio ? formatCompactCurrency(loanPortfolio.totalOutstandingBalance) : '—'}
-                    subtitle="Total loan balance"
-                    icon={Landmark}
-                />
+                {canDetail && (
+                    <>
+                        <StatCard
+                            title="Active Loans"
+                            value={loanPortfolio?.totalActiveLoans ?? 0}
+                            subtitle="Outstanding loans"
+                            icon={Receipt}
+                        />
+                        <StatCard
+                            title="Outstanding Balance"
+                            value={loanPortfolio ? formatCompactCurrency(loanPortfolio.totalOutstandingBalance) : '—'}
+                            subtitle="Total loan balance"
+                            icon={Landmark}
+                        />
+                    </>
+                )}
             </div>
 
             ) : null}
@@ -340,89 +346,93 @@ export default function DashboardPage() {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Payroll Trend Chart */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Payroll Trend (Last 6 Months)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {payrollTrendData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={payrollTrendData}>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                    <XAxis dataKey="month" className="text-xs" />
-                                    <YAxis
-                                        className="text-xs"
-                                        tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
-                                    />
-                                    <Tooltip
-                                        formatter={(value) => formatCurrency(value as number)}
-                                        contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
-                                    />
-                                    {/* Recharts colours the legend text with the
-                                        series colour, which on this background
-                                        measures 3.7:1 and 2.5:1 — under the 4.5:1
-                                        WCAG 1.4.3 needs. The swatch still carries
-                                        the colour; the words are readable. */}
-                                    <Legend
-                                        formatter={(value) => (
-                                            <span className="text-foreground">{value}</span>
-                                        )}
-                                    />
-                                    <Bar dataKey="gross" name="Gross Salary" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="net" name="Net Salary" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
-                                {yearEndFailed
-                                    ? "We couldn't load the payroll trend"
-                                    : 'No payroll trend data available'}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                {canYearEnd && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Payroll Trend (Last 6 Months)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {payrollTrendData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={payrollTrendData}>
+                                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                        <XAxis dataKey="month" className="text-xs" />
+                                        <YAxis
+                                            className="text-xs"
+                                            tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
+                                        />
+                                        <Tooltip
+                                            formatter={(value) => formatCurrency(value as number)}
+                                            contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                                        />
+                                        {/* Recharts colours the legend text with the
+                                            series colour, which on this background
+                                            measures 3.7:1 and 2.5:1 — under the 4.5:1
+                                            WCAG 1.4.3 needs. The swatch still carries
+                                            the colour; the words are readable. */}
+                                        <Legend
+                                            formatter={(value) => (
+                                                <span className="text-foreground">{value}</span>
+                                            )}
+                                        />
+                                        <Bar dataKey="gross" name="Gross Salary" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="net" name="Net Salary" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
+                                    {yearEndFailed
+                                        ? "We couldn't load the payroll trend"
+                                        : 'No payroll trend data available'}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Department Cost Chart */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Department Salary Cost</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {deptCostData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={deptCostData} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                    <XAxis
-                                        type="number"
-                                        className="text-xs"
-                                        tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
-                                    />
-                                    <YAxis
-                                        dataKey="department"
-                                        type="category"
-                                        className="text-xs"
-                                        width={120}
-                                    />
-                                    <Tooltip
-                                        formatter={(value) => formatCurrency(value as number)}
-                                        contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
-                                    />
-                                    <Bar dataKey="cost" name="Gross Cost" radius={[0, 4, 4, 0]}>
-                                        {deptCostData.map((_, index) => (
-                                            <Cell key={index} fill={DEPT_COLORS[index % DEPT_COLORS.length]} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
-                                {deptFailed
-                                    ? "We couldn't load the department costs"
-                                    : 'No department cost data available'}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                {canDetail && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Department Salary Cost</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {deptCostData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={deptCostData} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                        <XAxis
+                                            type="number"
+                                            className="text-xs"
+                                            tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
+                                        />
+                                        <YAxis
+                                            dataKey="department"
+                                            type="category"
+                                            className="text-xs"
+                                            width={120}
+                                        />
+                                        <Tooltip
+                                            formatter={(value) => formatCurrency(value as number)}
+                                            contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                                        />
+                                        <Bar dataKey="cost" name="Gross Cost" radius={[0, 4, 4, 0]}>
+                                            {deptCostData.map((_, index) => (
+                                                <Cell key={index} fill={DEPT_COLORS[index % DEPT_COLORS.length]} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
+                                    {deptFailed
+                                        ? "We couldn't load the department costs"
+                                        : 'No department cost data available'}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Loan Portfolio Summary */}
@@ -450,55 +460,57 @@ export default function DashboardPage() {
             )}
 
             {/* Recent Payroll Activity */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Recent Payroll Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {recentSalaries && recentSalaries.items.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Employee</TableHead>
-                                    <TableHead>Pay Period</TableHead>
-                                    <TableHead className="text-right">Gross</TableHead>
-                                    <TableHead className="text-right">Net</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {recentSalaries.items.map((salary) => (
-                                    <TableRow key={salary.id}>
-                                        <TableCell className="font-medium">
-                                            {salary.employee
-                                                ? `${salary.employee.firstName} ${salary.employee.lastName}`
-                                                : salary.employeeId}
-                                        </TableCell>
-                                        <TableCell>
-                                            {salary.payPeriod?.name ?? salary.payPeriodId}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {formatCurrency(salary.grossSalary)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {formatCurrency(salary.netSalary)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <StatusBadge status={salary.status} />
-                                        </TableCell>
+            {canSalaries && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Recent Payroll Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {recentSalaries && recentSalaries.items.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Pay Period</TableHead>
+                                        <TableHead className="text-right">Gross</TableHead>
+                                        <TableHead className="text-right">Net</TableHead>
+                                        <TableHead>Status</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <div className="text-center py-8 text-sm text-muted-foreground">
-                            {recentFailed
-                                ? "We couldn't load recent payroll activity"
-                                : 'No recent payroll activity'}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentSalaries.items.map((salary) => (
+                                        <TableRow key={salary.id}>
+                                            <TableCell className="font-medium">
+                                                {salary.employee
+                                                    ? `${salary.employee.firstName} ${salary.employee.lastName}`
+                                                    : salary.employeeId}
+                                            </TableCell>
+                                            <TableCell>
+                                                {salary.payPeriod?.name ?? salary.payPeriodId}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {formatCurrency(salary.grossSalary)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {formatCurrency(salary.netSalary)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <StatusBadge status={salary.status} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="text-center py-8 text-sm text-muted-foreground">
+                                {recentFailed
+                                    ? "We couldn't load recent payroll activity"
+                                    : 'No recent payroll activity'}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
             </>
             )}
         </div>

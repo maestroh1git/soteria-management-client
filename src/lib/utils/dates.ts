@@ -98,3 +98,8 @@ export function shiftDate(dateStr: string, days: number): string {
     .toISOString()
     .slice(0, 10);
 }
+
+/** Today as YYYY-MM-DD, the form every date input and the API use. */
+export function todayIso(): string {
+    return new Date().toISOString().slice(0, 10);
+}

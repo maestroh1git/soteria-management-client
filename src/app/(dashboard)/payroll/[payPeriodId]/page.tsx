@@ -62,7 +62,8 @@ import {
     useSalaryStatusSummary,
     useDiscardDraftRun,
 } from '@/lib/hooks/use-payroll';
-import { useAuthStore } from '@/stores/auth-store';
+import { useCan } from '@/lib/hooks/use-can';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
 import { PaymentFileCard } from '@/components/payroll/payment-file-card';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
@@ -79,11 +80,13 @@ export default function PayrollWorkspacePage() {
     const params = useParams();
     const router = useRouter();
     const payPeriodId = params.payPeriodId as string;
-    const user = useAuthStore((s) => s.user);
-    // Raising an adjustment and authorising it are deliberately separate rights.
-    const canApproveAdjustments = (user?.systemRoles ?? []).some((r) =>
-        ['tenant_owner', 'ADMIN', 'APPROVER'].includes(r),
-    );
+    // Processing, approving and paying are three different people's rights,
+    // and the API draws the same lines. Each button asks for its own.
+    const { user } = useAuth();
+    const can = useCan();
+    const canProcess = can('payroll.process');
+    const canApprove = can('payroll.approve');
+    const canPay = can('payroll.pay');
 
     // Filters & pagination
     const [statusFilter, setStatusFilter] = useState<SalaryStatus | undefined>();
@@ -241,14 +244,12 @@ export default function PayrollWorkspacePage() {
         });
     };
 
-    // Everything actionable in bulk: drafts (to approve) and approved (to pay).
-    const selectableIds = salaries
-        .filter(
-            (s) =>
-                s.status === SalaryStatus.DRAFT ||
-                s.status === SalaryStatus.APPROVED,
-        )
-        .map((s) => s.id);
+    // Everything this person can act on in bulk: drafts to approve, approved
+    // salaries to pay — each only if their role may.
+    const actionable = (s: Salary) =>
+        (s.status === SalaryStatus.DRAFT && canApprove) ||
+        (s.status === SalaryStatus.APPROVED && canPay);
+    const selectableIds = salaries.filter(actionable).map((s) => s.id);
 
     const toggleAll = () => {
         if (selectableIds.length > 0 && selected.size === selectableIds.length) {
@@ -291,7 +292,7 @@ export default function PayrollWorkspacePage() {
                 >
                     {period.status}
                 </Badge>
-                {period.status === PayPeriodStatus.OPEN && (
+                {period.status === PayPeriodStatus.OPEN && canProcess && (
                     <Button onClick={() => { setShowProcess(true); setProcessResult(null); setDryRun(false); }}>
                         <Play className="mr-2 h-4 w-4" />
                         Process Payroll
@@ -392,7 +393,7 @@ export default function PayrollWorkspacePage() {
                     </SelectContent>
                 </Select>
 
-                {selectedDraftIds.length > 0 && (
+                {canApprove && selectedDraftIds.length > 0 && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -403,7 +404,7 @@ export default function PayrollWorkspacePage() {
                         Approve {selectedDraftIds.length}
                     </Button>
                 )}
-                {selectedApprovedIds.length > 0 && (
+                {canPay && selectedApprovedIds.length > 0 && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -420,7 +421,7 @@ export default function PayrollWorkspacePage() {
                     against the wrong pay structure has no way back without
                     this. Offered only while every salary is still a draft,
                     which is exactly when the server will allow it. */}
-                {canDiscard && (
+                {canDiscard && canProcess && (
                     <Button
                         variant="ghost"
                         size="sm"
@@ -437,17 +438,20 @@ export default function PayrollWorkspacePage() {
             {/* Payment file — the last step of the cycle, so it sits above the
                 salary table where someone lands after approving. */}
             <PaymentFileCard
+                canPreview={can('payroll.paymentFile.preview')}
+                canDownload={can('payroll.paymentFile')}
                 payPeriodId={payPeriodId}
                 payPeriodName={period.name}
             />
 
-            <PayrollLedgerCheck payPeriodId={payPeriodId} />
+            {can('ledger.read') && <PayrollLedgerCheck payPeriodId={payPeriodId} />}
 
             {/* Adjustments — raised before the run, applied only once approved,
                 so they belong above the resulting figures. */}
             <AdjustmentsPanel
                 payPeriodId={payPeriodId}
-                canApprove={canApproveAdjustments}
+                canRaise={can('payroll.adjustments.raise')}
+                canApprove={can('payroll.adjustments.decide')}
                 readOnly={period.status === PayPeriodStatus.CLOSED}
             />
 
@@ -472,13 +476,12 @@ export default function PayrollWorkspacePage() {
                             <thead>
                                 <tr className="border-b bg-muted/50">
                                     <th className="w-10 px-4 py-3">
-                                        <Checkbox
-                                            checked={
-                                                selectableIds.length > 0 &&
-                                                selected.size === selectableIds.length
-                                            }
-                                            onCheckedChange={toggleAll}
-                                        />
+                                        {selectableIds.length > 0 && (
+                                            <Checkbox
+                                                checked={selected.size === selectableIds.length}
+                                                onCheckedChange={toggleAll}
+                                            />
+                                        )}
                                     </th>
                                     <th className="px-4 py-3 text-left font-medium">Employee</th>
                                     <th className="px-4 py-3 text-right font-medium">Gross</th>
@@ -494,8 +497,7 @@ export default function PayrollWorkspacePage() {
                                     return (
                                         <tr key={sal.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="px-4 py-3">
-                                                {(sal.status === SalaryStatus.DRAFT ||
-                                                    sal.status === SalaryStatus.APPROVED) && (
+                                                {actionable(sal) && (
                                                     <Checkbox
                                                         checked={selected.has(sal.id)}
                                                         onCheckedChange={() => toggleSelect(sal.id)}
@@ -529,7 +531,7 @@ export default function PayrollWorkspacePage() {
                                                     >
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
-                                                    {sal.status === SalaryStatus.DRAFT && (
+                                                    {sal.status === SalaryStatus.DRAFT && canApprove && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
@@ -542,7 +544,7 @@ export default function PayrollWorkspacePage() {
                                                             <Check className="h-4 w-4 text-green-600" />
                                                         </Button>
                                                     )}
-                                                    {sal.status === SalaryStatus.APPROVED && (
+                                                    {sal.status === SalaryStatus.APPROVED && canPay && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"

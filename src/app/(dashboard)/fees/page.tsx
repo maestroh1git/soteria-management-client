@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/common/empty-state';
 import { useSessions } from '@/lib/hooks/use-academics';
 import { useAccounts } from '@/lib/hooks/use-finance';
+import { useCan } from '@/lib/hooks/use-can';
 import {
     useCopyTermPrices,
     useCopyLevelPrices,
@@ -83,7 +84,10 @@ export default function FeesPage() {
     const { data: priceList, isLoading, isError } = usePriceList(sessionId);
     const { data: projection } = useFeeProjection(sessionId);
     const { data: items, isError: itemsFailed } = useFeeItems(true);
-    const { data: accounts } = useAccounts();
+    // The Registrar reads the fee list; pricing it is the finance office's.
+    // Revenue accounts only feed the "add a fee" form, so only writers load them.
+    const canWrite = useCan()('fees.write');
+    const { data: accounts } = useAccounts(undefined, canWrite);
     const setPrice = useSetFeePrice();
 
     const [addOpen, setAddOpen] = useState(false);
@@ -216,26 +220,28 @@ export default function FeesPage() {
                                 </Button>
                             ))}
                         </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCopyOpen(true)}
-                                disabled={(priceList?.terms.length ?? 0) < 2}
-                            >
-                                <Copy className="mr-2 h-4 w-4" />
-                                Copy from another term
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCopyLevelOpen(true)}
-                                disabled={(priceList?.levels.length ?? 0) < 2 || !termId}
-                            >
-                                <Copy className="mr-2 h-4 w-4" />
-                                Copy from another class
-                            </Button>
-                        </div>
+                        {canWrite && (
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCopyOpen(true)}
+                                    disabled={(priceList?.terms.length ?? 0) < 2}
+                                >
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Copy from another term
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCopyLevelOpen(true)}
+                                    disabled={(priceList?.levels.length ?? 0) < 2 || !termId}
+                                >
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Copy from another class
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     {isLoading ? (
@@ -301,6 +307,7 @@ export default function FeesPage() {
                                                         <td key={item.id} className="px-2 py-1.5">
                                                             <PriceCell
                                                                 value={cell?.amount ?? ''}
+                                                                readOnly={!canWrite}
                                                                 saving={setPrice.isPending}
                                                                 onCommit={(amount) => {
                                                                     if (!termId) return;
@@ -335,12 +342,14 @@ export default function FeesPage() {
 
                 {/* ── Catalogue ────────────────────────────────────────── */}
                 <TabsContent value="catalogue" className="space-y-4 pt-4">
-                    <div className="flex justify-end">
-                        <Button size="sm" onClick={() => setAddOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add a fee
-                        </Button>
-                    </div>
+                    {canWrite && (
+                        <div className="flex justify-end">
+                            <Button size="sm" onClick={() => setAddOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add a fee
+                            </Button>
+                        </div>
+                    )}
 
                     {!items?.length ? (
                         <EmptyState
@@ -373,6 +382,7 @@ export default function FeesPage() {
                                             <FeeRow
                                                 key={item.id}
                                                 item={item}
+                                                canEdit={canWrite}
                                                 onEdit={(it) => {
                                                     setEditingItem(it);
                                                     setAddOpen(true);
@@ -421,16 +431,27 @@ export default function FeesPage() {
  */
 function PriceCell({
     value,
+    readOnly,
     saving,
     onCommit,
 }: {
     value: string;
+    /** For those who may read the price list but not set it. */
+    readOnly: boolean;
     saving: boolean;
     onCommit: (amount: number) => void;
 }) {
     const [draft, setDraft] = useState(value);
 
     useEffect(() => setDraft(value), [value]);
+
+    if (readOnly) {
+        return (
+            <span className="block w-28 text-right tabular-nums text-muted-foreground">
+                {value ? money(Number(value).toFixed(2)) : '—'}
+            </span>
+        );
+    }
 
     return (
         <Input
@@ -456,9 +477,11 @@ function PriceCell({
 
 function FeeRow({
     item,
+    canEdit,
     onEdit,
 }: {
     item: FeeItemRow;
+    canEdit: boolean;
     onEdit: (item: FeeItemRow) => void;
 }) {
     const remove = useRemoveFeeItem();
@@ -490,36 +513,38 @@ function FeeRow({
                 </div>
             </td>
             <td className="px-4 py-3 text-right">
-                <div className="flex justify-end gap-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(item)}
-                        aria-label="Edit fee"
-                    >
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                    {item.active ? (
+                {canEdit && (
+                    <div className="flex justify-end gap-1">
                         <Button
                             variant="ghost"
-                            size="sm"
-                            disabled={remove.isPending}
-                            onClick={() => remove.mutate(item.id)}
+                            size="icon"
+                            onClick={() => onEdit(item)}
+                            aria-label="Edit fee"
                         >
-                            Retire
+                            <Pencil className="h-4 w-4" />
                         </Button>
-                    ) : (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={update.isPending}
-                            onClick={() => update.mutate({ id: item.id, active: true })}
-                        >
-                            <RotateCcw className="mr-1 h-4 w-4" />
-                            Reactivate
-                        </Button>
-                    )}
-                </div>
+                        {item.active ? (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={remove.isPending}
+                                onClick={() => remove.mutate(item.id)}
+                            >
+                                Retire
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={update.isPending}
+                                onClick={() => update.mutate({ id: item.id, active: true })}
+                            >
+                                <RotateCcw className="mr-1 h-4 w-4" />
+                                Reactivate
+                            </Button>
+                        )}
+                    </div>
+                )}
             </td>
         </tr>
     );

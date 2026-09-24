@@ -13,6 +13,7 @@ import {
     createClassLevel,
     updateClassLevel,
     getClassArms,
+    getEducatorOptions,
     createClassArm,
     updateClassArm,
     getArmOccupancy,
@@ -146,6 +147,16 @@ export function useCreateClassLevel() {
             toast.success('Class level created');
         },
         onError: (e: Error) => toast.error(e.message || 'Could not create level'),
+    });
+}
+
+/** The form-teacher picker, for those who manage classes. */
+export function useEducatorOptions(enabled = true) {
+    return useQuery({
+        queryKey: ['academics', 'educators'],
+        queryFn: getEducatorOptions,
+        staleTime: STRUCTURE_STALE,
+        enabled,
     });
 }
 

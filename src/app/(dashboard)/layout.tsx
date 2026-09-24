@@ -3,6 +3,8 @@ import { Topbar } from '@/components/layout/topbar';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { CommandMenu } from '@/components/common/command-menu';
 import { BrandingHead } from '@/components/layout/branding-head';
+import { UnauthorizedNotice } from '@/components/layout/unauthorized-notice';
+import { Suspense } from 'react';
 
 export default function DashboardLayout({
     children,
@@ -31,6 +33,11 @@ export default function DashboardLayout({
                 Skip to main content
             </a>
             <BrandingHead />
+            {/* useSearchParams needs a boundary, or every page here renders
+                on the client only. */}
+            <Suspense fallback={null}>
+                <UnauthorizedNotice />
+            </Suspense>
             <CommandMenu />
             <Sidebar />
             <MobileSidebar />

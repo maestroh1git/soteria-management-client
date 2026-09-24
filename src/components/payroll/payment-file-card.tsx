@@ -23,14 +23,19 @@ import {
 export function PaymentFileCard({
     payPeriodId,
     payPeriodName,
+    canPreview,
+    canDownload,
 }: {
     payPeriodId: string;
     payPeriodName: string;
+    /** Payroll prepares the file and may check it; Finance sends it. */
+    canPreview: boolean;
+    canDownload: boolean;
 }) {
     const { data: preview, isLoading } = useQuery({
         queryKey: ['payment-file-preview', payPeriodId],
         queryFn: () => getPaymentFilePreview(payPeriodId),
-        enabled: !!payPeriodId,
+        enabled: !!payPeriodId && canPreview,
         retry: false,
     });
 
@@ -40,7 +45,7 @@ export function PaymentFileCard({
         onError: (e: Error) => toast.error(e.message),
     });
 
-    if (isLoading || !preview) return null;
+    if (!canPreview || isLoading || !preview) return null;
 
     // Nothing approved yet — the card would only confuse before there is a run
     // to pay.
@@ -55,17 +60,23 @@ export function PaymentFileCard({
                         Approved salaries, ready to upload to your bank.
                     </p>
                 </div>
-                <Button
-                    onClick={() => download.mutate()}
-                    disabled={download.isPending || preview.payableCount === 0}
-                >
-                    {download.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Download className="mr-2 h-4 w-4" />
-                    )}
-                    Download CSV
-                </Button>
+                {canDownload ? (
+                    <Button
+                        onClick={() => download.mutate()}
+                        disabled={download.isPending || preview.payableCount === 0}
+                    >
+                        {download.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Download className="mr-2 h-4 w-4" />
+                        )}
+                        Download CSV
+                    </Button>
+                ) : (
+                    <p className="max-w-[16rem] text-right text-sm text-muted-foreground">
+                        The finance office downloads this file and sends it to the bank.
+                    </p>
+                )}
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex items-center gap-6">

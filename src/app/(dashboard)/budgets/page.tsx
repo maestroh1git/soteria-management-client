@@ -30,7 +30,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/common/empty-state';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import {
     useBudgetVariance,
     useAccounts,
@@ -53,13 +53,14 @@ const money = (v: string) => {
  * would be worse than not offering one.
  */
 export default function BudgetsPage() {
-    const { hasRole } = useAuth();
-    const canManage = hasRole(['tenant_owner', 'ADMIN', 'FINANCE_ADMIN']);
+    // Approvers read budgets against actuals; setting one is the finance
+    // office's. Accounts and departments only feed the "set a budget" form.
+    const canManage = useCan()('budgets.manage');
 
     const [creating, setCreating] = useState(false);
     const { data: variance = [], isLoading, isError } = useBudgetVariance();
-    const { data: accounts = [] } = useAccounts();
-    const { data: departments = [] } = useDepartmentsList();
+    const { data: accounts = [] } = useAccounts(undefined, canManage);
+    const { data: departments = [] } = useDepartmentsList(canManage);
     const remove = useDeleteBudget();
 
     const over = variance.filter((v) => v.overBudget);

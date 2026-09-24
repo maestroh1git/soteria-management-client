@@ -44,7 +44,7 @@ import {
     useStudentMedical,
     useUpsertStudentMedical,
 } from '@/lib/hooks/use-students';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { StudentDocuments } from '@/components/students/student-documents';
 import { formatDate } from '@/lib/utils/dates';
 import type { StudentGuardianLink } from '@/lib/api/students';
@@ -62,8 +62,9 @@ export default function StudentDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
-    const { hasRole } = useAuth();
-    const canEdit = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+    const can = useCan();
+    const canEdit = can('students.manage');
+    const canInvite = can('users.manage');
 
     const { data: student, isLoading, isError } = useStudent(id);
     const { data: guardians = [], isError: guardiansFailed } =
@@ -258,12 +259,18 @@ export default function StudentDetailPage({
                                                 {!link.canCollect && (
                                                     <Badge variant="destructive">May not collect</Badge>
                                                 )}
-                                                <InviteParentButton
-                                                    guardianId={link.guardian.id}
-                                                    firstName={link.guardian.firstName}
-                                                    lastName={link.guardian.lastName}
-                                                    email={link.guardian.email}
-                                                />
+                                                {/* Creating a login is Owner/Admin
+                                                    on the API. Everyone else who can
+                                                    open a pupil was offered this and
+                                                    refused (A3). */}
+                                                {canInvite && (
+                                                    <InviteParentButton
+                                                        guardianId={link.guardian.id}
+                                                        firstName={link.guardian.firstName}
+                                                        lastName={link.guardian.lastName}
+                                                        email={link.guardian.email}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     ))}

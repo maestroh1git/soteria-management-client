@@ -24,10 +24,11 @@ import {
 
 // ── Ledger ──────────────────────────────────────────────────────────────────
 
-export function useAccounts(asOf?: string) {
+export function useAccounts(asOf?: string, enabled = true) {
     return useQuery({
         queryKey: ['ledger', 'accounts', asOf],
         queryFn: () => getAccounts(asOf),
+        enabled,
     });
 }
 
@@ -196,11 +197,11 @@ export function useDeleteBudget() {
  * that could not exist before fees — until then every posting this system made
  * was a cost or a liability.
  */
-export function useIncomeStatement(from?: string, to?: string) {
+export function useIncomeStatement(from?: string, to?: string, enabled = true) {
     return useQuery({
         queryKey: ['finance', 'income-statement', from, to],
         queryFn: () => getIncomeStatement(from!, to!),
-        enabled: !!from && !!to,
+        enabled: enabled && !!from && !!to,
     });
 }
 

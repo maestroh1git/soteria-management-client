@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/common/empty-state';
 import { useSessions } from '@/lib/hooks/use-academics';
 import { useIncomeStatement } from '@/lib/hooks/use-finance';
+import { useCan } from '@/lib/hooks/use-can';
 import { useCollectionByTerm, useDebtors } from '@/lib/hooks/use-fees';
 
 const money = (v: string) => {
@@ -39,9 +40,13 @@ export default function ArrearsPage() {
     // The session so far. A calendar year would split a Nigerian session in
     // half and make the net position meaningless.
     const current = sessions?.find((s) => s.isCurrent);
+    // The net position is the ledger's, and the ledger is the finance office's.
+    // A Registrar reads who owes and how the term is going, not the books.
+    const seesLedger = useCan()('ledger.read');
     const { data: income, isError: incomeFailed } = useIncomeStatement(
         current?.startDate,
         current?.endDate,
+        seesLedger,
     );
 
     return (
@@ -59,7 +64,7 @@ export default function ArrearsPage() {
                 <TabsList>
                     <TabsTrigger value="debtors">Who owes</TabsTrigger>
                     <TabsTrigger value="terms">By term</TabsTrigger>
-                    <TabsTrigger value="net">Net position</TabsTrigger>
+                    {seesLedger && <TabsTrigger value="net">Net position</TabsTrigger>}
                 </TabsList>
 
                 {/* ── Who owes ─────────────────────────────────────────── */}
@@ -313,92 +318,94 @@ export default function ArrearsPage() {
                 </TabsContent>
 
                 {/* ── Net position ─────────────────────────────────────── */}
-                <TabsContent value="net" className="space-y-4 pt-4">
-                    {!income ? (
-                        <EmptyState
-                            isError={incomeFailed}
-                            subject="the net position"
-                            title="Nothing posted yet"
-                            description="Once fees are issued and costs are paid, this shows what the school netted."
-                        />
-                    ) : (
-                        <>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <p className="text-xs text-muted-foreground">Earned</p>
-                                        <p className="text-2xl font-bold tabular-nums text-green-700 dark:text-green-400">
-                                            ₦{money(income.totalRevenue)}
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <p className="text-xs text-muted-foreground">Spent</p>
-                                        <p className="text-2xl font-bold tabular-nums">
-                                            ₦{money(income.totalExpenses)}
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <p className="text-xs text-muted-foreground">
-                                            Net this session
-                                        </p>
-                                        <p
-                                            className={`text-2xl font-bold tabular-nums ${
-                                                Number(income.net) < 0 ? 'text-red-600' : ''
-                                            }`}
-                                        >
-                                            ₦{money(income.net)}
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                {seesLedger && (
+                    <TabsContent value="net" className="space-y-4 pt-4">
+                        {!income ? (
+                            <EmptyState
+                                isError={incomeFailed}
+                                subject="the net position"
+                                title="Nothing posted yet"
+                                description="Once fees are issued and costs are paid, this shows what the school netted."
+                            />
+                        ) : (
+                            <>
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <Card>
+                                        <CardContent className="pt-6">
+                                            <p className="text-xs text-muted-foreground">Earned</p>
+                                            <p className="text-2xl font-bold tabular-nums text-green-700 dark:text-green-400">
+                                                ₦{money(income.totalRevenue)}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardContent className="pt-6">
+                                            <p className="text-xs text-muted-foreground">Spent</p>
+                                            <p className="text-2xl font-bold tabular-nums">
+                                                ₦{money(income.totalExpenses)}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardContent className="pt-6">
+                                            <p className="text-xs text-muted-foreground">
+                                                Net this session
+                                            </p>
+                                            <p
+                                                className={`text-2xl font-bold tabular-nums ${
+                                                    Number(income.net) < 0 ? 'text-red-600' : ''
+                                                }`}
+                                            >
+                                                ₦{money(income.net)}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
 
-                            <div className="grid gap-4 lg:grid-cols-2">
-                                <Card>
-                                    <div className="border-b px-4 py-3 font-medium">Earned</div>
-                                    <table className="w-full text-sm">
-                                        <tbody className="divide-y">
-                                            {income.revenue.map((r) => (
-                                                <tr key={r.code}>
-                                                    <td className="px-4 py-2.5">{r.name}</td>
-                                                    <td className="px-4 py-2.5 text-right tabular-nums">
-                                                        ₦{money(r.amount)}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </Card>
+                                <div className="grid gap-4 lg:grid-cols-2">
+                                    <Card>
+                                        <div className="border-b px-4 py-3 font-medium">Earned</div>
+                                        <table className="w-full text-sm">
+                                            <tbody className="divide-y">
+                                                {income.revenue.map((r) => (
+                                                    <tr key={r.code}>
+                                                        <td className="px-4 py-2.5">{r.name}</td>
+                                                        <td className="px-4 py-2.5 text-right tabular-nums">
+                                                            ₦{money(r.amount)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </Card>
 
-                                <Card>
-                                    <div className="border-b px-4 py-3 font-medium">Spent</div>
-                                    <table className="w-full text-sm">
-                                        <tbody className="divide-y">
-                                            {income.expenses.map((r) => (
-                                                <tr key={r.code}>
-                                                    <td className="px-4 py-2.5">{r.name}</td>
-                                                    <td className="px-4 py-2.5 text-right tabular-nums">
-                                                        ₦{money(r.amount)}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </Card>
-                            </div>
+                                    <Card>
+                                        <div className="border-b px-4 py-3 font-medium">Spent</div>
+                                        <table className="w-full text-sm">
+                                            <tbody className="divide-y">
+                                                {income.expenses.map((r) => (
+                                                    <tr key={r.code}>
+                                                        <td className="px-4 py-2.5">{r.name}</td>
+                                                        <td className="px-4 py-2.5 text-right tabular-nums">
+                                                            ₦{money(r.amount)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </Card>
+                                </div>
 
-                            <p className="text-xs text-muted-foreground">
-                                Both sides read the ledger, so this is the same money the
-                                trial balance sees. Fees count when they are billed, not
-                                when they are paid — money received in advance is not income
-                                until it is earned.
-                            </p>
-                        </>
-                    )}
-                </TabsContent>
+                                <p className="text-xs text-muted-foreground">
+                                    Both sides read the ledger, so this is the same money the
+                                    trial balance sees. Fees count when they are billed, not
+                                    when they are paid — money received in advance is not income
+                                    until it is earned.
+                                </p>
+                            </>
+                        )}
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     );

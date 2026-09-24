@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useDaySummary } from '@/lib/hooks/use-attendance';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 
 /**
  * Today's attendance, and — louder — the registers nobody has taken.
@@ -15,7 +17,12 @@ import { useDaySummary } from '@/lib/hooks/use-attendance';
  * naming the three missing ones is something a person can act on.
  */
 export function AttendanceTile() {
-    const { data, isLoading, isError } = useDaySummary();
+    // Today's attendance, for those who read attendance reports. Everyone else
+    // was asking and being refused on every visit to the dashboard.
+    const { tenantOrgType } = useAuth();
+    const can = useCan();
+    const allowed = tenantOrgType === 'SCHOOL' && can('attendance.report');
+    const { data, isLoading, isError } = useDaySummary(undefined, allowed);
 
     if (isLoading) {
         return (
