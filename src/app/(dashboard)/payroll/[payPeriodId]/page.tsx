@@ -16,6 +16,7 @@ import {
     AlertTriangle,
     Trash2,
     X,
+    Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +73,7 @@ import { formatDate } from '@/lib/utils/dates';
 import { StatusBadge } from '@/components/common/status-badge';
 import { statusOptions } from '@/lib/status/registry';
 import { EmployeeLink } from '@/components/common/entity-link';
+import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
 
 export default function PayrollWorkspacePage() {
     const params = useParams();
@@ -88,8 +90,22 @@ export default function PayrollWorkspacePage() {
     // Filters & pagination
     const [statusFilter, setStatusFilter] = useState<SalaryStatus | undefined>();
     const [page, setPage] = useState(1);
+    const [searchText, setSearchText] = useState('');
+    const search = useDebouncedValue(searchText.trim());
+    const [searched, setSearched] = useState(search);
+    // A new search starts from page 1 (set during render, not in an effect).
+    if (searched !== search) {
+        setSearched(search);
+        setPage(1);
+    }
 
-    const filters: SalaryFilters = { payPeriodId, status: statusFilter, page, limit: 20 };
+    const filters: SalaryFilters = {
+        payPeriodId,
+        status: statusFilter,
+        search: search || undefined,
+        page,
+        limit: 20,
+    };
 
     // Queries
     const {
@@ -369,7 +385,17 @@ export default function PayrollWorkspacePage() {
             )}
 
             {/* Filter & Bulk Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        placeholder="Name or staff number"
+                        aria-label="Search this run"
+                        className="pl-9"
+                    />
+                </div>
                 <Select
                     value={statusFilter ?? 'all'}
                     onValueChange={(v) => {

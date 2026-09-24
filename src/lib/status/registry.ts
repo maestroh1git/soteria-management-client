@@ -30,6 +30,11 @@ type Entry = { label: string; tone: Tone };
 const e = (label: string, tone: Tone): Entry => ({ label, tone });
 
 export const STATUSES = {
+  /** Anything simply switched on or off: a department, a position. */
+  active: {
+    ACTIVE: e('Active', 'done'),
+    INACTIVE: e('Inactive', 'neutral'),
+  },
   employee: {
     ACTIVE: e('Active', 'done'),
     INACTIVE: e('Inactive', 'neutral'),

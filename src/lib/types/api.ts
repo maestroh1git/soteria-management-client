@@ -631,6 +631,8 @@ export interface SalaryFilters extends PaginationParams {
   payPeriodId?: string;
   status?: SalaryStatus;
   employeeId?: string;
+  /** Name or staff number. */
+  search?: string;
 }
 
 export interface PayPeriodFilters extends PaginationParams {

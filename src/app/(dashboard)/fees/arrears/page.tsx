@@ -14,6 +14,9 @@ import { useCollectionByTerm, useDebtors } from '@/lib/hooks/use-fees';
 import { Money } from '@/components/common/money';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
 import { StudentLink } from '@/components/common/entity-link';
+import type { DebtorRow } from '@/lib/api/fees';
+import { fromMinorUnits, toMinorUnits } from '@/lib/utils/money';
+import { ListFilters, matches } from '@/components/common/list-filters';
 
 /** Blank rather than a zero, so the eye lands on the buckets that matter. */
 const cell = (v: string) =>
@@ -32,6 +35,42 @@ const ARREARS_TABS = ['debtors', 'terms', 'net'] as const;
 export default function ArrearsPage() {
     const [tab, setTab] = useTabParam(ARREARS_TABS);
     const { data: debtors, isLoading, isError } = useDebtors();
+    const [search, setSearch] = useState('');
+    const [level, setLevel] = useState<string>();
+    const [overdue, setOverdue] = useState<string>();
+    const levels = [...new Set((debtors?.rows ?? []).map((r) => r.classLevel))]
+        .sort()
+        .map((l) => ({ value: l, label: l }));
+    // "Over N days": anything in that bucket or an older one.
+    const olderThan = (r: DebtorRow, days: string) => {
+        const buckets =
+            days === '30'
+                ? [r.days60, r.days90, r.days90Plus, r.days30]
+                : days === '60'
+                  ? [r.days60, r.days90, r.days90Plus]
+                  : [r.days90, r.days90Plus];
+        return buckets.some((b) => Number(b) > 0);
+    };
+    const rows = (debtors?.rows ?? []).filter(
+        (r) =>
+            (!level || r.classLevel === level) &&
+            (!overdue || olderThan(r, overdue)) &&
+            matches(search, r.studentName, r.admissionNumber, r.guardianName, r.guardianPhone),
+    );
+    const filteredRows = !!(search || level || overdue);
+    // The footer adds up what is shown, in kobo so it matches the rows.
+    const sum = (k: keyof DebtorRow) =>
+        fromMinorUnits(rows.reduce((t, r) => t + toMinorUnits(r[k] as string), 0));
+    const totals = filteredRows && debtors
+        ? {
+              current: sum('current'),
+              days30: sum('days30'),
+              days60: sum('days60'),
+              days90: sum('days90'),
+              days90Plus: sum('days90Plus'),
+              total: sum('total'),
+          }
+        : debtors?.totals;
     const { data: sessions } = useSessions();
     const [sessionId, setSessionId] = useState<string>();
     const { data: byTerm, isError: byTermFailed } = useCollectionByTerm(sessionId);
@@ -108,6 +147,26 @@ export default function ArrearsPage() {
                                 ))}
                             </div>
 
+                            <ListFilters
+                                search={search}
+                                onSearch={setSearch}
+                                searchPlaceholder="Pupil, admission no. or guardian"
+                                filters={[
+                                    { id: 'level', label: 'classes', value: level, onChange: setLevel, options: levels },
+                                    {
+                                        id: 'overdue',
+                                        label: 'ages',
+                                        value: overdue,
+                                        onChange: setOverdue,
+                                        options: [
+                                            { value: '30', label: 'Over 30 days late' },
+                                            { value: '60', label: 'Over 60 days late' },
+                                            { value: '90', label: 'Over 90 days late' },
+                                        ],
+                                    },
+                                ]}
+                            />
+
                             <Card>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
@@ -140,7 +199,14 @@ export default function ArrearsPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
-                                            {debtors.rows.map((row) => (
+                                            {rows.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                                                        Nobody matches. Try another class, age or search.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {rows.map((row) => (
                                                 <tr key={row.studentId} className="hover:bg-muted/30">
                                                     <td className="px-4 py-3">
                                                         {/* Finance chases the debt and may not open the
@@ -206,26 +272,27 @@ export default function ArrearsPage() {
                                         <tfoot className="border-t-2 bg-muted/20 font-semibold">
                                             <tr>
                                                 <td className="px-4 py-3" colSpan={2}>
-                                                    {debtors.rows.length} famil
-                                                    {debtors.rows.length === 1 ? 'y' : 'ies'}
+                                                    {rows.length} famil
+                                                    {rows.length === 1 ? 'y' : 'ies'}
+                                                    {filteredRows && ` of ${debtors.rows.length}`}
                                                 </td>
                                                 <td className="px-3 py-3 text-right tabular-nums">
-                                                    {cell(debtors.totals.current)}
+                                                    {cell(totals!.current)}
                                                 </td>
                                                 <td className="px-3 py-3 text-right tabular-nums">
-                                                    {cell(debtors.totals.days30)}
+                                                    {cell(totals!.days30)}
                                                 </td>
                                                 <td className="px-3 py-3 text-right tabular-nums">
-                                                    {cell(debtors.totals.days60)}
+                                                    {cell(totals!.days60)}
                                                 </td>
                                                 <td className="px-3 py-3 text-right tabular-nums">
-                                                    {cell(debtors.totals.days90)}
+                                                    {cell(totals!.days90)}
                                                 </td>
                                                 <td className="px-3 py-3 text-right tabular-nums text-red-600">
-                                                    {cell(debtors.totals.days90Plus)}
+                                                    {cell(totals!.days90Plus)}
                                                 </td>
                                                 <td className="px-4 py-3 text-right tabular-nums">
-                                                    <Money value={debtors.totals.total} />
+                                                    <Money value={totals!.total} />
                                                 </td>
                                             </tr>
                                         </tfoot>

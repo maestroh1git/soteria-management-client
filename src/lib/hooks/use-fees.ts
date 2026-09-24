@@ -188,6 +188,9 @@ export function useInvoices(filters?: {
     termId?: string;
     studentId?: string;
     status?: InvoiceStatus;
+    classLevelId?: string;
+    /** Invoice number, pupil's name or admission number. */
+    search?: string;
     page?: number;
     limit?: number;
 }) {

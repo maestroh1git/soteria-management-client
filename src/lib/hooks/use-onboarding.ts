@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDepartments } from '@/lib/api/departments';
+import { getDepartments } from '@/features/staff/departments/api';
 import { getRoles } from '@/lib/api/roles';
 import { getSalaryComponents } from '@/lib/api/salary-components';
 import { getTaxRules } from '@/lib/api/tax';

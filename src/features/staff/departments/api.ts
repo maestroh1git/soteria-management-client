@@ -1,4 +1,4 @@
-import api from './client';
+import api from '@/lib/api/client';
 import type { Department } from '@/lib/types/api';
 
 export interface CreateDepartmentDto {

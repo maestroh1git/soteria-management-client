@@ -41,9 +41,29 @@ import type { LeaveRequest, LeaveType } from '@/lib/types/api';
 import { formatSpan } from '@/lib/utils/dates';
 import { StatusBadge } from '@/components/common/status-badge';
 import { EmployeeLink } from '@/components/common/entity-link';
+import { statusOptions } from '@/lib/status/registry';
+import { ListFilters, matches } from '@/components/common/list-filters';
 
 export default function LeavePage() {
-    const { data: requests = [], isLoading } = useLeaveRequests();
+    const { data: allRequests = [], isLoading } = useLeaveRequests();
+    const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState<string>();
+    const [statusFilter, setStatusFilter] = useState<string>();
+    const typeOptions = [
+        ...new Map(
+            allRequests
+                .filter((r) => r.leaveType)
+                .map((r) => [r.leaveType!.id, r.leaveType!.name]),
+        ).entries(),
+    ].map(([value, label]) => ({ value, label }));
+    // Search and type narrow both lists; status only means something in the
+    // history (everything awaiting a decision is, by definition, pending).
+    const requests = allRequests.filter(
+        (r) =>
+            (!typeFilter || r.leaveType?.id === typeFilter) &&
+            (!statusFilter || r.status === 'PENDING' || r.status === statusFilter) &&
+            matches(search, r.employee?.firstName, r.employee?.lastName, r.reason),
+    );
     const [dialogOpen, setDialogOpen] = useState(false);
 
     // Raising leave and authorising it are deliberately separate rights, and
@@ -91,6 +111,22 @@ export default function LeavePage() {
                     </Button>
                 )}
             </div>
+
+            <ListFilters
+                search={search}
+                onSearch={setSearch}
+                searchPlaceholder="Search by employee or reason"
+                filters={[
+                    { id: 'type', label: 'leave types', value: typeFilter, onChange: setTypeFilter, options: typeOptions },
+                    {
+                        id: 'status',
+                        label: 'outcomes',
+                        value: statusFilter,
+                        onChange: setStatusFilter,
+                        options: statusOptions('leave').filter((o) => o.value !== 'PENDING'),
+                    },
+                ]}
+            />
 
             <Card>
                 <CardHeader>

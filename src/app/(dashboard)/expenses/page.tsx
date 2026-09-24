@@ -51,6 +51,8 @@ import { formatDate } from '@/lib/utils/dates';
 import type { Expense, ExpenseStatus } from '@/lib/api/finance';
 import { Money } from '@/components/common/money';
 import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
+import { ListFilters, matches } from '@/components/common/list-filters';
 
 const ACTION_LABEL: Record<string, string> = {
     SUBMITTED: 'Send for approval',
@@ -80,7 +82,22 @@ export default function ExpensesPage() {
     const [raising, setRaising] = useState(false);
     const [paying, setPaying] = useState<Expense | null>(null);
 
-    const { data: expenses = [], isLoading, isError } = useExpenses(status);
+    const [search, setSearch] = useState('');
+    const [accountFilter, setAccountFilter] = useState<string>();
+    const { data: allExpenses = [], isLoading, isError } = useExpenses(status);
+    const accountOptions = [
+        ...new Map(
+            allExpenses
+                .filter((e) => e.account)
+                .map((e) => [e.account!.id, `${e.account!.code} · ${e.account!.name}`]),
+        ).entries(),
+    ].map(([value, label]) => ({ value, label }));
+    const expenses = allExpenses.filter(
+        (e) =>
+            (!accountFilter || e.accountId === accountFilter) &&
+            matches(search, e.expenseNumber, e.description, e.vendor, e.paymentReference, e.department?.name),
+    );
+    const filtered = status !== 'all' || !!accountFilter || !!search;
     // Accounts only feed the raise and pay forms.
     const { data: accounts = [] } = useAccounts(undefined, canRaise);
 
@@ -103,21 +120,27 @@ export default function ExpensesPage() {
                 )}
             </div>
 
-            <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-52">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {['DRAFT', 'SUBMITTED', 'APPROVED', 'PAID', 'REJECTED', 'CANCELLED'].map(
-                        (s) => (
-                            <SelectItem key={s} value={s}>
-                                {s.toLowerCase()}
-                            </SelectItem>
-                        ),
-                    )}
-                </SelectContent>
-            </Select>
+            <ListFilters
+                search={search}
+                onSearch={setSearch}
+                searchPlaceholder="Number, description, vendor or reference"
+                filters={[
+                    {
+                        id: 'status',
+                        label: 'statuses',
+                        value: status === 'all' ? undefined : status,
+                        onChange: (v) => setStatus(v ?? 'all'),
+                        options: statusOptions('expense'),
+                    },
+                    {
+                        id: 'account',
+                        label: 'accounts',
+                        value: accountFilter,
+                        onChange: setAccountFilter,
+                        options: accountOptions,
+                    },
+                ]}
+            />
 
             {isLoading ? (
                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -127,8 +150,12 @@ export default function ExpensesPage() {
                 <EmptyState
                     isError={isError}
                     subject="the expenses"
-                    title="No expenses"
-                    description="Raise one when the school spends money on something other than salaries."
+                    title={filtered ? 'No expenses match' : 'No expenses'}
+                    description={
+                        filtered
+                            ? 'Try another status, account or search.'
+                            : 'Raise one when the school spends money on something other than salaries.'
+                    }
                 />
             ) : (
                 <div className="space-y-3">

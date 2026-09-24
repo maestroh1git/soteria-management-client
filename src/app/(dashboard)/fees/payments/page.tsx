@@ -36,6 +36,8 @@ import { useCan } from '@/lib/hooks/use-can';
 import { downloadReceiptPdf } from '@/lib/api/fees';
 import { Money } from '@/components/common/money';
 import { fromMinorUnits, toMinorUnits } from '@/lib/utils/money';
+import { statusOptions } from '@/lib/status/registry';
+import { ListFilters, matches } from '@/components/common/list-filters';
 
 /** Kobo, so the running total of an allocation never drifts. */
 const METHODS = [
@@ -59,7 +61,21 @@ export default function PaymentsPage() {
     // Recording and voiding money is the finance office's; the Registrar
     // reads receipts and can hand a parent a copy.
     const canWrite = useCan()('fees.write');
-    const { data: payments, isLoading, isError } = usePayments();
+    const { data: allPayments, isLoading, isError } = usePayments();
+    const [search, setSearch] = useState('');
+    const [method, setMethod] = useState<string>();
+    const [state, setState] = useState<string>();
+    const methods = [...new Set((allPayments ?? []).map((p) => p.method))].map((m) => ({
+        value: m,
+        label: m.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
+    }));
+    const payments = allPayments?.filter(
+        (p) =>
+            (!method || p.method === method) &&
+            (!state || (state === 'UNAPPLIED' ? Number(p.unallocated) > 0 && p.status === 'RECEIVED' : p.status === state)) &&
+            matches(search, p.receiptNumber, p.reference, p.studentName, p.admissionNumber, p.payerName),
+    );
+    const filtered = !!(search || method || state);
     const voidPayment = useVoidPayment();
     const [voidTarget, setVoidTarget] = useState<string | null>(null);
     const [voidReason, setVoidReason] = useState('');
@@ -81,6 +97,27 @@ export default function PaymentsPage() {
                 )}
             </div>
 
+            {!!allPayments?.length && (
+                <ListFilters
+                    search={search}
+                    onSearch={setSearch}
+                    searchPlaceholder="Receipt, pupil, payer or reference"
+                    filters={[
+                        {
+                            id: 'status',
+                            label: 'receipts',
+                            value: state,
+                            onChange: setState,
+                            options: [
+                                ...statusOptions('receipt'),
+                                { value: 'UNAPPLIED', label: 'Not fully applied' },
+                            ],
+                        },
+                        { id: 'method', label: 'methods', value: method, onChange: setMethod, options: methods },
+                    ]}
+                />
+            )}
+
             {isLoading ? (
                 <div className="flex justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -89,8 +126,12 @@ export default function PaymentsPage() {
                 <EmptyState
                     isError={isError}
                     subject="the receipts"
-                    title="No receipts yet"
-                    description="Record a payment when money arrives — cash at the gate, or a transfer off the statement."
+                    title={filtered ? 'No receipts match' : 'No receipts yet'}
+                    description={
+                        filtered
+                            ? 'Try another search or filter.'
+                            : 'Record a payment when money arrives — cash at the gate, or a transfer off the statement.'
+                    }
                 />
             ) : (
                 <Card>

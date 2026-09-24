@@ -46,7 +46,7 @@ import {
     getPermissions,
     type CreateRoleDto,
 } from '@/lib/api/roles';
-import { getDepartments } from '@/lib/api/departments';
+import { getDepartments } from '@/features/staff/departments/api';
 import { createRoleSchema, type CreateRoleValues } from '@/lib/utils/validation';
 import { RoleType } from '@/lib/types/enums';
 import type { Role } from '@/lib/types/api';

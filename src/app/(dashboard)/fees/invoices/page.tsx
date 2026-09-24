@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Loader2, Play, Info } from 'lucide-react';
+import { AlertTriangle, Loader2, Play, Info, Search } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/common/empty-state';
-import { useSessions, useTerms } from '@/lib/hooks/use-academics';
+import { useClassLevels, useSessions, useTerms } from '@/lib/hooks/use-academics';
 import {
     useGenerateInvoices,
     useInvoiceRunPreview,
@@ -42,6 +42,7 @@ import type { InvoiceStatus, InvoiceSummary } from '@/lib/api/fees';
 import { Money } from '@/components/common/money';
 import { statusOf, TONE_CLASS } from '@/lib/status/registry';
 import { InvoiceLink } from '@/components/common/entity-link';
+import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
 
 const PAID_STYLE = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
 const PART_STYLE = 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200';
@@ -80,6 +81,10 @@ export default function InvoicesPage() {
     const [sessionId, setSessionId] = useState<string>();
     const [termId, setTermId] = useState<string>();
     const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'ALL'>('ALL');
+    const [levelId, setLevelId] = useState<string>('ALL');
+    const [searchText, setSearchText] = useState('');
+    const search = useDebouncedValue(searchText.trim());
+    const { data: levels = [] } = useClassLevels();
     const [runOpen, setRunOpen] = useState(false);
 
     const { data: terms } = useTerms(sessionId);
@@ -87,8 +92,11 @@ export default function InvoicesPage() {
     const { data: invoicePage, isLoading, isError } = useInvoices({
         termId,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
+        classLevelId: levelId === 'ALL' ? undefined : levelId,
+        search: search || undefined,
         page,
     });
+    const filtered = statusFilter !== 'ALL' || levelId !== 'ALL' || !!search;
     // The server returns one page; it used to return every invoice the school
     // had ever issued.
     const invoices = invoicePage?.items;
@@ -110,7 +118,7 @@ export default function InvoicesPage() {
     // table that looks like "nothing billed".
     useEffect(() => {
         setPage(1);
-    }, [termId, statusFilter]);
+    }, [termId, statusFilter, levelId, search]);
     const issueTerm = useIssueTermInvoices();
     // Billing is the finance office's; the Registrar reads what was billed.
     const canWrite = useCan()('fees.write');
@@ -146,6 +154,16 @@ export default function InvoicesPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        placeholder="Pupil, admission or invoice no."
+                        aria-label="Search invoices"
+                        className="pl-9"
+                    />
+                </div>
                 <Select value={sessionId} onValueChange={setSessionId}>
                     <SelectTrigger className="w-44">
                         <SelectValue placeholder="Session" />
@@ -187,6 +205,20 @@ export default function InvoicesPage() {
                     </SelectContent>
                 </Select>
 
+                <Select value={levelId} onValueChange={setLevelId}>
+                    <SelectTrigger className="w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All classes</SelectItem>
+                        {levels.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                                {l.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
                 {canWrite && draftCount > 0 && (
                     <Button
                         variant="outline"
@@ -209,8 +241,12 @@ export default function InvoicesPage() {
                 <EmptyState
                     isError={isError}
                     subject="the invoices"
-                    title="Nothing billed yet"
-                    description="Run the term to create drafts. Nothing is owed until you issue them."
+                    title={filtered ? 'No invoices match' : 'Nothing billed yet'}
+                    description={
+                        filtered
+                            ? 'Try another status, class or search.'
+                            : 'Run the term to create drafts. Nothing is owed until you issue them.'
+                    }
                 />
             ) : (
                 <Card>
