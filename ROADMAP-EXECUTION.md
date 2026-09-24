@@ -16,6 +16,60 @@ It is written as pull requests. Each PR has a repository (**S** = `soteria-manag
 the test that proves it. Waves are ordered by dependency; PRs inside a wave can
 run in parallel unless a dependency is named.
 
+## Progress
+
+| Wave | Status | Where |
+|---|---|---|
+| 0 Safety net | **Done** 24 Sep | client CI + lint ratchet + persona tests (this repo); `seed:personas` + audit in CI (API) |
+| 1 Unblock | **Done** 24 Sep | same two pull requests |
+| 2–5 | Not started | — |
+
+Wave 1's exit test passes: all 17 persona tests are green against a seeded
+school (every persona's sidebar loads with no 401/403/5xx and no page error,
+plus the four repaired paths walked end to end), and the API's access suite
+passes 26/26. Its first 19 tests were run against the code before Wave 1, and
+15 of them failed there.
+
+### What Wave 1 turned up that the map had not
+
+Running the persona tests before fixing anything found more than the map did.
+All of it was fixed in the same pull requests:
+
+- **No one outside payroll could request leave.** My Leave read
+  `GET /leave/types` (O A P Ap V). New `GET /me/leave/types`.
+- **React #418 on nearly every screen.** The auth store rehydrates in the root
+  layout's effect, but pages hydrate later inside `loading.tsx` boundaries, so
+  their first render already knew the user (and the tenant) and disagreed
+  with the server's HTML. New `useHydrated()`; `useAuth` reports signed-out
+  until the component has hydrated.
+- **Registrars could not choose a class's educator**, and the Classes screen
+  403'd for Educators: it loaded the whole staff list to print one name per
+  class. Arms now carry `formTeacherName`; new `GET /academics/educators`
+  (id, name, position, department) for the picker.
+- **The Gate could not find a pupil** for an Attendance Officer
+  (`GET /students` now admits them; the full record still does not).
+- **Departments were unreadable to those who pick one** (Payroll on the
+  employee form, Finance on budgets). Reads now O A P F Ap V.
+- **A form teacher holding only Employee could not recognise their own
+  pupils.** Awards are now granted by identity as well as role
+  (`AwardService.assertCanGrant`).
+- **Any tenant owner could write the global `permissions` table.** Writes are
+  super-admin only.
+
+### Found, not fixed (outside Waves 0–1)
+
+- **Any tenant's Owner/Admin can add, edit or delete `countries` and
+  `payroll_settings`**, which are global tables shared by every tenant (no
+  `tenant_id`). Needs a decision: make writes super-admin only, or give each
+  tenant its own settings rows.
+- **Loan approval takes `approverId` from the request body**, so the recorded
+  approver is whatever the client sends. The server should use the caller.
+- **Report exports open a bare URL** (`window.open(getExportCsvUrl(…))`), which
+  carries no token, so they cannot authenticate. Belongs with the Wave 5
+  exports work.
+- 26 pre-existing lint errors (React Compiler rules), held flat by the
+  ratchet; down from 37.
+
 ---
 
 ## 0. Rules every PR follows
@@ -72,11 +126,12 @@ page-by-page table in §8 tracks it.
 
 ---
 
-## 2. Decisions needed before Wave 1 ends
+## 2. Decisions
 
-These are policy, not code. Each has a recommendation; the owner decides.
+These are policy, not code. **All eight recommendations were accepted on 24
+Sep.** D1, D2 and D5 are done in Wave 1; the rest land with the wave named.
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
 | D1 | Keep job-role **permissions** (`PermissionsGuard`)? | Retire them. One mechanism. Keep the table for a later fine-grained model if a customer asks. |
 | D2 | May **Approvers** approve loans? Today only Owner/Admin can. | Yes: loans are exactly what an Approver is for. |
