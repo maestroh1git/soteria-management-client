@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,9 +11,6 @@ import {
     Globe,
     Settings as SettingsIcon,
     Save,
-    Users,
-    Shield,
-    UserPlus,
     Building2,
     Palette,
 } from 'lucide-react';
@@ -41,7 +37,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import {
@@ -53,22 +48,17 @@ import {
     useUpsertSetting,
     useDeleteSetting,
 } from '@/lib/hooks/use-settings';
-import {
-    useUsers,
-    useCreateUser,
-    useUpdateUser,
-} from '@/lib/hooks/use-users';
-import { useEmployees } from '@/lib/hooks/use-employees';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useCan } from '@/lib/hooks/use-can';
 import { useMyTenant, useUpdateTenant } from '@/lib/hooks/use-tenant';
-import { KybStatus, SystemRole } from '@/lib/types/enums';
-import type { Country, User } from '@/lib/types/api';
+import { KybStatus } from '@/lib/types/enums';
+import type { Country } from '@/lib/types/api';
 import type { PayrollSetting } from '@/lib/api/settings';
 import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LearnerTermSetting } from '@/components/settings/learner-term-setting';
 import { PageHeader } from '@/components/layout/page-header';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 // ── Schemas ─────────────────────────────────────────────────
 
@@ -89,11 +79,6 @@ const settingSchema = z.object({
 });
 type SettingValues = z.infer<typeof settingSchema>;
 
-const createUserSchema = z.object({
-    employeeId: z.string().min(1, 'Employee is required'),
-    systemRoles: z.array(z.string()).min(1, 'At least one role is required'),
-});
-type CreateUserValues = z.infer<typeof createUserSchema>;
 
 const orgProfileSchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -115,56 +100,14 @@ const orgProfileSchema = z.object({
 });
 type OrgProfileValues = z.infer<typeof orgProfileSchema>;
 
-// Role display labels
-const ROLE_LABELS: Record<string, string> = {
-    [SystemRole.TENANT_OWNER]: 'Owner',
-    [SystemRole.ADMIN]: 'Admin',
-    [SystemRole.PAYROLL_OFFICER]: 'Payroll Officer',
-    [SystemRole.FINANCE_ADMIN]: 'Finance Admin',
-    [SystemRole.APPROVER]: 'Approver',
-    [SystemRole.VIEWER]: 'Viewer',
-    [SystemRole.EMPLOYEE]: 'Employee',
-    // Namespaced roles. Every one of these was missing, so they rendered raw —
-    // a user's role read "academic.teacher" — and, worse, none of them appeared
-    // in ASSIGNABLE_ROLES, so no school could actually grant one. The register
-    // and the gate were unreachable by anyone but an owner or an admin.
-    //
-    // "Educator" rather than "Teacher": that is the word this product uses, and
-    // the word the first school asked for. The stored value stays
-    // `academic.teacher` — it lives in users.system_roles rows and renaming it
-    // is a data migration, not a label change.
-    [SystemRole.ACADEMIC_TEACHER]: 'Educator',
-    [SystemRole.ATTENDANCE_OFFICER]: 'Attendance Officer',
-    [SystemRole.ADMISSIONS_REGISTRAR]: 'Admissions Registrar',
-    [SystemRole.ADMISSIONS_OFFICER]: 'Admissions Officer',
-    // Shown, never offered: a parent login is created through the guardian
-    // invite, which links a guardian record. Granting it to a staff account
-    // would make a portal account with no children behind it.
-    [SystemRole.PARENT]: 'Parent',
-};
+const ORG_TABS = ['profile', 'branding', 'countries', 'settings'] as const;
+const REFERENCE_TABS = ['countries', 'settings'] as const;
 
-/** Roles that only mean something in a school. */
-const SCHOOL_ROLES = [
-    SystemRole.ACADEMIC_TEACHER,
-    SystemRole.ATTENDANCE_OFFICER,
-    SystemRole.ADMISSIONS_REGISTRAR,
-    SystemRole.ADMISSIONS_OFFICER,
-];
-
-const ASSIGNABLE_ROLES = [
-    SystemRole.ADMIN,
-    SystemRole.PAYROLL_OFFICER,
-    SystemRole.FINANCE_ADMIN,
-    SystemRole.APPROVER,
-    SystemRole.VIEWER,
-    SystemRole.EMPLOYEE,
-];
-
-export default function SettingsPage() {
+export default function OrganisationPage() {
     const { tenantOrgType } = useAuth();
     const can = useCan();
-    const canManageTeam = can('users.manage');
-    const canGrantOwnership = can('users.grantOwnership');
+    const canManageOrg = can('organisation.manage');
+    const [tab, setTab] = useTabParam(canManageOrg ? ORG_TABS : REFERENCE_TABS);
     /**
      * Countries and the advanced key/value store have no tenant column: they
      * are reference data every school shares. Editing one edits it for all of
@@ -177,11 +120,8 @@ export default function SettingsPage() {
 
     const [showCountryDialog, setShowCountryDialog] = useState(false);
     const [showSettingDialog, setShowSettingDialog] = useState(false);
-    const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
-    const [showEditRolesDialog, setShowEditRolesDialog] = useState(false);
     const [editingCountry, setEditingCountry] = useState<Country | null>(null);
     const [editingSetting, setEditingSetting] = useState<PayrollSetting | null>(null);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
 
     const {
         data: countries,
@@ -193,12 +133,6 @@ export default function SettingsPage() {
         isLoading: settingsLoading,
         isError: settingsFailed,
     } = useSettings();
-    const {
-        data: users,
-        isLoading: usersLoading,
-        isError: usersFailed,
-    } = useUsers();
-    const { data: employees } = useEmployees();
     const { data: myTenant, isLoading: tenantLoading } = useMyTenant();
     const updateTenantMutation = useUpdateTenant();
 
@@ -207,17 +141,7 @@ export default function SettingsPage() {
     const deleteCountryMutation = useDeleteCountry();
     const upsertSettingMutation = useUpsertSetting();
     const deleteSettingMutation = useDeleteSetting();
-    const createUserMutation = useCreateUser();
-    const updateUserMutation = useUpdateUser();
 
-    // Employees that don't have a user account yet
-    const availableEmployees = (employees || []).filter(
-        (emp) => !users?.some((u) => u.employeeId === emp.id),
-    );
-
-    const [selectedEmployee, setSelectedEmployee] = useState<string>('');
-    const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-    const [editRoles, setEditRoles] = useState<string[]>([]);
 
     const orgProfileForm = useForm<OrgProfileValues>({
         resolver: zodResolver(orgProfileSchema),
@@ -268,14 +192,6 @@ export default function SettingsPage() {
         defaultValues: { key: '', value: '', dataType: 'string', description: '', countryId: '' },
     });
 
-    const createUserForm = useForm<CreateUserValues>({
-        resolver: zodResolver(createUserSchema),
-        defaultValues: { employeeId: '', systemRoles: [] },
-    });
-
-    // When mail is not configured the API hands the invite link back; we show it
-    // so the admin can pass it to the new user by hand.
-    const [inviteLink, setInviteLink] = useState<{ name: string; url: string } | null>(null);
 
     const openCountryDialog = (country?: Country) => {
         if (country) {
@@ -310,20 +226,6 @@ export default function SettingsPage() {
         setShowSettingDialog(true);
     };
 
-    const openCreateUserDialog = () => {
-        setSelectedEmployee('');
-        setSelectedRoles([]);
-        createUserForm.reset({ employeeId: '', systemRoles: [] });
-        setShowCreateUserDialog(true);
-    };
-
-    const openEditRolesDialog = (user: User) => {
-        setEditingUser(user);
-        // A colleague's roles, being edited — data, not a permission check.
-        // eslint-disable-next-line no-restricted-syntax
-        setEditRoles([...user.systemRoles]);
-        setShowEditRolesDialog(true);
-    };
 
     const handleCountrySubmit = countryForm.handleSubmit((data) => {
         if (editingCountry) {
@@ -348,50 +250,6 @@ export default function SettingsPage() {
         });
     });
 
-    const handleCreateUserSubmit = () => {
-        const emp = availableEmployees.find((e) => e.id === selectedEmployee);
-        if (!emp || selectedRoles.length === 0) return;
-
-        createUserMutation.mutate(
-            {
-                email: emp.email,
-                firstName: emp.firstName,
-                lastName: emp.lastName,
-                employeeId: emp.id,
-                systemRoles: selectedRoles,
-            },
-            {
-                onSuccess: (res) => {
-                    setShowCreateUserDialog(false);
-                    if (res.emailed) {
-                        toast.success(`Invitation emailed to ${emp.email}`);
-                    } else if (res.inviteUrl) {
-                        // Mail is not set up — surface the link so it is not lost.
-                        setInviteLink({
-                            name: `${emp.firstName} ${emp.lastName}`,
-                            url: res.inviteUrl,
-                        });
-                    }
-                },
-            },
-        );
-    };
-
-    const handleEditRolesSubmit = () => {
-        if (!editingUser || editRoles.length === 0) return;
-        updateUserMutation.mutate(
-            { id: editingUser.id, data: { systemRoles: editRoles } },
-            { onSuccess: () => setShowEditRolesDialog(false) },
-        );
-    };
-
-    const handleToggleActive = (user: User) => {
-        updateUserMutation.mutate({
-            id: user.id,
-            data: { isActive: !user.isActive },
-        });
-    };
-
     const handleOrgProfileSubmit = orgProfileForm.handleSubmit((data) => {
         const payload: UpdateTenantProfileDto = {};
         if (data.name) payload.name = data.name;
@@ -409,28 +267,26 @@ export default function SettingsPage() {
         updateTenantMutation.mutate(payload);
     });
 
-    // A hospital has no educators, so the school roles only appear for a school.
-    const assignable =
-        tenantOrgType === 'SCHOOL'
-            ? [...ASSIGNABLE_ROLES, ...SCHOOL_ROLES]
-            : ASSIGNABLE_ROLES;
-    const allRolesForAssignment = canGrantOwnership
-        ? [SystemRole.TENANT_OWNER, ...assignable]
-        : assignable;
 
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Organisation & access"
-                description="Your organisation’s profile and branding, who on the team can do what, and the reference data every school shares."
+                title="Organisation"
+                description="Your organisation’s profile, compliance numbers and branding, and the reference data every school shares. Who can sign in is under Team & access."
             />
 
-            <Tabs defaultValue={canManageTeam ? 'team' : 'countries'} className="space-y-6">
+            <Tabs value={tab} onValueChange={setTab} className="space-y-6">
                 <TabsList>
-                    {canManageTeam && (
-                        <TabsTrigger value="team">
-                            <Users className="mr-2 h-4 w-4" />
-                            Team
+                    {canManageOrg && (
+                        <TabsTrigger value="profile">
+                            <Building2 className="mr-2 h-4 w-4" />
+                            Profile
+                        </TabsTrigger>
+                    )}
+                    {canManageOrg && (
+                        <TabsTrigger value="branding">
+                            <Palette className="mr-2 h-4 w-4" />
+                            Branding
                         </TabsTrigger>
                     )}
                     <TabsTrigger value="countries">
@@ -441,112 +297,11 @@ export default function SettingsPage() {
                         <SettingsIcon className="mr-2 h-4 w-4" />
                         Advanced
                     </TabsTrigger>
-                    {canManageTeam && (
-                        <TabsTrigger value="organization">
-                            <Building2 className="mr-2 h-4 w-4" />
-                            Organization
-                        </TabsTrigger>
-                    )}
-                    {canManageTeam && (
-                        <TabsTrigger value="branding">
-                            <Palette className="mr-2 h-4 w-4" />
-                            Branding
-                        </TabsTrigger>
-                    )}
                 </TabsList>
 
-                {canManageTeam && (
+                {canManageOrg && (
                     <TabsContent value="branding" className="space-y-4">
                         <BrandingSettings />
-                    </TabsContent>
-                )}
-
-                {/* ─── Team ─────────────────────────────────────────── */}
-                {canManageTeam && (
-                    <TabsContent value="team" className="space-y-4">
-                        <div className="flex justify-end">
-                            <Button onClick={openCreateUserDialog}>
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Add User
-                            </Button>
-                        </div>
-
-                        {usersLoading ? (
-                            <LoadingSkeleton rows={5} />
-                        ) : usersFailed || !users?.length ? (
-                            <EmptyState
-                                isError={usersFailed}
-                                subject="the team members"
-                                title="No team members"
-                                description="Create user accounts for your employees to give them system access."
-                                actionLabel="Add User"
-                                onAction={openCreateUserDialog}
-                            />
-                        ) : (
-                            <div className="rounded-lg border bg-card">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b bg-muted/50">
-                                            <th className="px-4 py-3 text-left font-medium">Name</th>
-                                            <th className="px-4 py-3 text-left font-medium">Email</th>
-                                            <th className="hidden md:table-cell px-4 py-3 text-left font-medium">Employee #</th>
-                                            <th className="px-4 py-3 text-left font-medium">Role(s)</th>
-                                            <th className="px-4 py-3 text-left font-medium">Status</th>
-                                            <th className="px-4 py-3 text-right font-medium">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users.map((user) => (
-                                            <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
-                                                <td className="px-4 py-3 font-medium">
-                                                    {user.firstName} {user.lastName}
-                                                </td>
-                                                <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
-                                                <td className="hidden md:table-cell px-4 py-3 text-muted-foreground">
-                                                    {user.employee?.employeeNumber || '-'}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {/* A colleague's roles, listed — data, not a permission check. */}
-                                                        {/* eslint-disable-next-line no-restricted-syntax */}
-                                                        {user.systemRoles.map((role) => (
-                                                            <Badge key={role} variant="outline" className="text-xs">
-                                                                {ROLE_LABELS[role] || role}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Badge variant={user.isActive ? 'default' : user.invitePending ? 'outline' : 'secondary'}>
-                                                        {user.isActive ? 'Active' : user.invitePending ? 'Invited' : 'Inactive'}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <div className="flex justify-end gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => openEditRolesDialog(user)}
-                                                            title="Edit roles"
-                                                        >
-                                                            <Shield className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleToggleActive(user)}
-                                                            className={!user.isActive ? 'text-green-600' : 'text-destructive'}
-                                                        >
-                                                            {user.isActive ? 'Deactivate' : 'Activate'}
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
                     </TabsContent>
                 )}
 
@@ -731,8 +486,8 @@ export default function SettingsPage() {
                     )}
                 </TabsContent>
                 {/* ─── Organization ─────────────────────────────────── */}
-                {canManageTeam && (
-                    <TabsContent value="organization" className="space-y-6">
+                {canManageOrg && (
+                    <TabsContent value="profile" className="space-y-6">
                         {tenantOrgType === 'SCHOOL' && (
                             <LearnerTermSetting canEdit={can('organisation.manage')} />
                         )}
@@ -990,163 +745,6 @@ export default function SettingsPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* ── Create User Dialog ─────────────────────────────── */}
-            <Dialog open={showCreateUserDialog} onOpenChange={setShowCreateUserDialog}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Invite a user</DialogTitle>
-                        <DialogDescription>
-                            The employee gets an email with a link to set their own password and
-                            activate their account. You never set a password for them.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="settings-page-employee">Employee</Label>
-                            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                                <SelectTrigger id="settings-page-employee">
-                                    <SelectValue placeholder="Select an employee" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableEmployees.map((emp) => (
-                                        <SelectItem key={emp.id} value={emp.id}>
-                                            {emp.firstName} {emp.lastName} ({emp.email})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {availableEmployees.length === 0 && (
-                                <p className="text-xs text-muted-foreground">All employees already have user accounts.</p>
-                            )}
-                        </div>
-
-                        {selectedEmployee && (() => {
-                            const emp = availableEmployees.find((e) => e.id === selectedEmployee);
-                            if (!emp) return null;
-                            return (
-                                <div className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
-                                    <p><span className="text-muted-foreground">Name:</span> {emp.firstName} {emp.lastName}</p>
-                                    <p><span className="text-muted-foreground">Email:</span> {emp.email}</p>
-                                    <p><span className="text-muted-foreground">Employee #:</span> {emp.employeeNumber}</p>
-                                </div>
-                            );
-                        })()}
-
-                        <div className="space-y-2">
-                            {/* Labels a set of checkboxes, not one control. */}
-                            <Label id="settings-system-roles-label">System Roles</Label>
-                            <div
-                                className="grid grid-cols-2 gap-2"
-                                role="group"
-                                aria-labelledby="settings-system-roles-label"
-                            >
-                                {allRolesForAssignment.map((role) => (
-                                    <label key={role} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <Checkbox
-                                            checked={selectedRoles.includes(role)}
-                                            onCheckedChange={(checked) => {
-                                                setSelectedRoles((prev) =>
-                                                    checked
-                                                        ? [...prev, role]
-                                                        : prev.filter((r) => r !== role),
-                                                );
-                                            }}
-                                        />
-                                        {ROLE_LABELS[role] || role}
-                                    </label>
-                                ))}
-                            </div>
-                            {selectedRoles.length === 0 && (
-                                <p className="text-xs text-destructive">At least one role is required</p>
-                            )}
-                        </div>
-
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowCreateUserDialog(false)}>Cancel</Button>
-                            <Button
-                                onClick={handleCreateUserSubmit}
-                                disabled={!selectedEmployee || selectedRoles.length === 0 || createUserMutation.isPending}
-                            >
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                {createUserMutation.isPending ? 'Sending…' : 'Send invite'}
-                            </Button>
-                        </DialogFooter>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* ── Invite link fallback (mail not configured) ─────── */}
-            <Dialog open={!!inviteLink} onOpenChange={(o) => !o && setInviteLink(null)}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Share this invite link</DialogTitle>
-                        <DialogDescription>
-                            Email isn&apos;t set up, so the invitation could not be sent. Copy
-                            the link below and give it to {inviteLink?.name} — it lets them set
-                            their password and sign in. It expires in 7 days.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex items-center gap-2">
-                        <Input readOnly value={inviteLink?.url ?? ''} className="font-mono text-xs" />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                if (inviteLink) {
-                                    navigator.clipboard?.writeText(inviteLink.url);
-                                    toast.success('Invite link copied');
-                                }
-                            }}
-                        >
-                            Copy
-                        </Button>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={() => setInviteLink(null)}>Done</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* ── Edit Roles Dialog ──────────────────────────────── */}
-            <Dialog open={showEditRolesDialog} onOpenChange={setShowEditRolesDialog}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit Roles</DialogTitle>
-                        <DialogDescription>
-                            Update roles for {editingUser?.firstName} {editingUser?.lastName}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-2">
-                            {allRolesForAssignment.map((role) => (
-                                <label key={role} className="flex items-center gap-2 text-sm cursor-pointer">
-                                    <Checkbox
-                                        checked={editRoles.includes(role)}
-                                        onCheckedChange={(checked) => {
-                                            setEditRoles((prev) =>
-                                                checked
-                                                    ? [...prev, role]
-                                                    : prev.filter((r) => r !== role),
-                                            );
-                                        }}
-                                    />
-                                    {ROLE_LABELS[role] || role}
-                                </label>
-                            ))}
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowEditRolesDialog(false)}>Cancel</Button>
-                            <Button
-                                onClick={handleEditRolesSubmit}
-                                disabled={editRoles.length === 0 || updateUserMutation.isPending}
-                            >
-                                <Save className="mr-2 h-4 w-4" />
-                                Save Roles
-                            </Button>
-                        </DialogFooter>
-                    </div>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

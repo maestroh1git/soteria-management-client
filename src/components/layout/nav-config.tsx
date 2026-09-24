@@ -5,9 +5,6 @@ import {
   ClipboardList,
   School,
   BadgeDollarSign,
-  ReceiptText,
-  HandCoins,
-  TrendingDown,
   Scale,
   PiggyBank,
   CalendarDays,
@@ -30,6 +27,7 @@ import {
   Banknote,
   TreePalm,
   ArrowLeftRight,
+  Inbox,
 } from "lucide-react";
 
 export interface NavItem {
@@ -47,6 +45,8 @@ export interface NavItem {
   orgTypes?: string[];
   /** Titled with the school's word for its learners (lib/copy/glossary). */
   learnerTerm?: boolean;
+  /** Show a live count beside the title. */
+  count?: "approvals";
 }
 
 export interface NavGroup {
@@ -80,7 +80,11 @@ export const navigation: NavGroup[] = [
   },
   {
     label: "Home",
-    items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
+    items: [
+      { title: "Dashboard", href: "/", icon: LayoutDashboard },
+      // One queue for every decision (C4.9), with how many wait on you.
+      { title: "Approvals", href: "/approvals", icon: Inbox, count: "approvals" },
+    ],
   },
   {
     label: "People",
@@ -126,10 +130,9 @@ export const navigation: NavGroup[] = [
   {
     label: "Money",
     items: [
+      // Prices, invoices, receipts, concessions, optional fees and arrears
+      // are tabs of one hub now (C4.7).
       { title: "Fees", href: "/fees", icon: BadgeDollarSign, orgTypes: ["SCHOOL"] },
-      { title: "Invoices", href: "/fees/invoices", icon: ReceiptText, orgTypes: ["SCHOOL"] },
-      { title: "Receipts", href: "/fees/payments", icon: HandCoins, orgTypes: ["SCHOOL"] },
-      { title: "Arrears", href: "/fees/arrears", icon: TrendingDown, orgTypes: ["SCHOOL"] },
       { title: "Expenses", href: "/expenses", icon: Wallet },
       { title: "Budgets", href: "/budgets", icon: PiggyBank },
       { title: "Bank reconciliation", href: "/banking", icon: ArrowLeftRight },

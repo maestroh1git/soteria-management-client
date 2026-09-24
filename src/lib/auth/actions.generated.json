@@ -176,6 +176,24 @@
     "FINANCE_ADMIN",
     "APPROVER"
   ],
+  "fees.concessions.decide": [
+    "tenant_owner",
+    "ADMIN",
+    "APPROVER"
+  ],
+  "fees.concessions.raise": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "admissions.registrar"
+  ],
+  "fees.concessions.read": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "admissions.registrar",
+    "APPROVER"
+  ],
   "fees.read": [
     "tenant_owner",
     "ADMIN",
@@ -396,7 +414,8 @@
     "admissions.registrar",
     "admissions.officer",
     "academic.teacher",
-    "academic.attendance_officer"
+    "academic.attendance_officer",
+    "FINANCE_ADMIN"
   ],
   "students.manage": [
     "tenant_owner",

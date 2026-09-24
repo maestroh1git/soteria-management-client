@@ -76,7 +76,7 @@ export default function PositionsPage() {
         <div className="space-y-6">
             <PageHeader
                 title="Positions"
-                description="The jobs in your organisation, and who reports to whom. Someone's access is set in Setup, under Organisation & access."
+                description="The jobs in your organisation, and who reports to whom. Someone's access is set in Setup, under Team & access."
                 actions={
                     <Button
                         onClick={() => {

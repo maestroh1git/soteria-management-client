@@ -45,6 +45,7 @@ import {
     usePriceList,
     useRemoveFeeItem,
     useSetFeePrice,
+    useRemoveFeePrice,
 } from '@/lib/hooks/use-fees';
 import type { FeeCategory } from '@/lib/api/fees';
 import { Money } from '@/components/common/money';
@@ -89,6 +90,8 @@ export default function FeesPage() {
     const canWrite = useCan()('fees.write');
     const { data: accounts } = useAccounts(undefined, canWrite);
     const setPrice = useSetFeePrice();
+    // Clearing a price cell removes that price (it used to snap back).
+    const removePrice = useRemoveFeePrice();
 
     const [addOpen, setAddOpen] = useState(false);
     // Non-null while the fee dialog is editing an existing fee rather than adding.
@@ -308,7 +311,12 @@ export default function FeesPage() {
                                                             <PriceCell
                                                                 value={cell?.amount ?? ''}
                                                                 readOnly={!canWrite}
-                                                                saving={setPrice.isPending}
+                                                                saving={setPrice.isPending || removePrice.isPending}
+                                                                onClear={
+                                                                    cell
+                                                                        ? () => removePrice.mutate(cell.id)
+                                                                        : undefined
+                                                                }
                                                                 onCommit={(amount) => {
                                                                     if (!termId) return;
                                                                     setPrice.mutate({
@@ -434,12 +442,15 @@ function PriceCell({
     readOnly,
     saving,
     onCommit,
+    onClear,
 }: {
     value: string;
     /** For those who may read the price list but not set it. */
     readOnly: boolean;
     saving: boolean;
     onCommit: (amount: number) => void;
+    /** Empty the cell to take the price off; absent when there is none. */
+    onClear?: () => void;
 }) {
     const [draft, setDraft] = useState(value);
 
@@ -460,10 +471,16 @@ function PriceCell({
             disabled={saving}
             className="h-8 w-28 text-right tabular-nums"
             placeholder="—"
+            aria-label="Price"
+            title={onClear ? 'Clear to remove this price' : undefined}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => {
                 const trimmed = draft.trim();
                 if (trimmed === (value ?? '').trim()) return;
+                if (trimmed === '' && onClear) {
+                    onClear();
+                    return;
+                }
                 const amount = Number(trimmed);
                 if (trimmed === '' || Number.isNaN(amount) || amount < 0) {
                     setDraft(value);

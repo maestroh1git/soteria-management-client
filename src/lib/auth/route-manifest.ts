@@ -28,6 +28,16 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/portal': 'guardians',
   '/admin': 'platform.read',
 
+  // Everyone who decides anything; the inbox holds only what they decide.
+  '/approvals': [
+    'payroll.approve',
+    'payroll.adjustments.decide',
+    'leave.decide',
+    'expenses.decide',
+    'fees.concessions.decide',
+    'loans.decide',
+  ],
+
   // People
   '/employees': 'employees.read',
   '/students': 'students.read',
@@ -63,6 +73,9 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/fees/arrears': 'fees.read',
   '/fees/invoices': 'fees.read',
   '/fees/payments': 'fees.read',
+  // Approvers read concessions to decide them, without reading the rest of Fees.
+  '/fees/concessions': 'fees.concessions.read',
+  '/fees/optional': 'fees.read',
   '/expenses': 'expenses.read',
   '/budgets': 'budgets.read',
   '/banking': 'banking.reconcile',
@@ -76,6 +89,7 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   // section keeps its own entry, so the hub never shows a door that is shut.
   '/setup': [
     'organisation.manage',
+    'users.manage',
     'events.read',
     'departments.manage',
     'positions.manage',
@@ -86,6 +100,7 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
     'academics.manage',
   ],
   '/setup/organisation': 'organisation.manage',
+  '/setup/team': 'users.manage',
   '/setup/events': 'events.read',
   '/setup/departments': 'departments.manage',
   '/setup/positions': 'positions.manage',

@@ -27,7 +27,7 @@ export const TERMS = {
 
 /**
  * D7: a primary school has pupils, a secondary school students. Each school
- * says which in Setup > Organisation & access (tenant.settings.learnerTerm); one word per screen,
+ * says which in Setup > Organisation (tenant.settings.learnerTerm); one word per screen,
  * and "student" when unset, because it is the API's word.
  */
 export type LearnerTerm = 'pupil' | 'student';
