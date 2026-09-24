@@ -167,6 +167,14 @@ export default function SettingsPage() {
     const { hasRole, tenantOrgType } = useAuth();
     const canManageTeam = hasRole(['tenant_owner', 'ADMIN']);
     const isTenantOwner = hasRole(['tenant_owner']);
+    /**
+     * Countries and the advanced key/value store have no tenant column: they
+     * are reference data every school shares. Editing one edits it for all of
+     * them, so the API now takes those writes from the platform only. The
+     * controls go with it — a button that is certain to be refused is worse
+     * than no button, and this tab is still worth reading.
+     */
+    const canEditPlatformReference = hasRole(['super_admin']);
 
     const [showCountryDialog, setShowCountryDialog] = useState(false);
     const [showSettingDialog, setShowSettingDialog] = useState(false);
@@ -542,12 +550,20 @@ export default function SettingsPage() {
 
                 {/* ─── Countries ─────────────────────────────────────── */}
                 <TabsContent value="countries" className="space-y-4">
-                    <div className="flex justify-end">
-                        <Button onClick={() => openCountryDialog()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Country
-                        </Button>
-                    </div>
+                    {canEditPlatformReference ? (
+                        <div className="flex justify-end">
+                            <Button onClick={() => openCountryDialog()}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Country
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
+                            The country list is shared by every school on the
+                            platform, so it is maintained centrally. Contact
+                            support if something here is wrong or missing.
+                        </div>
+                    )}
 
                     {countriesLoading ? (
                         <LoadingSkeleton rows={4} />
@@ -557,8 +573,16 @@ export default function SettingsPage() {
                             subject="the countries"
                             title="No countries"
                             description="Add a country to configure currency and tax rules."
-                            actionLabel="Add Country"
-                            onAction={() => openCountryDialog()}
+                            actionLabel={
+                                canEditPlatformReference
+                                    ? 'Add Country'
+                                    : undefined
+                            }
+                            onAction={
+                                canEditPlatformReference
+                                    ? () => openCountryDialog()
+                                    : undefined
+                            }
                         />
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -578,19 +602,27 @@ export default function SettingsPage() {
                                                 <p>Code: <span className="font-medium text-foreground">{country.code}</span></p>
                                                 <p>Currency: <span className="font-medium text-foreground">{country.currencySymbol} ({country.currencyCode})</span></p>
                                             </div>
-                                            <div className="flex gap-1">
-                                                <Button variant="ghost" size="icon" onClick={() => openCountryDialog(country)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => deleteCountryMutation.mutate(country.id)}
-                                                    className="text-destructive hover:text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                            {canEditPlatformReference && (
+                                                <div className="flex gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => openCountryDialog(country)}
+                                                        aria-label={`Edit ${country.name}`}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => deleteCountryMutation.mutate(country.id)}
+                                                        className="text-destructive hover:text-destructive"
+                                                        aria-label={`Delete ${country.name}`}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -610,12 +642,19 @@ export default function SettingsPage() {
                         calculation. Pay is driven by salary components and tax rules — you
                         don&apos;t need to configure anything here to run payroll.
                     </div>
-                    <div className="flex justify-end">
-                        <Button onClick={() => openSettingDialog()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Setting
-                        </Button>
-                    </div>
+                    {canEditPlatformReference ? (
+                        <div className="flex justify-end">
+                            <Button onClick={() => openSettingDialog()}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Setting
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
+                            These keys are shared by every school on the
+                            platform, so they are maintained centrally.
+                        </div>
+                    )}
 
                     {settingsLoading ? (
                         <LoadingSkeleton rows={5} />
@@ -625,8 +664,16 @@ export default function SettingsPage() {
                             subject="the settings"
                             title="No settings"
                             description="Add payroll configuration settings."
-                            actionLabel="Add Setting"
-                            onAction={() => openSettingDialog()}
+                            actionLabel={
+                                canEditPlatformReference
+                                    ? 'Add Setting'
+                                    : undefined
+                            }
+                            onAction={
+                                canEditPlatformReference
+                                    ? () => openSettingDialog()
+                                    : undefined
+                            }
                         />
                     ) : (
                         <div className="rounded-lg border bg-card">
@@ -652,19 +699,27 @@ export default function SettingsPage() {
                                                 {setting.description}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <div className="flex justify-end gap-1">
-                                                    <Button variant="ghost" size="icon" onClick={() => openSettingDialog(setting)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => deleteSettingMutation.mutate(setting.id)}
-                                                        className="text-destructive hover:text-destructive"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                {canEditPlatformReference && (
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => openSettingDialog(setting)}
+                                                            aria-label={`Edit ${setting.key}`}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => deleteSettingMutation.mutate(setting.id)}
+                                                            className="text-destructive hover:text-destructive"
+                                                            aria-label={`Delete ${setting.key}`}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
