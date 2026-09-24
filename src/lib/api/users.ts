@@ -65,6 +65,19 @@ export async function resendInvite(id: string): Promise<InviteResponse> {
   return (await api.post(`/users/${id}/resend-invite`)) as unknown as InviteResponse;
 }
 
+/**
+ * Invite a pupil's guardian to the parent portal (decision D4). Registrars may
+ * do this; it only ever creates a parent login.
+ */
+export async function inviteGuardian(
+  guardianId: string,
+  email?: string,
+): Promise<InviteResponse> {
+  return (await api.post(`/users/guardians/${guardianId}/invite`, {
+    email: email || undefined,
+  })) as unknown as InviteResponse;
+}
+
 export async function deleteUser(id: string): Promise<User> {
   return (await api.delete(`/users/${id}`)) as unknown as User;
 }

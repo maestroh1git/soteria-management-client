@@ -1,19 +1,9 @@
 'use client';
 
-import { use, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Star, Loader2, Plus, Mail } from 'lucide-react';
+import { use, useMemo, useState } from 'react';
+import { AlertTriangle, Star, Loader2, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { useCreateUser } from '@/lib/hooks/use-users';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +40,11 @@ import { formatDate } from '@/lib/utils/dates';
 import type { StudentGuardianLink } from '@/lib/api/students';
 import { AddGuardianDialog } from '@/components/students/add-guardian-dialog';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { PageHeader } from '@/components/layout/page-header';
+import { InviteParentButton } from '@/features/students/record/invite-parent-button';
+import { AttendanceTab } from '@/features/students/record/attendance-tab';
+import { FeesTab } from '@/features/students/record/fees-tab';
+import { AdmissionTab } from '@/features/students/record/admission-tab';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENOTYPES = ['AA', 'AS', 'SS', 'AC', 'SC'];
@@ -57,18 +52,47 @@ const GENOTYPES = ['AA', 'AS', 'SS', 'AC', 'SC'];
 /** Sickle cell disease. Worth calling out rather than showing as two letters. */
 const SICKLE = ['SS', 'SC'];
 
-const STUDENT_TABS = ['bio', 'guardians', 'medical', 'awards', 'documents'] as const;
+const TAB_LABELS: Record<string, string> = {
+    bio: 'Bio',
+    guardians: 'Guardians',
+    attendance: 'Class & attendance',
+    fees: 'Fees',
+    awards: 'Awards',
+    medical: 'Medical',
+    documents: 'Documents',
+    admission: 'Admission',
+};
 
 export default function StudentDetailPage({
     params,
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const [tab, setTab] = useTabParam(STUDENT_TABS);
     const { id } = use(params);
     const can = useCan();
     const canEdit = can('students.manage');
-    const canInvite = can('users.manage');
+    // D4: the registrar who keeps the guardians may give them a login.
+    const canInvite = can('guardians.invite');
+    // The pupil record hub (C4.5): each tab is shown to whoever may read it.
+    const tabs = useMemo(
+        () =>
+            (
+                [
+                    ['bio', true],
+                    ['guardians', true],
+                    ['attendance', can('attendance.report')],
+                    ['fees', can('fees.read')],
+                    ['awards', can('awards.read')],
+                    ['medical', true],
+                    ['documents', true],
+                    ['admission', can('admissions.read')],
+                ] as const
+            )
+                .filter(([, shown]) => shown)
+                .map(([t]) => t),
+        [can],
+    );
+    const [tab, setTab] = useTabParam<(typeof tabs)[number]>(tabs);
 
     const { data: student, isLoading, isError } = useStudent(id);
     const { data: guardians = [], isError: guardiansFailed } =
@@ -119,24 +143,16 @@ export default function StudentDetailPage({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/students" aria-label="Back to students">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-semibold">
-                        {student.firstName} {student.middleName ?? ''} {student.lastName}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {student.admissionNumber}
-                        {student.currentClassArm &&
-                            ` · ${student.currentClassArm.level?.name ?? ''} ${student.currentClassArm.name}`}
-                    </p>
-                </div>
-                <StatusBadge kind="student" status={student.status} />
-            </div>
+            <PageHeader
+                title={`${student.firstName} ${student.middleName ?? ''} ${student.lastName}`.replace(/\s+/g, ' ')}
+                badge={<StatusBadge kind="student" status={student.status} />}
+                description={`${student.admissionNumber}${
+                    student.currentClassArm
+                        ? ` · ${`${student.currentClassArm.level?.name ?? ''} ${student.currentClassArm.name}`.trim()}`
+                        : ''
+                }`}
+                crumbs={[{ label: `${student.firstName} ${student.lastName}` }]}
+            />
 
             {/* The point of holding medical data at all is that somebody sees it
                 in time, so it is surfaced here rather than only inside its tab. */}
@@ -164,14 +180,13 @@ export default function StudentDetailPage({
             )}
 
             <Tabs value={tab} onValueChange={setTab}>
-                <TabsList>
-                    <TabsTrigger value="bio">Biodata</TabsTrigger>
-                    <TabsTrigger value="guardians">
-                        Guardians{guardians.length ? ` (${guardians.length})` : ''}
-                    </TabsTrigger>
-                    <TabsTrigger value="medical">Medical</TabsTrigger>
-                    <TabsTrigger value="awards">Awards</TabsTrigger>
-                    <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsList className="h-auto flex-wrap justify-start">
+                    {tabs.map((t) => (
+                        <TabsTrigger key={t} value={t}>
+                            {TAB_LABELS[t]}
+                            {t === 'guardians' && guardians.length ? ` (${guardians.length})` : ''}
+                        </TabsTrigger>
+                    ))}
                 </TabsList>
 
                 <TabsContent value="bio" className="space-y-4">
@@ -283,6 +298,18 @@ export default function StudentDetailPage({
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                {tabs.includes('attendance') && (
+                    <TabsContent value="attendance">
+                        <AttendanceTab studentId={id} classArm={student.currentClassArm} />
+                    </TabsContent>
+                )}
+
+                {tabs.includes('fees') && (
+                    <TabsContent value="fees">
+                        <FeesTab student={student} />
+                    </TabsContent>
+                )}
 
                 <TabsContent value="medical" className="space-y-4">
                     <Card>
@@ -459,22 +486,16 @@ export default function StudentDetailPage({
                     </Card>
                 </TabsContent>
 
-            
-                <TabsContent value="awards" className="space-y-4">
-            
-                    <StudentAwards
-            
-                        studentId={student.id}
-            
-                        pupilName={`${student.lastName}, ${student.firstName}`}
-            
-                        termId={currentTerm?.id}
-            
-                    />
-            
-                </TabsContent>
+                {tabs.includes('awards') && (
+                    <TabsContent value="awards" className="space-y-4">
+                        <StudentAwards
+                            studentId={student.id}
+                            pupilName={`${student.lastName}, ${student.firstName}`}
+                            termId={currentTerm?.id}
+                        />
+                    </TabsContent>
+                )}
 
-            
                 <TabsContent value="documents" className="space-y-4">
                     <Card>
                         <CardHeader>
@@ -490,6 +511,11 @@ export default function StudentDetailPage({
                     </Card>
                 </TabsContent>
 
+                {tabs.includes('admission') && (
+                    <TabsContent value="admission">
+                        <AdmissionTab studentId={id} admittedOn={student.admissionDate} />
+                    </TabsContent>
+                )}
             </Tabs>
 
             <AddGuardianDialog
@@ -551,138 +577,5 @@ function Text({
             <Input id="id-page-label-2" value={value} onChange={(e) => onChange(e.target.value)} />
             {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
-    );
-}
-
-
-/**
- * Giving a parent a login.
- *
- * On the guardian rather than in Settings, because this is where somebody is
- * already looking at the person. Reuses the staff invite: the parent sets their
- * own password, and if mail is not configured the link comes back for the
- * office to pass on by hand.
- */
-function InviteParentButton({
-    guardianId,
-    firstName,
-    lastName,
-    email,
-}: {
-    guardianId: string;
-    firstName: string;
-    lastName: string;
-    email?: string | null;
-}) {
-    const [open, setOpen] = useState(false);
-    const [address, setAddress] = useState(email ?? '');
-    const [link, setLink] = useState<string | null>(null);
-    const invite = useCreateUser();
-
-    const send = () => {
-        invite.mutate(
-            {
-                email: address.trim(),
-                firstName,
-                lastName,
-                guardianId,
-                systemRoles: ['PARENT'],
-            },
-            {
-                onSuccess: (res) => {
-                    setOpen(false);
-                    if (!res.emailed && res.inviteUrl) {
-                        // Mail is not configured — hand the link over rather
-                        // than letting the invite vanish.
-                        setLink(res.inviteUrl);
-                    }
-                },
-            },
-        );
-    };
-
-    return (
-        <>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                    setAddress(email ?? '');
-                    setOpen(true);
-                }}
-            >
-                <Mail className="mr-2 h-3.5 w-3.5" />
-                Invite to portal
-            </Button>
-
-            {/* Mail unconfigured: the office has to pass the link on itself,
-                so it has to be visible somewhere. */}
-            <Dialog open={!!link} onOpenChange={(o) => !o && setLink(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Send this link to {firstName}</DialogTitle>
-                        <DialogDescription>
-                            Email is not set up on this school, so the invite could
-                            not be sent. This link lets them set their password —
-                            it is the only copy.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <code className="block w-full break-all rounded bg-muted p-3 text-xs">
-                        {link}
-                    </code>
-                    <DialogFooter>
-                        <Button
-                            onClick={() => {
-                                if (link) navigator.clipboard?.writeText(link);
-                            }}
-                        >
-                            Copy link
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>
-                            Invite {firstName} {lastName} to the parent portal
-                        </DialogTitle>
-                        <DialogDescription>
-                            They get a link to set their own password, and can then
-                            see every child of theirs on the roll — fees, payments
-                            and what is still owed. You never set a password for
-                            them.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="id-page-email">Email</Label>
-                        <Input id="id-page-email"
-                            type="email"
-                            value={address}
-                            placeholder="parent@example.com"
-                            onChange={(e) => setAddress(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Where the invite goes. It does not have to match the
-                            number the school rings.
-                        </p>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={send}
-                            disabled={invite.isPending || !address.trim()}
-                        >
-                            Send invite
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </>
     );
 }

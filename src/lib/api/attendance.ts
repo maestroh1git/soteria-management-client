@@ -273,6 +273,33 @@ export async function getDaySummary(date?: string): Promise<DaySummary> {
     })) as unknown as DaySummary;
 }
 
+/** One mark as recorded, corrections included (the older one is not current). */
+export interface MarkHistoryItem {
+    id: string;
+    date: string;
+    status: AttendanceStatus;
+    reasonCode: AbsenceReason | null;
+    reasonNote: string | null;
+    minutesLate: number | null;
+    source: string;
+    recordedAt: string;
+    correctionNote: string | null;
+    isCurrent: boolean;
+    recordedByName: string | null;
+}
+
+/** One pupil's marks between two dates, newest first. */
+export async function getMarkHistory(params: {
+    studentId: string;
+    from: string;
+    to: string;
+    limit?: number;
+}): Promise<{ items: MarkHistoryItem[]; total: number }> {
+    return (await api.get('/attendance/marks', {
+        params: { limit: 200, ...params },
+    })) as unknown as { items: MarkHistoryItem[]; total: number };
+}
+
 export async function getStudentSummary(
     studentId: string,
     termId: string,

@@ -2,16 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
     getUser,
-    createUser,
+    inviteGuardian,
     updateUser,
     changePassword,
 } from '@/lib/api/users';
-import type {
-  CreateUserDto,
-  UpdateUserDto,
-  ChangePasswordDto,
-} from '@/lib/api/users';
+import type { UpdateUserDto, ChangePasswordDto } from '@/lib/api/users';
 import { SESSION_KEY } from './use-session';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 
 export function useUser(id: string) {
   return useQuery({
@@ -21,16 +18,18 @@ export function useUser(id: string) {
   });
 }
 
-export function useCreateUser() {
+/** A parent-portal login for a pupil's guardian (D4); Registrars may send it. */
+export function useInviteGuardian() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateUserDto) => createUser(data),
-    onSuccess: () => {
+    mutationFn: ({ guardianId, email }: { guardianId: string; email?: string }) =>
+      inviteGuardian(guardianId, email),
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User created successfully');
+      if (res.emailed) toast.success(`Invite sent to ${res.user.email}`);
     },
-    onError: (error: { message?: string }) =>
-      toast.error(error.message || 'Failed to create user'),
+    onError: (error: unknown) =>
+      toast.error(getApiErrorMessage(error, 'The invite could not be sent.')),
   });
 }
 

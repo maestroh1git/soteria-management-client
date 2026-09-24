@@ -15,6 +15,7 @@ import {
     getMyClasses,
     getRegister,
     getStudentSummary,
+    getMarkHistory,
     recordDeparture,
     recordReturn,
     setCalendarRange,
@@ -72,6 +73,15 @@ export function useStudentSummary(studentId?: string, termId?: string) {
         queryKey: ['attendance', 'summary', 'student', studentId, termId],
         queryFn: () => getStudentSummary(studentId!, termId!),
         enabled: !!studentId && !!termId,
+    });
+}
+
+/** One pupil's marks across a term (the attendance tab, 5.4). */
+export function useMarkHistory(studentId?: string, from?: string, to?: string) {
+    return useQuery({
+        queryKey: ['attendance', 'marks', studentId, from, to],
+        queryFn: () => getMarkHistory({ studentId: studentId!, from: from!, to: to! }),
+        enabled: !!studentId && !!from && !!to,
     });
 }
 
