@@ -70,7 +70,7 @@ export function PayslipsTab({ employeeId }: { employeeId: string }) {
             searchPlaceholder="Search pay runs…"
             filters={[{ id: 'status', label: 'statuses', value: status, options: statusOptions('payslip') }]}
             onFilterChange={(_, v) => setStatus(v)}
-            rowHref={(p) => (p.salary ? `/payroll/${p.salary.payPeriodId}` : '')}
+            rowHref={(p) => (p.salary ? `/payroll/${p.salary.payPeriodId}?tab=payslips` : '')}
             rowActions={(p) => (
                 <Button
                     variant="ghost"

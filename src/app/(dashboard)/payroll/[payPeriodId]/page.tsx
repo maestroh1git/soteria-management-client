@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
-    ArrowLeft,
     Play,
     CheckCircle2,
     DollarSign,
@@ -18,7 +17,6 @@ import {
     Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +63,11 @@ import {
 import { useCan } from '@/lib/hooks/use-can';
 import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
 import { PaymentFileCard } from '@/components/payroll/payment-file-card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/layout/page-header';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { PayslipsPanel } from '@/features/payroll/run/payslips-panel';
+import { VariancePanel } from '@/features/payroll/run/variance-panel';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
 import type { Salary, SalaryFilters, PayrollProcessResult } from '@/lib/types/api';
 import { formatDate } from '@/lib/utils/dates';
@@ -73,9 +76,17 @@ import { statusOptions } from '@/lib/status/registry';
 import { EmployeeLink } from '@/components/common/entity-link';
 import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
 
+const RUN_TAB_LABELS: Record<string, string> = {
+    salaries: 'Salaries',
+    adjustments: 'Adjustments',
+    payslips: 'Payslips',
+    bank: 'Bank file',
+    ledger: 'Ledger check',
+    variance: 'Variance',
+};
+
 export default function PayrollWorkspacePage() {
     const params = useParams();
-    const router = useRouter();
     const payPeriodId = params.payPeriodId as string;
     // Processing, approving and paying are three different people's rights,
     // and the API draws the same lines. Each button asks for its own.
@@ -83,6 +94,25 @@ export default function PayrollWorkspacePage() {
     const canProcess = can('payroll.process');
     const canApprove = can('payroll.approve');
     const canPay = can('payroll.pay');
+    // Each tab is shown to whoever may read it; the one open is in the URL so
+    // the approvals inbox and the staff record can link straight to it.
+    const runTabs = useMemo(
+        () =>
+            (
+                [
+                    ['salaries', true],
+                    ['adjustments', can('payroll.adjustments.read')],
+                    ['payslips', can('payslips.read')],
+                    ['bank', can('payroll.paymentFile.preview')],
+                    ['ledger', can('ledger.read')],
+                    ['variance', can('payroll.variance')],
+                ] as const
+            )
+                .filter(([, shown]) => shown)
+                .map(([t]) => t),
+        [can],
+    );
+    const [tab, setTab] = useTabParam<(typeof runTabs)[number]>(runTabs);
 
     // Filters & pagination
     const [statusFilter, setStatusFilter] = useState<SalaryStatus | undefined>();
@@ -280,33 +310,21 @@ export default function PayrollWorkspacePage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.push('/payroll')}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight">{period.name}</h1>
-                    <p className="text-sm text-muted-foreground">
-                        {formatDate(period.startDate)} – {formatDate(period.endDate)} · Payment: {formatDate(period.paymentDate)}
-                    </p>
-                </div>
-                <Badge
-                    variant={
-                        period.status === PayPeriodStatus.OPEN ? 'default'
-                            : period.status === PayPeriodStatus.PROCESSING ? 'secondary'
-                                : 'outline'
-                    }
-                >
-                    {period.status}
-                </Badge>
-                {period.status === PayPeriodStatus.OPEN && canProcess && (
-                    <Button onClick={() => { setShowProcess(true); setProcessResult(null); setDryRun(false); }}>
-                        <Play className="mr-2 h-4 w-4" />
-                        Process Payroll
-                    </Button>
-                )}
-            </div>
+            <PageHeader
+                title={period.name}
+                badge={<StatusBadge kind="payPeriod" status={period.status} />}
+                description={`${formatDate(period.startDate)} – ${formatDate(period.endDate)} · Paid ${formatDate(period.paymentDate)}`}
+                crumbs={[{ label: 'Payroll', href: '/payroll' }, { label: period.name }]}
+                actions={
+                    period.status === PayPeriodStatus.OPEN &&
+                    canProcess && (
+                        <Button onClick={() => { setShowProcess(true); setProcessResult(null); setDryRun(false); }}>
+                            <Play className="mr-2 h-4 w-4" />
+                            Process payroll
+                        </Button>
+                    )
+                }
+            />
 
             {/* Summary Cards */}
             <div className="grid gap-4 md:grid-cols-4">
@@ -365,6 +383,7 @@ export default function PayrollWorkspacePage() {
                             onClick={() => {
                                 setStatusFilter(statusFilter === s.key ? undefined : (s.key as SalaryStatus));
                                 setPage(1);
+                                setTab('salaries');
                             }}
                             className={`flex-1 min-w-[140px] rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 ${statusFilter === s.key ? 'ring-2 ring-primary' : ''}`}
                         >
@@ -381,232 +400,270 @@ export default function PayrollWorkspacePage() {
                 </div>
             )}
 
-            {/* Filter & Bulk Actions */}
-            <div className="flex flex-wrap items-center gap-3">
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        placeholder="Name or staff number"
-                        aria-label="Search this run"
-                        className="pl-9"
-                    />
-                </div>
-                <Select
-                    value={statusFilter ?? 'all'}
-                    onValueChange={(v) => {
-                        setStatusFilter(v === 'all' ? undefined : (v as SalaryStatus));
-                        setPage(1);
-                    }}
-                >
-                    <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All statuses</SelectItem>
-                        {statusOptions('salary').map(({ value, label }) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            {/* The pay run hub (C4.6): one run, every step of it. */}
+            <Tabs value={tab} onValueChange={setTab}>
+                <TabsList className="h-auto flex-wrap justify-start">
+                    {runTabs.map((t) => (
+                        <TabsTrigger key={t} value={t}>
+                            {RUN_TAB_LABELS[t]}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
 
-                {canApprove && selectedDraftIds.length > 0 && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleBulkApprove}
-                        disabled={bulkApproveMutation.isPending}
-                    >
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        Approve {selectedDraftIds.length}
-                    </Button>
-                )}
-                {canPay && selectedApprovedIds.length > 0 && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleBulkPay}
-                        disabled={bulkPayMutation.isPending}
-                    >
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Mark {selectedApprovedIds.length} as Paid
-                    </Button>
-                )}
-
-                {/* A run reads the salary components as they stood when it ran,
-                    and re-processing only ever skips duplicates — so a run made
-                    against the wrong pay structure has no way back without
-                    this. Offered only while every salary is still a draft,
-                    which is exactly when the server will allow it. */}
-                {canDiscard && canProcess && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="ml-auto text-muted-foreground hover:text-destructive"
-                        onClick={() => setShowDiscard(true)}
-                        disabled={discardMutation.isPending}
-                    >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Discard this run
-                    </Button>
-                )}
-            </div>
-
-            {/* Payment file — the last step of the cycle, so it sits above the
-                salary table where someone lands after approving. */}
-            <PaymentFileCard
-                canPreview={can('payroll.paymentFile.preview')}
-                canDownload={can('payroll.paymentFile')}
-                payPeriodId={payPeriodId}
-                payPeriodName={period.name}
-            />
-
-            {can('ledger.read') && <PayrollLedgerCheck payPeriodId={payPeriodId} />}
-
-            {/* Adjustments — raised before the run, applied only once approved,
-                so they belong above the resulting figures. */}
-            <AdjustmentsPanel
-                payPeriodId={payPeriodId}
-                canRaise={can('payroll.adjustments.raise')}
-                canApprove={can('payroll.adjustments.decide')}
-                readOnly={period.status === PayPeriodStatus.CLOSED}
-            />
-
-            {/* Salaries Table */}
-            {salariesLoading ? (
-                <LoadingSkeleton rows={5} />
-            ) : !salaries.length ? (
-                <EmptyState
-                    isError={salariesFailed}
-                    subject="the salaries"
-                    title="No salaries"
-                    description={
-                        period.status === PayPeriodStatus.OPEN
-                            ? 'Process payroll to generate salary records.'
-                            : 'No salary records found for this pay period.'
-                    }
-                />
-            ) : (
-                <>
-                    <div className="rounded-lg border bg-card">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b bg-muted/50">
-                                    <th className="w-10 px-4 py-3">
-                                        {selectableIds.length > 0 && (
-                                            <Checkbox
-                                                checked={selected.size === selectableIds.length}
-                                                onCheckedChange={toggleAll}
-                                            />
-                                        )}
-                                    </th>
-                                    <th className="px-4 py-3 text-left font-medium">Employee</th>
-                                    <th className="px-4 py-3 text-right font-medium">Gross</th>
-                                    <th className="px-4 py-3 text-right font-medium">Deductions</th>
-                                    <th className="px-4 py-3 text-right font-medium">Net</th>
-                                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                                    <th className="px-4 py-3 text-right font-medium">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {salaries.map((sal) => {
-                                    return (
-                                        <tr key={sal.id} className="border-b transition-colors hover:bg-muted/50">
-                                            <td className="px-4 py-3">
-                                                {actionable(sal) && (
-                                                    <Checkbox
-                                                        checked={selected.has(sal.id)}
-                                                        onCheckedChange={() => toggleSelect(sal.id)}
-                                                    />
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium">
-                                                <EmployeeLink id={sal.employeeId} employee={sal.employee} />
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <CurrencyDisplay amount={Number(sal.grossSalary)} />
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-red-600">
-                                                <CurrencyDisplay amount={Number(sal.totalDeductions)} />
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
-                                                <CurrencyDisplay amount={Number(sal.netSalary)} />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <StatusBadge kind="salary" status={sal.status} />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex justify-end gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        title="View details"
-                                                        onClick={() => setViewSalaryId(sal.id)}
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                    {sal.status === SalaryStatus.DRAFT && canApprove && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            title="Approve"
-                                                            onClick={() => {
-                                                                setApproveTarget(sal);
-                                                                setShowApprove(true);
-                                                            }}
-                                                        >
-                                                            <Check className="h-4 w-4 text-green-600" />
-                                                        </Button>
-                                                    )}
-                                                    {sal.status === SalaryStatus.APPROVED && canPay && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            title="Mark as paid"
-                                                            onClick={() => {
-                                                                setPayTarget(sal);
-                                                                setShowPay(true);
-                                                            }}
-                                                        >
-                                                            <CreditCard className="h-4 w-4 text-blue-600" />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                <TabsContent value="salaries" className="space-y-4">
+                {/* Filter & Bulk Actions */}
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            placeholder="Name or staff number"
+                            aria-label="Search this run"
+                            className="pl-9"
+                        />
                     </div>
+                    <Select
+                        value={statusFilter ?? 'all'}
+                        onValueChange={(v) => {
+                            setStatusFilter(v === 'all' ? undefined : (v as SalaryStatus));
+                            setPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="All statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All statuses</SelectItem>
+                            {statusOptions('salary').map(({ value, label }) => (
+                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={page <= 1}
-                                onClick={() => setPage((p) => p - 1)}
-                            >
-                                Previous
-                            </Button>
-                            <span className="text-sm text-muted-foreground">
-                                Page {page} of {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={page >= totalPages}
-                                onClick={() => setPage((p) => p + 1)}
-                            >
-                                Next
-                            </Button>
-                        </div>
+                    {canApprove && selectedDraftIds.length > 0 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleBulkApprove}
+                            disabled={bulkApproveMutation.isPending}
+                        >
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Approve {selectedDraftIds.length}
+                        </Button>
                     )}
-                </>
-            )}
+                    {canPay && selectedApprovedIds.length > 0 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleBulkPay}
+                            disabled={bulkPayMutation.isPending}
+                        >
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Mark {selectedApprovedIds.length} as Paid
+                        </Button>
+                    )}
+
+                    {/* A run reads the salary components as they stood when it ran,
+                        and re-processing only ever skips duplicates — so a run made
+                        against the wrong pay structure has no way back without
+                        this. Offered only while every salary is still a draft,
+                        which is exactly when the server will allow it. */}
+                    {canDiscard && canProcess && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto text-muted-foreground hover:text-destructive"
+                            onClick={() => setShowDiscard(true)}
+                            disabled={discardMutation.isPending}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Discard this run
+                        </Button>
+                    )}
+                </div>
+
+                {/* Salaries Table */}
+                {salariesLoading ? (
+                    <LoadingSkeleton rows={5} />
+                ) : !salaries.length ? (
+                    <EmptyState
+                        isError={salariesFailed}
+                        subject="the salaries"
+                        title="No salaries"
+                        description={
+                            period.status === PayPeriodStatus.OPEN
+                                ? 'Process payroll to generate salary records.'
+                                : 'No salary records found for this pay period.'
+                        }
+                    />
+                ) : (
+                    <>
+                        <div className="rounded-lg border bg-card">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-muted/50">
+                                        <th className="w-10 px-4 py-3">
+                                            {selectableIds.length > 0 && (
+                                                <Checkbox
+                                                    checked={selected.size === selectableIds.length}
+                                                    onCheckedChange={toggleAll}
+                                                />
+                                            )}
+                                        </th>
+                                        <th className="px-4 py-3 text-left font-medium">Employee</th>
+                                        <th className="px-4 py-3 text-right font-medium">Gross</th>
+                                        <th className="px-4 py-3 text-right font-medium">Deductions</th>
+                                        <th className="px-4 py-3 text-right font-medium">Net</th>
+                                        <th className="px-4 py-3 text-left font-medium">Status</th>
+                                        <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {salaries.map((sal) => {
+                                        return (
+                                            <tr key={sal.id} className="border-b transition-colors hover:bg-muted/50">
+                                                <td className="px-4 py-3">
+                                                    {actionable(sal) && (
+                                                        <Checkbox
+                                                            checked={selected.has(sal.id)}
+                                                            onCheckedChange={() => toggleSelect(sal.id)}
+                                                        />
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 font-medium">
+                                                    <EmployeeLink id={sal.employeeId} employee={sal.employee} />
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <CurrencyDisplay amount={Number(sal.grossSalary)} />
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-red-600">
+                                                    <CurrencyDisplay amount={Number(sal.totalDeductions)} />
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-semibold">
+                                                    <CurrencyDisplay amount={Number(sal.netSalary)} />
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <StatusBadge kind="salary" status={sal.status} />
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            title="View details"
+                                                            onClick={() => setViewSalaryId(sal.id)}
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                        {sal.status === SalaryStatus.DRAFT && canApprove && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                title="Approve"
+                                                                onClick={() => {
+                                                                    setApproveTarget(sal);
+                                                                    setShowApprove(true);
+                                                                }}
+                                                            >
+                                                                <Check className="h-4 w-4 text-green-600" />
+                                                            </Button>
+                                                        )}
+                                                        {sal.status === SalaryStatus.APPROVED && canPay && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                title="Mark as paid"
+                                                                onClick={() => {
+                                                                    setPayTarget(sal);
+                                                                    setShowPay(true);
+                                                                }}
+                                                            >
+                                                                <CreditCard className="h-4 w-4 text-blue-600" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page <= 1}
+                                    onClick={() => setPage((p) => p - 1)}
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-sm text-muted-foreground">
+                                    Page {page} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page >= totalPages}
+                                    onClick={() => setPage((p) => p + 1)}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        )}
+                    </>
+                )}
+                </TabsContent>
+
+                {runTabs.includes('adjustments') && (
+                    <TabsContent value="adjustments">
+                        {/* Raised before the run, applied only once approved. */}
+                        <AdjustmentsPanel
+                            payPeriodId={payPeriodId}
+                            canRaise={can('payroll.adjustments.raise')}
+                            canApprove={can('payroll.adjustments.decide')}
+                            readOnly={period.status === PayPeriodStatus.CLOSED}
+                        />
+                    </TabsContent>
+                )}
+
+                {runTabs.includes('payslips') && (
+                    <TabsContent value="payslips">
+                        <PayslipsPanel
+                            payPeriodId={payPeriodId}
+                            payPeriodName={period.name}
+                            canManage={can('payslips.manage')}
+                        />
+                    </TabsContent>
+                )}
+
+                {runTabs.includes('bank') && (
+                    <TabsContent value="bank">
+                        <PaymentFileCard
+                            canPreview={can('payroll.paymentFile.preview')}
+                            canDownload={can('payroll.paymentFile')}
+                            payPeriodId={payPeriodId}
+                            payPeriodName={period.name}
+                        />
+                    </TabsContent>
+                )}
+
+                {runTabs.includes('ledger') && (
+                    <TabsContent value="ledger">
+                        <PayrollLedgerCheck payPeriodId={payPeriodId} />
+                    </TabsContent>
+                )}
+
+                {runTabs.includes('variance') && (
+                    <TabsContent value="variance">
+                        <VariancePanel payPeriodId={payPeriodId} />
+                    </TabsContent>
+                )}
+            </Tabs>
 
             {/* ─── Process Payroll Dialog ───────────────────────────── */}
             <Dialog open={showProcess} onOpenChange={setShowProcess}>

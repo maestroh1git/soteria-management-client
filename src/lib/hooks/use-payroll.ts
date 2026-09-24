@@ -19,6 +19,7 @@ import {
   bulkApprove,
   getSalaryStatusSummary,
   discardDraftRun,
+  getVariance,
   type ProcessPayrollDto,
   type SalaryApprovalDto,
   type SalaryPaymentDto,
@@ -195,5 +196,14 @@ export function useBulkApproval() {
       else toast.success(msg);
     },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Bulk approval failed')),
+  });
+}
+
+/** Net pay against the previous run (the pay run's Variance tab). */
+export function useVariance(payPeriodId: string, threshold?: number, enabled = true) {
+  return useQuery({
+    queryKey: ['payroll', 'variance', payPeriodId, threshold],
+    queryFn: () => getVariance(payPeriodId, threshold),
+    enabled: enabled && !!payPeriodId,
   });
 }
