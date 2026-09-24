@@ -48,7 +48,13 @@ export function TeamScreen() {
     const can = useCan();
     const accessOptions = grantableAccess(tenantOrgType, can('users.grantOwnership'));
 
-    const { data: users = [], isLoading, isError } = useTeam();
+    const { data: everyone = [], isLoading, isError } = useTeam();
+    // Parent portal logins belong to a pupil's guardians, where they are
+    // invited and switched off; they are not staff, and have no access to
+    // change here.
+    const isParentLogin = (u: User) => accessOf(u).every((r) => r === 'PARENT');
+    const users = everyone.filter((u) => !isParentLogin(u));
+    const parentLogins = everyone.length - users.length;
     const { data: employees = [] } = useEmployees({ status: 'ACTIVE' });
     const resend = useResendInvite();
     const deactivate = useDeactivate();
@@ -163,6 +169,13 @@ export function TeamScreen() {
                         </button>
                     )}
                 </div>
+            )}
+
+            {parentLogins > 0 && (
+                <p className="text-sm text-muted-foreground">
+                    {parentLogins} parent portal {parentLogins === 1 ? 'login is' : 'logins are'} not
+                    listed: they are invited and managed from each pupil’s guardians.
+                </p>
             )}
 
             <DataTable
