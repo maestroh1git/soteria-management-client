@@ -22,6 +22,7 @@ import {
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
+import { landingFor } from '@/lib/auth/landing';
 
 const loginSchema = z.object({
     email: z.string().email('Enter a valid email address'),
@@ -59,13 +60,9 @@ function LoginForm() {
                 return;
             }
 
-            // Platform operators (super_admin) land in the admin console; they
-            // have no tenant, so the tenant dashboard isn't meaningful for them.
-            const isSuperAdmin = !!user?.systemRoles?.some(
-                (r) => r.toLowerCase() === 'super_admin',
-            );
-            const from = searchParams.get('from') || '/';
-            router.push(isSuperAdmin ? '/admin' : from);
+            // Platform operators land in the admin console (they have no
+            // tenant), guardians in the portal, staff where they were headed.
+            router.push(landingFor(user, searchParams.get('from')));
         } catch (err: unknown) {
             setServerError(getApiErrorMessage(err, 'Invalid credentials. Please try again.'));
         }

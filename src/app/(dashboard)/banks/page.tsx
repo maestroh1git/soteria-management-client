@@ -23,14 +23,14 @@ import {
     useUpdateBank,
     useDeleteBank,
 } from '@/lib/hooks/use-banks';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import type { Bank } from '@/lib/api/banks';
 
 const EMPTY = { name: '', code: '' };
 
 export default function BanksPage() {
-    const { hasRole } = useAuth();
-    const canManage = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const can = useCan();
+    const canManage = can('banks.manage');
 
     const { data: banks = [], isLoading, isError } = useBanks();
     const create = useCreateBank();

@@ -131,7 +131,7 @@ export default function StudentDetailPage({
                             ` · ${student.currentClassArm.level?.name ?? ''} ${student.currentClassArm.name}`}
                     </p>
                 </div>
-                <StatusBadge status={student.status} />
+                <StatusBadge kind="student" status={student.status} />
             </div>
 
             {/* The point of holding medical data at all is that somebody sees it

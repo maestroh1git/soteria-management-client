@@ -55,13 +55,14 @@ All of it was fixed in the same pull requests:
   (`AwardService.assertCanGrant`).
 - **Any tenant owner could write the global `permissions` table.** Writes are
   super-admin only.
+- **Any tenant's Owner/Admin could add, edit or delete `countries` and
+  `payroll_settings`**, global tables shared by every tenant. Writes are now
+  super-admin only (API #64), and Settings no longer offers them to anyone
+  else (client #63; since Wave 2, `can('countries.manage')` and
+  `can('settings.manage')`).
 
 ### Found, not fixed (outside Waves 0–1)
 
-- **Any tenant's Owner/Admin can add, edit or delete `countries` and
-  `payroll_settings`**, which are global tables shared by every tenant (no
-  `tenant_id`). Needs a decision: make writes super-admin only, or give each
-  tenant its own settings rows.
 - **Loan approval takes `approverId` from the request body**, so the recorded
   approver is whatever the client sends. The server should use the caller.
 - **Report exports open a bare URL** (`window.open(getExportCsvUrl(…))`), which

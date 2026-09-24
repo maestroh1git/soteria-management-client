@@ -12,11 +12,11 @@ import { filterNavigation } from './nav-config';
 
 export function MobileSidebar() {
     const pathname = usePathname();
-    const { hasRole, tenantOrgType } = useAuth();
+    const { mayReach, tenantOrgType } = useAuth();
     const { mobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
 
     // The same list and the same filter as the desktop rail — see nav-config.
-    const filteredNavigation = filterNavigation(hasRole, tenantOrgType);
+    const filteredNavigation = filterNavigation(mayReach, tenantOrgType);
 
     return (
         <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>

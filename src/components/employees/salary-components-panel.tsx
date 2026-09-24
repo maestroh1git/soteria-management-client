@@ -41,6 +41,8 @@ import { useSalaryComponentsList } from '@/lib/hooks/use-onboarding';
 import { CalculationType, ComponentStatus } from '@/lib/types/enums';
 import type { EmployeeSalaryComponent, SalaryComponent } from '@/lib/types/api';
 import { formatDate } from '@/lib/utils/dates';
+import { currencySymbol } from '@/lib/utils/money';
+import { useTenantCurrency } from '@/lib/hooks/use-tenant-currency';
 
 interface Props {
     employeeId: string;
@@ -70,6 +72,7 @@ function isPercentage(calc?: CalculationType) {
  * was paid.
  */
 export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
+    const currency = useTenantCurrency();
     const {
         data: assigned = [],
         isLoading,
@@ -293,7 +296,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                 {selected &&
                                     (isPercentage(selected.calculationType)
                                         ? '(% of base)'
-                                        : '(₦)')}
+                                        : `(${currencySymbol(currency).trim()})`)}
                             </Label>
                             <Input
                                 id="salary-component-add-value"
@@ -351,7 +354,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                 {editing &&
                                     (isPercentage(editing.salaryComponent?.calculationType)
                                         ? '(% of base)'
-                                        : '(₦)')}
+                                        : `(${currencySymbol(currency).trim()})`)}
                             </Label>
                             <Input
                                 id="salary-component-edit-value"

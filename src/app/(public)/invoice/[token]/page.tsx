@@ -15,11 +15,7 @@ import {
     publicInvoicePdfUrl,
     type PublicInvoice,
 } from '@/lib/api/public-invoice';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
 
 /**
  * A parent's bill, opened from a link. No account, no password.
@@ -105,7 +101,7 @@ export default function PublicInvoicePage({
                         <>
                             <p className="text-sm text-muted-foreground">Still to pay</p>
                             <p className="text-4xl font-bold tabular-nums">
-                                ₦{money(invoice.outstanding)}
+                                <Money value={invoice.outstanding} />
                             </p>
                             {invoice.dueDate && (
                                 <p className="mt-1 text-sm text-muted-foreground">
@@ -131,7 +127,7 @@ export default function PublicInvoicePage({
                                 <tr key={`c${i}`}>
                                     <td className="px-6 py-3">{line.description}</td>
                                     <td className="px-6 py-3 text-right tabular-nums">
-                                        ₦{money(line.amount)}
+                                        <Money value={line.amount} />
                                     </td>
                                 </tr>
                             ))}
@@ -139,7 +135,7 @@ export default function PublicInvoicePage({
                                 <tr key={`d${i}`} className="text-green-700 dark:text-green-400">
                                     <td className="px-6 py-3">{line.description}</td>
                                     <td className="px-6 py-3 text-right tabular-nums">
-                                        −₦{money(line.amount)}
+                                        <Money value={line.amount} deduction />
                                     </td>
                                 </tr>
                             ))}
@@ -148,14 +144,14 @@ export default function PublicInvoicePage({
                             <tr>
                                 <td className="px-6 py-3 font-medium">Total</td>
                                 <td className="px-6 py-3 text-right font-bold tabular-nums">
-                                    ₦{money(invoice.total)}
+                                    <Money value={invoice.total} />
                                 </td>
                             </tr>
                             {Number(invoice.paid) > 0 && (
                                 <tr className="text-muted-foreground">
                                     <td className="px-6 py-3">Paid so far</td>
                                     <td className="px-6 py-3 text-right tabular-nums">
-                                        −₦{money(invoice.paid)}
+                                        <Money value={invoice.paid} deduction />
                                     </td>
                                 </tr>
                             )}
@@ -181,7 +177,7 @@ export default function PublicInvoicePage({
                                             </div>
                                         </td>
                                         <td className="px-6 py-3 text-right tabular-nums">
-                                            ₦{money(p.amount)}
+                                            <Money value={p.amount} />
                                         </td>
                                     </tr>
                                 ))}

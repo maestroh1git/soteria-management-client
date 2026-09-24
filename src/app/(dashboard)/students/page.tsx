@@ -18,7 +18,7 @@ import {
 import { DataTable } from '@/components/common/data-table';
 import { StatusBadge } from '@/components/common/status-badge';
 import { useStudents } from '@/lib/hooks/use-students';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { formatDate } from '@/lib/utils/dates';
 import type { Student } from '@/lib/api/students';
 
@@ -30,12 +30,8 @@ import type { Student } from '@/lib/api/students';
  */
 export default function StudentsPage() {
     const router = useRouter();
-    const { hasRole } = useAuth();
-    const canManage = hasRole([
-        'tenant_owner',
-        'ADMIN',
-        'admissions.registrar',
-    ]);
+    const can = useCan();
+    const canManage = can('students.manage');
 
     const [status, setStatus] = useState('all');
     const [search, setSearch] = useState('');
@@ -101,7 +97,7 @@ export default function StudentsPage() {
         {
             accessorKey: 'status',
             header: 'Status',
-            cell: ({ row }) => <StatusBadge status={row.original.status} />,
+            cell: ({ row }) => <StatusBadge kind="student" status={row.original.status} />,
         },
         {
             accessorKey: 'admissionDate',

@@ -24,11 +24,8 @@ import {
 } from '@/components/ui/select';
 import { useAccounts } from '@/lib/hooks/use-finance';
 import { useCreateStatement } from '@/lib/hooks/use-banking';
-
-const money = (v: number) =>
-    (v / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-const kobo = (v: string) => Math.round(Number(v || 0) * 100);
+import { Money } from '@/components/common/money';
+import { fromMinorUnits, toMinorUnits } from '@/lib/utils/money';
 
 interface ParsedLine {
     lineNumber: number;
@@ -130,10 +127,10 @@ export function ImportStatementDialog({
     // The bank's own arithmetic, checked here so the mistake is caught while
     // the numbers are still on screen rather than as a server error.
     const runningKobo = lines.reduce(
-        (sum, l) => sum + kobo(String(l.moneyIn ?? 0)) - kobo(String(l.moneyOut ?? 0)),
-        kobo(openingBalance),
+        (sum, l) => sum + toMinorUnits(String(l.moneyIn ?? 0)) - toMinorUnits(String(l.moneyOut ?? 0)),
+        toMinorUnits(openingBalance),
     );
-    const expectedKobo = kobo(closingBalance);
+    const expectedKobo = toMinorUnits(closingBalance);
     const foots = lines.length > 0 && runningKobo === expectedKobo;
 
     const submit = async () => {
@@ -270,8 +267,8 @@ export function ImportStatementDialog({
                                 </p>
                                 {!foots && (
                                     <p className="text-xs">
-                                        Opening plus the movements gives ₦{money(runningKobo)}, but
-                                        the closing balance says ₦{money(expectedKobo)}. A row is
+                                        Opening plus the movements gives <Money value={fromMinorUnits(runningKobo)} />, but
+                                        the closing balance says <Money value={fromMinorUnits(expectedKobo)} />. A row is
                                         probably missing or in the wrong column.
                                     </p>
                                 )}

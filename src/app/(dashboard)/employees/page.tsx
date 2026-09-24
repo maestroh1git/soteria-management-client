@@ -35,7 +35,7 @@ import {
     useDeleteEmployee,
     useCompletenessSummary,
 } from '@/lib/hooks/use-employees';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { useRolesList } from '@/lib/hooks/use-onboarding';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -45,9 +45,9 @@ import type { Employee } from '@/lib/types/api';
 
 export default function EmployeesPage() {
     const router = useRouter();
-    const { hasRole } = useAuth();
+    const can = useCan();
     // VIEWER has read-only directory access (S13) — no create/edit/delete.
-    const canManage = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManage = can('employees.manage');
     // Only nudge on a *confirmed* empty roles list (data defined ⇒ the request
     // succeeded); a 403 leaves data undefined and shows nothing rather than a
     // false "create a role" prompt.
@@ -111,7 +111,7 @@ export default function EmployeesPage() {
         {
             accessorKey: 'status',
             header: 'Status',
-            cell: ({ row }) => <StatusBadge status={row.original.status} />,
+            cell: ({ row }) => <StatusBadge kind="employee" status={row.original.status} />,
         },
         {
             id: 'record',

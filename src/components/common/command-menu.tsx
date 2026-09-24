@@ -29,8 +29,8 @@ export function CommandMenu() {
     const [open, setOpen] = React.useState(false);
     const router = useRouter();
     const { setTheme } = useTheme();
-    const { hasRole, tenantOrgType } = useAuth();
-    const groups = filterNavigation(hasRole, tenantOrgType);
+    const { mayReach, tenantOrgType } = useAuth();
+    const groups = filterNavigation(mayReach, tenantOrgType);
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {

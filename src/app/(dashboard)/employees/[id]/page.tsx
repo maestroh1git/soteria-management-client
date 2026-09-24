@@ -19,10 +19,10 @@ import { useEmployee } from '@/lib/hooks/use-employees';
 import { BankAccountsPanel } from '@/components/employees/bank-accounts-panel';
 import { RecordCompletenessPanel } from '@/components/employees/record-completeness-panel';
 import { SalaryComponentsPanel } from '@/components/employees/salary-components-panel';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
-import { formatDate } from '@/lib/utils/dates';
+import { formatDate, formatDateTime } from '@/lib/utils/dates';
 
 export default function EmployeeDetailPage({
     params,
@@ -30,17 +30,17 @@ export default function EmployeeDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
-    const { hasRole } = useAuth();
+    const can = useCan();
     // Bank details & salary components are forbidden for VIEWER (S13) — skip the
     // requests and hide the tabs entirely for roles that can't manage them.
-    const canViewSensitive = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canViewSensitive = can('employees.manage');
     // Changing where salary lands is the classic payroll fraud, so it is held to
     // the roles that own payroll rather than everyone who may view an employee.
-    const canManageBank = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManageBank = can('employees.manage');
     // Salary lines are guarded by the same payroll-owning roles on the server.
-    const canManageSalary = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManageSalary = can('employees.manage');
     // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
-    const canManageEmployee = hasRole(['tenant_owner', 'ADMIN', 'PAYROLL_OFFICER']);
+    const canManageEmployee = can('employees.manage');
     const { data: employee, isLoading, isError } = useEmployee(id);
     // Controlled so the completeness panel can send the user to the tab a gap
     // is actually fixed on.
@@ -75,7 +75,7 @@ export default function EmployeeDetailPage({
                         <h1 className="text-3xl font-bold tracking-tight">
                             {employee.firstName} {employee.lastName}
                         </h1>
-                        <StatusBadge status={employee.status} />
+                        <StatusBadge kind="employee" status={employee.status} />
                     </div>
                     <p className="text-muted-foreground">
                         {employee.employeeNumber} · {employee.role?.name ?? 'No role'}
@@ -301,10 +301,7 @@ export default function EmployeeDetailPage({
                                             <div className="flex items-center gap-2 mb-1">
                                                 <ActionBadge action={log.action} />
                                                 <span className="text-xs text-muted-foreground">
-                                                    {new Date(log.createdAt).toLocaleString('en-US', {
-                                                        month: 'short', day: 'numeric', year: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit',
-                                                    })}
+                                                    {formatDateTime(log.createdAt)}
                                                 </span>
                                                 {log.userName && (
                                                     <span className="text-xs text-muted-foreground">· by {log.userName}</span>

@@ -44,7 +44,7 @@ import {
     useEnrol,
 } from '@/lib/hooks/use-admissions';
 import { useClassArms } from '@/lib/hooks/use-academics';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { AssessmentsPanel } from '@/components/admissions/assessments-panel';
 import { VettingPanel } from '@/components/admissions/vetting-panel';
 import { formatDate } from '@/lib/utils/dates';
@@ -101,17 +101,12 @@ export default function ApplicationDetailPage({
 }) {
     const { id } = use(params);
     const router = useRouter();
-    const { hasRole } = useAuth();
-    const canDecide = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+    const can = useCan();
+    const canDecide = can('admissions.decide');
     // Running the assessments and deciding who gets a place are deliberately
     // different rights, and the API draws the same line: an officer may book a
     // candidate in and record how it went, but not offer them anything.
-    const canRunAssessments = hasRole([
-        'tenant_owner',
-        'ADMIN',
-        'admissions.registrar',
-        'admissions.officer',
-    ]);
+    const canRunAssessments = can('admissions.assess');
 
     const { data: application, isLoading, isError } = useApplication(id);
     const transition = useTransitionApplication(id);

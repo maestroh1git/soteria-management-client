@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { clearSession } from '@/lib/utils/session';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -20,8 +21,9 @@ import { ModeToggle } from '@/components/common/mode-toggle';
 
 export function Topbar() {
     const router = useRouter();
-    const { fullName, initials, user, logout, hasRole } = useAuth();
-    const canManageSettings = hasRole(['tenant_owner', 'ADMIN']);
+    const { fullName, initials, user, logout } = useAuth();
+    const can = useCan();
+    const canManageSettings = can('organisation.manage');
     const { setMobileSidebarOpen } = useUIStore();
 
     function handleLogout() {

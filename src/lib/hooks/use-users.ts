@@ -13,6 +13,7 @@ import type {
   UpdateUserDto,
   ChangePasswordDto,
 } from '@/lib/api/users';
+import { SESSION_KEY } from './use-session';
 
 export function useUsers() {
   return useQuery({
@@ -49,6 +50,8 @@ export function useUpdateUser() {
       updateUser(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['users'] });
+      // If they changed their own access, their screens follow now.
+      qc.invalidateQueries({ queryKey: SESSION_KEY });
       toast.success('User updated successfully');
     },
     onError: (error: { message?: string }) =>
@@ -62,6 +65,7 @@ export function useDeleteUser() {
     mutationFn: (id: string) => deleteUser(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: SESSION_KEY });
       toast.success('User deactivated');
     },
     onError: (error: { message?: string }) =>

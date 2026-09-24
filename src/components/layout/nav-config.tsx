@@ -33,7 +33,6 @@ import {
   ListChecks,
   type LucideIcon,
 } from "lucide-react";
-import { routeRolesFor } from "@/lib/auth/route-roles";
 
 export interface NavItem {
   title: string;
@@ -224,7 +223,7 @@ export const navigation: NavGroup[] = [
 
 /** The filter both sidebars share: role gate, then org-type gate (fail closed). */
 export function filterNavigation(
-  hasRole: (roles: string[]) => boolean,
+  mayReach: (href: string) => boolean,
   tenantOrgType: string | null,
 ): NavGroup[] {
   return navigation
@@ -235,8 +234,7 @@ export function filterNavigation(
           // Roles come from ROUTE_ROLES, the same map the middleware
           // reads. Two copies drifted into 15 sidebar routes the
           // middleware had never heard of.
-          (!routeRolesFor(item.href).roles ||
-            hasRole(routeRolesFor(item.href).roles as string[])) &&
+          mayReach(item.href) &&
           (!item.orgTypes ||
             (tenantOrgType !== null && item.orgTypes.includes(tenantOrgType))),
       ),

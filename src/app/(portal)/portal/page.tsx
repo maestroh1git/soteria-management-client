@@ -6,9 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/common/empty-state';
 import { useMyChildren } from '@/lib/hooks/use-portal';
-
-const money = (v: string | number) =>
-    Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+import { Money } from '@/components/common/money';
 
 export default function PortalHomePage() {
     const { data: children = [], isLoading, isError } = useMyChildren();
@@ -53,7 +51,7 @@ export default function PortalHomePage() {
                             <CardContent className="py-4">
                                 <p className="text-sm text-amber-900 dark:text-amber-200">
                                     <span className="font-semibold">
-                                        ₦{money(owed)}
+                                        <Money value={owed} />
                                     </span>{' '}
                                     outstanding across{' '}
                                     {children.filter((c) => Number(c.outstanding) > 0)
@@ -98,7 +96,7 @@ export default function PortalHomePage() {
                                                     </Badge>
                                                 ) : (
                                                     <span className="font-semibold tabular-nums">
-                                                        ₦{money(child.outstanding)}
+                                                        <Money value={child.outstanding} />
                                                     </span>
                                                 )}
                                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />

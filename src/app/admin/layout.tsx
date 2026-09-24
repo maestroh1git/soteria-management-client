@@ -6,6 +6,8 @@ import { Loader2 } from 'lucide-react';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { useAuthStore } from '@/stores/auth-store';
+import { SessionSync } from '@/lib/hooks/use-session';
+import { isPlatformOperator } from '@/lib/auth/landing';
 
 export default function AdminLayout({
   children,
@@ -15,9 +17,7 @@ export default function AdminLayout({
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isSuperAdmin = !!user?.systemRoles?.some(
-    (r) => r.toLowerCase() === 'super_admin',
-  );
+  const isSuperAdmin = isPlatformOperator(user);
 
   // Defense-in-depth: the middleware already gates /admin on the super_admin
   // role, but guard client-side too so a non-operator never sees the console.
@@ -41,6 +41,7 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <SessionSync />
       <AdminSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />

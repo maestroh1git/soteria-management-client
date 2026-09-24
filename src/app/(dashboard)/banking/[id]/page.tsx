@@ -46,14 +46,8 @@ import {
     usePostStatementLine,
     useReconciliationReport,
 } from '@/lib/hooks/use-banking';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
-
-const kobo = (v: string) => Math.round(Number(v || 0) * 100);
+import { Money } from '@/components/common/money';
+import { toMinorUnits } from '@/lib/utils/money';
 
 /**
  * Reconciling one statement.
@@ -114,10 +108,10 @@ export default function ReconcilePage() {
 
     const bankKobo = report.unrecorded
         .filter((l) => selectedBank.includes(l.id))
-        .reduce((s, l) => s + kobo(l.moneyIn) - kobo(l.moneyOut), 0);
+        .reduce((s, l) => s + toMinorUnits(l.moneyIn) - toMinorUnits(l.moneyOut), 0);
     const bookKobo = report.inTransit
         .filter((l) => selectedBook.includes(l.journalLineId))
-        .reduce((s, l) => s + kobo(l.debit) - kobo(l.credit), 0);
+        .reduce((s, l) => s + toMinorUnits(l.debit) - toMinorUnits(l.credit), 0);
 
     const canMatch =
         selectedBank.length > 0 &&
@@ -210,7 +204,7 @@ export default function ReconcilePage() {
                         <CardContent className="pt-6">
                             <p className="text-xs text-muted-foreground">{label}</p>
                             <p className="text-lg font-bold tabular-nums">
-                                ₦{money(value as string)}
+                                <Money value={value as string} />
                             </p>
                         </CardContent>
                     </Card>
@@ -222,11 +216,11 @@ export default function ReconcilePage() {
                     <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
                         <div className="text-sm">
                             <span className="font-medium tabular-nums">
-                                ₦{money((bankKobo / 100).toFixed(2))}
+                                <Money value={(bankKobo / 100).toFixed(2)} />
                             </span>{' '}
                             selected on the bank side,{' '}
                             <span className="font-medium tabular-nums">
-                                ₦{money((bookKobo / 100).toFixed(2))}
+                                <Money value={(bookKobo / 100).toFixed(2)} />
                             </span>{' '}
                             in the books.
                             {!canMatch && bankKobo !== bookKobo && (
@@ -308,8 +302,8 @@ export default function ReconcilePage() {
                                             </td>
                                             <td className="py-3 text-right tabular-nums">
                                                 {Number(line.moneyIn) > 0
-                                                    ? `+₦${money(line.moneyIn)}`
-                                                    : `−₦${money(line.moneyOut)}`}
+                                                    ? <Money value={line.moneyIn} signed />
+                                                    : <Money value={line.moneyOut} deduction />}
                                             </td>
                                             <td className="py-3 pr-6 text-right">
                                                 {!closed && (
@@ -372,8 +366,8 @@ export default function ReconcilePage() {
                                             </td>
                                             <td className="py-3 pr-6 text-right tabular-nums">
                                                 {Number(line.debit) > 0
-                                                    ? `+₦${money(line.debit)}`
-                                                    : `−₦${money(line.credit)}`}
+                                                    ? <Money value={line.debit} signed />
+                                                    : <Money value={line.credit} deduction />}
                                             </td>
                                         </tr>
                                     ))}

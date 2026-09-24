@@ -12,16 +12,11 @@ import { useSessions } from '@/lib/hooks/use-academics';
 import { useIncomeStatement } from '@/lib/hooks/use-finance';
 import { useCan } from '@/lib/hooks/use-can';
 import { useCollectionByTerm, useDebtors } from '@/lib/hooks/use-fees';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
 
 /** Blank rather than a zero, so the eye lands on the buckets that matter. */
 const cell = (v: string) =>
-    Number(v) === 0 ? <span className="text-muted-foreground">—</span> : `₦${money(v)}`;
+    Number(v) === 0 ? <span className="text-muted-foreground">—</span> : <Money value={v} />;
 
 /**
  * Who owes what, how the term is collecting, and what the school actually
@@ -102,7 +97,7 @@ export default function ArrearsPage() {
                                                         : ''
                                                 }`}
                                             >
-                                                ₦{money(value as string)}
+                                                <Money value={value as string} />
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -190,13 +185,13 @@ export default function ArrearsPage() {
                                                         {cell(row.days90Plus)}
                                                     </td>
                                                     <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                                                        ₦{money(row.total)}
+                                                        <Money value={row.total} />
                                                         {Number(row.credit) > 0 && (
                                                             // Shown, never netted into the buckets: a
                                                             // family in credit on this term and behind
                                                             // on the last one needs both facts.
                                                             <div className="text-xs font-normal text-green-700 dark:text-green-400">
-                                                                ₦{money(row.credit)} in credit
+                                                                <Money value={row.credit} /> in credit
                                                             </div>
                                                         )}
                                                     </td>
@@ -225,7 +220,7 @@ export default function ArrearsPage() {
                                                     {cell(debtors.totals.days90Plus)}
                                                 </td>
                                                 <td className="px-4 py-3 text-right tabular-nums">
-                                                    ₦{money(debtors.totals.total)}
+                                                    <Money value={debtors.totals.total} />
                                                 </td>
                                             </tr>
                                         </tfoot>
@@ -279,13 +274,13 @@ export default function ArrearsPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right tabular-nums">
-                                                    ₦{money(t.billed)}
+                                                    <Money value={t.billed} />
                                                 </td>
                                                 <td className="px-4 py-3 text-right tabular-nums">
-                                                    ₦{money(t.collected)}
+                                                    <Money value={t.collected} />
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-medium tabular-nums">
-                                                    ₦{money(t.outstanding)}
+                                                    <Money value={t.outstanding} />
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     {t.collectionRate === null ? (
@@ -334,7 +329,7 @@ export default function ArrearsPage() {
                                         <CardContent className="pt-6">
                                             <p className="text-xs text-muted-foreground">Earned</p>
                                             <p className="text-2xl font-bold tabular-nums text-green-700 dark:text-green-400">
-                                                ₦{money(income.totalRevenue)}
+                                                <Money value={income.totalRevenue} />
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -342,7 +337,7 @@ export default function ArrearsPage() {
                                         <CardContent className="pt-6">
                                             <p className="text-xs text-muted-foreground">Spent</p>
                                             <p className="text-2xl font-bold tabular-nums">
-                                                ₦{money(income.totalExpenses)}
+                                                <Money value={income.totalExpenses} />
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -356,7 +351,7 @@ export default function ArrearsPage() {
                                                     Number(income.net) < 0 ? 'text-red-600' : ''
                                                 }`}
                                             >
-                                                ₦{money(income.net)}
+                                                <Money value={income.net} />
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -371,7 +366,7 @@ export default function ArrearsPage() {
                                                     <tr key={r.code}>
                                                         <td className="px-4 py-2.5">{r.name}</td>
                                                         <td className="px-4 py-2.5 text-right tabular-nums">
-                                                            ₦{money(r.amount)}
+                                                            <Money value={r.amount} />
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -387,7 +382,7 @@ export default function ArrearsPage() {
                                                     <tr key={r.code}>
                                                         <td className="px-4 py-2.5">{r.name}</td>
                                                         <td className="px-4 py-2.5 text-right tabular-nums">
-                                                            ₦{money(r.amount)}
+                                                            <Money value={r.amount} />
                                                         </td>
                                                     </tr>
                                                 ))}

@@ -37,27 +37,9 @@ import {
 } from '@/lib/hooks/use-leave';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useCan } from '@/lib/hooks/use-can';
-import type { LeaveRequest, LeaveStatus, LeaveType } from '@/lib/types/api';
-
-const STATUS_VARIANT: Record<
-    LeaveStatus,
-    'default' | 'secondary' | 'destructive' | 'outline'
-> = {
-    APPROVED: 'default',
-    PENDING: 'secondary',
-    REJECTED: 'destructive',
-    CANCELLED: 'outline',
-};
-
-function formatRange(start: string, end: string): string {
-    const fmt = (d: string) =>
-        new Date(d).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-        });
-    return start === end ? fmt(start) : `${fmt(start)} — ${fmt(end)}`;
-}
+import type { LeaveRequest, LeaveType } from '@/lib/types/api';
+import { formatSpan } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
 
 export default function LeavePage() {
     const { data: requests = [], isLoading } = useLeaveRequests();
@@ -220,15 +202,13 @@ function RequestTable({
                                 )}
                             </td>
                             <td className="px-3 py-2 text-muted-foreground">
-                                {formatRange(request.startDate, request.endDate)}
+                                {formatSpan(request.startDate, request.endDate)}
                             </td>
                             <td className="px-3 py-2 text-right">
                                 {Number(request.days)}
                             </td>
                             <td className="px-3 py-2">
-                                <Badge variant={STATUS_VARIANT[request.status]}>
-                                    {request.status}
-                                </Badge>
+                                <StatusBadge kind="leave" status={request.status} />
                                 {request.decisionNote && (
                                     <span className="block text-xs text-muted-foreground">
                                         {request.decisionNote}

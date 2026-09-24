@@ -26,7 +26,7 @@ const ORG_TYPE_LABEL: Record<string, string> = {
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { tenantName, tenantOrgType, hasRole } = useAuth();
+    const { tenantName, tenantOrgType, mayReach } = useAuth();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
     const { data: branding } = useBranding();
     const logoUrl = brandingImageUrl(branding?.logoUrl);
@@ -34,7 +34,7 @@ export function Sidebar() {
 
     const orgSubtitle = tenantOrgType ? (ORG_TYPE_LABEL[tenantOrgType] ?? 'Payroll System') : 'Payroll System';
 
-    const filteredNavigation = filterNavigation(hasRole, tenantOrgType);
+    const filteredNavigation = filterNavigation(mayReach, tenantOrgType);
 
     return (
         <aside

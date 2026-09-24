@@ -22,16 +22,10 @@ import {
     AWARD_CATEGORY_LABELS,
     type AwardCategory,
 } from '@/lib/api/attendance';
+import { formatDate } from '@/lib/utils/dates';
 
 const CATEGORIES = Object.keys(AWARD_CATEGORY_LABELS) as AwardCategory[];
 const ANY = 'any';
-
-const shortDate = (iso: string) =>
-    new Date(`${iso}T00:00:00`).toLocaleDateString('en-NG', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
 
 /**
  * Awards across the school.
@@ -209,7 +203,7 @@ export default function AwardsPage() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 tabular-nums text-muted-foreground">
-                                            {shortDate(a.awardedOn)}
+                                            {formatDate(a.awardedOn)}
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
                                             {a.awardedByName ?? '—'}

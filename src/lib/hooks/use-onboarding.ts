@@ -10,6 +10,7 @@ import { getPayPeriods } from '@/lib/api/pay-periods';
 import { updateMyTenant } from '@/lib/api/tenants';
 import { useMyTenant } from './use-tenant';
 import { useAuth } from './use-auth';
+import { useCan } from './use-can';
 import { useSessions, useClassArms } from './use-academics';
 import { useStudents } from './use-students';
 import { useFeeItems } from './use-fees';
@@ -77,8 +78,9 @@ function readDismissed(tenant?: Tenant | null): boolean {
 }
 
 export function useOnboardingProgress(): OnboardingProgress {
-  const { hasRole, tenantOrgType } = useAuth();
-  const canSetup = hasRole(['tenant_owner', 'ADMIN']);
+  const { tenantOrgType } = useAuth();
+  const can = useCan();
+  const canSetup = can('organisation.manage');
   const isSchool = tenantOrgType === 'SCHOOL';
 
   // Only OWNER/ADMIN see the checklist, and they can read every resource below —

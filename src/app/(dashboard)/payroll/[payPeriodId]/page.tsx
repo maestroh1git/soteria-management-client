@@ -68,13 +68,9 @@ import { AdjustmentsPanel } from '@/components/payroll/adjustments-panel';
 import { PaymentFileCard } from '@/components/payroll/payment-file-card';
 import { PayPeriodStatus, SalaryStatus, ComponentType } from '@/lib/types/enums';
 import type { Salary, SalaryFilters, PayrollProcessResult } from '@/lib/types/api';
-
-const SALARY_STATUS_CONFIG: Record<SalaryStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-    [SalaryStatus.DRAFT]: { label: 'Draft', variant: 'secondary' },
-    [SalaryStatus.APPROVED]: { label: 'Approved', variant: 'default' },
-    [SalaryStatus.PAID]: { label: 'Paid', variant: 'outline' },
-    [SalaryStatus.CANCELLED]: { label: 'Cancelled', variant: 'destructive' },
-};
+import { formatDate } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
 
 export default function PayrollWorkspacePage() {
     const params = useParams();
@@ -141,8 +137,6 @@ export default function PayrollWorkspacePage() {
     const salaries = salariesResponse?.items ?? [];
     const totalPages = salariesResponse?.totalPages ?? 1;
 
-    const formatDate = (d: string) =>
-        new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 
     // Summary stats — from the period-wide status summary, falling back to the
@@ -387,8 +381,8 @@ export default function PayrollWorkspacePage() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All statuses</SelectItem>
-                        {Object.entries(SALARY_STATUS_CONFIG).map(([key, cfg]) => (
-                            <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                        {statusOptions('salary').map(({ value, label }) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -493,7 +487,6 @@ export default function PayrollWorkspacePage() {
                             </thead>
                             <tbody>
                                 {salaries.map((sal) => {
-                                    const cfg = SALARY_STATUS_CONFIG[sal.status];
                                     return (
                                         <tr key={sal.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="px-4 py-3">
@@ -519,7 +512,7 @@ export default function PayrollWorkspacePage() {
                                                 <CurrencyDisplay amount={Number(sal.netSalary)} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                                                <StatusBadge kind="salary" status={sal.status} />
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex justify-end gap-1">
@@ -858,9 +851,7 @@ export default function PayrollWorkspacePage() {
                             <div className="space-y-2 border-t pt-4 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Status</span>
-                                    <Badge variant={SALARY_STATUS_CONFIG[viewSalary.status].variant}>
-                                        {SALARY_STATUS_CONFIG[viewSalary.status].label}
-                                    </Badge>
+                                    <StatusBadge kind="salary" status={viewSalary.status} />
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Calculated</span>

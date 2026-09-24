@@ -5,6 +5,7 @@ import { CommandMenu } from '@/components/common/command-menu';
 import { BrandingHead } from '@/components/layout/branding-head';
 import { UnauthorizedNotice } from '@/components/layout/unauthorized-notice';
 import { Suspense } from 'react';
+import { SessionSync } from '@/lib/hooks/use-session';
 
 export default function DashboardLayout({
     children,
@@ -13,6 +14,7 @@ export default function DashboardLayout({
 }) {
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+            <SessionSync />
             {/*
               * WCAG 2.4.1, and it has to be FIRST in the DOM to mean anything:
               * the whole point is reaching it before the sidebar's seventeen

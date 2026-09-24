@@ -57,7 +57,7 @@ const DEPT_COLORS = [
 ];
 
 export default function DashboardPage() {
-    const { fullName, tenantName, hasRole } = useAuth();
+    const { fullName, tenantName } = useAuth();
 
     /**
      * Who is looking.
@@ -80,16 +80,15 @@ export default function DashboardPage() {
 
     // A plain member of staff — the EMPLOYEE role and nothing that runs the
     // school or the payroll. The admin dashboard below is not theirs to read;
-    // they get their own pay-first landing instead.
+    // they get their own pay-first landing instead. Said in actions: they may
+    // look colleagues up, and they neither read the pay reports, approve,
+    // run admissions nor teach.
     const isPlainEmployee =
-        hasRole(['EMPLOYEE']) &&
+        can('employees.directory') &&
         !seesPayroll &&
-        !hasRole([
-            'APPROVER',
-            'admissions.registrar',
-            'admissions.officer',
-            'academic.teacher',
-        ]);
+        !can('payroll.approve') &&
+        !can('admissions.read') &&
+        !can('students.read');
 
     // What the page is actually showing this person. Telling a form teacher
     // they are looking at payroll status, above a screen with no payroll on it,
@@ -495,7 +494,7 @@ export default function DashboardPage() {
                                                 {formatCurrency(salary.netSalary)}
                                             </TableCell>
                                             <TableCell>
-                                                <StatusBadge status={salary.status} />
+                                                <StatusBadge kind="salary" status={salary.status} />
                                             </TableCell>
                                         </TableRow>
                                     ))}

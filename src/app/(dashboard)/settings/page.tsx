@@ -60,11 +60,13 @@ import {
 } from '@/lib/hooks/use-users';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { useMyTenant, useUpdateTenant } from '@/lib/hooks/use-tenant';
 import { KybStatus, SystemRole } from '@/lib/types/enums';
 import type { Country, User } from '@/lib/types/api';
 import type { PayrollSetting } from '@/lib/api/settings';
 import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
+import { StatusBadge } from '@/components/common/status-badge';
 
 // ── Schemas ─────────────────────────────────────────────────
 
@@ -110,13 +112,6 @@ const orgProfileSchema = z.object({
     nhfNumber: z.string().optional(),
 });
 type OrgProfileValues = z.infer<typeof orgProfileSchema>;
-
-const KYB_STATUS_CONFIG: Record<KybStatus, { label: string; className: string }> = {
-    [KybStatus.PENDING]: { label: 'Pending', className: 'bg-gray-100 text-gray-700' },
-    [KybStatus.SUBMITTED]: { label: 'Submitted', className: 'bg-yellow-100 text-yellow-800' },
-    [KybStatus.VERIFIED]: { label: 'Verified', className: 'bg-green-100 text-green-800' },
-    [KybStatus.REJECTED]: { label: 'Rejected', className: 'bg-red-100 text-red-800' },
-};
 
 // Role display labels
 const ROLE_LABELS: Record<string, string> = {
@@ -164,9 +159,10 @@ const ASSIGNABLE_ROLES = [
 ];
 
 export default function SettingsPage() {
-    const { hasRole, tenantOrgType } = useAuth();
-    const canManageTeam = hasRole(['tenant_owner', 'ADMIN']);
-    const isTenantOwner = hasRole(['tenant_owner']);
+    const { tenantOrgType } = useAuth();
+    const can = useCan();
+    const canManageTeam = can('users.manage');
+    const canGrantOwnership = can('users.grantOwnership');
     /**
      * Countries and the advanced key/value store have no tenant column: they
      * are reference data every school shares. Editing one edits it for all of
@@ -174,7 +170,8 @@ export default function SettingsPage() {
      * controls go with it — a button that is certain to be refused is worse
      * than no button, and this tab is still worth reading.
      */
-    const canEditPlatformReference = hasRole(['super_admin']);
+    const canEditCountries = can('countries.manage');
+    const canEditSettings = can('settings.manage');
 
     const [showCountryDialog, setShowCountryDialog] = useState(false);
     const [showSettingDialog, setShowSettingDialog] = useState(false);
@@ -320,6 +317,8 @@ export default function SettingsPage() {
 
     const openEditRolesDialog = (user: User) => {
         setEditingUser(user);
+        // A colleague's roles, being edited — data, not a permission check.
+        // eslint-disable-next-line no-restricted-syntax
         setEditRoles([...user.systemRoles]);
         setShowEditRolesDialog(true);
     };
@@ -413,7 +412,7 @@ export default function SettingsPage() {
         tenantOrgType === 'SCHOOL'
             ? [...ASSIGNABLE_ROLES, ...SCHOOL_ROLES]
             : ASSIGNABLE_ROLES;
-    const allRolesForAssignment = isTenantOwner
+    const allRolesForAssignment = canGrantOwnership
         ? [SystemRole.TENANT_OWNER, ...assignable]
         : assignable;
 
@@ -507,6 +506,8 @@ export default function SettingsPage() {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-wrap gap-1">
+                                                        {/* A colleague's roles, listed — data, not a permission check. */}
+                                                        {/* eslint-disable-next-line no-restricted-syntax */}
                                                         {user.systemRoles.map((role) => (
                                                             <Badge key={role} variant="outline" className="text-xs">
                                                                 {ROLE_LABELS[role] || role}
@@ -550,7 +551,7 @@ export default function SettingsPage() {
 
                 {/* ─── Countries ─────────────────────────────────────── */}
                 <TabsContent value="countries" className="space-y-4">
-                    {canEditPlatformReference ? (
+                    {canEditCountries ? (
                         <div className="flex justify-end">
                             <Button onClick={() => openCountryDialog()}>
                                 <Plus className="mr-2 h-4 w-4" />
@@ -574,12 +575,12 @@ export default function SettingsPage() {
                             title="No countries"
                             description="Add a country to configure currency and tax rules."
                             actionLabel={
-                                canEditPlatformReference
+                                canEditCountries
                                     ? 'Add Country'
                                     : undefined
                             }
                             onAction={
-                                canEditPlatformReference
+                                canEditCountries
                                     ? () => openCountryDialog()
                                     : undefined
                             }
@@ -602,7 +603,7 @@ export default function SettingsPage() {
                                                 <p>Code: <span className="font-medium text-foreground">{country.code}</span></p>
                                                 <p>Currency: <span className="font-medium text-foreground">{country.currencySymbol} ({country.currencyCode})</span></p>
                                             </div>
-                                            {canEditPlatformReference && (
+                                            {canEditCountries && (
                                                 <div className="flex gap-1">
                                                     <Button
                                                         variant="ghost"
@@ -642,7 +643,7 @@ export default function SettingsPage() {
                         calculation. Pay is driven by salary components and tax rules — you
                         don&apos;t need to configure anything here to run payroll.
                     </div>
-                    {canEditPlatformReference ? (
+                    {canEditSettings ? (
                         <div className="flex justify-end">
                             <Button onClick={() => openSettingDialog()}>
                                 <Plus className="mr-2 h-4 w-4" />
@@ -665,12 +666,12 @@ export default function SettingsPage() {
                             title="No settings"
                             description="Add payroll configuration settings."
                             actionLabel={
-                                canEditPlatformReference
+                                canEditSettings
                                     ? 'Add Setting'
                                     : undefined
                             }
                             onAction={
-                                canEditPlatformReference
+                                canEditSettings
                                     ? () => openSettingDialog()
                                     : undefined
                             }
@@ -699,7 +700,7 @@ export default function SettingsPage() {
                                                 {setting.description}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                {canEditPlatformReference && (
+                                                {canEditSettings && (
                                                     <div className="flex justify-end gap-1">
                                                         <Button
                                                             variant="ghost"
@@ -799,9 +800,7 @@ export default function SettingsPage() {
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-base">KYB / Compliance</CardTitle>
                                             {myTenant && (
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${KYB_STATUS_CONFIG[myTenant.kybStatus]?.className ?? ''}`}>
-                                                    {KYB_STATUS_CONFIG[myTenant.kybStatus]?.label ?? myTenant.kybStatus}
-                                                </span>
+                                                <StatusBadge kind="kyb" status={myTenant.kybStatus} />
                                             )}
                                         </div>
                                     </CardHeader>
@@ -891,6 +890,8 @@ export default function SettingsPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="currency-symbol">Symbol</Label>
+                                {/* An example of what to type, not an amount. */}
+                                {/* eslint-disable-next-line no-restricted-syntax */}
                                 <Input id="currency-symbol" {...countryForm.register('currencySymbol')} placeholder="₦" />
                             </div>
                         </div>

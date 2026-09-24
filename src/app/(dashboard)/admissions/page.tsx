@@ -37,25 +37,11 @@ import {
     useRemindOffers,
 } from '@/lib/hooks/use-admissions';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { isRowNavigationClick } from '@/lib/utils/row-click';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
-
-const STATUS_STYLE: Record<string, string> = {
-    APPLIED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    ASSESSMENT_SCHEDULED:
-        'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-    ASSESSED:
-        'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
-    OFFERED:
-        'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    ACCEPTED:
-        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    ENROLLED:
-        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    WAITLISTED:
-        'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-};
+import { StatusBadge } from '@/components/common/status-badge';
 
 const label = (s: string) => s.replace(/_/g, ' ').toLowerCase();
 
@@ -68,8 +54,9 @@ const label = (s: string) => s.replace(/_/g, ' ').toLowerCase();
  */
 export default function AdmissionsPage() {
     const router = useRouter();
-    const { hasRole, tenantSlug } = useAuth();
-    const canDecide = hasRole(['tenant_owner', 'ADMIN', 'admissions.registrar']);
+    const { tenantSlug } = useAuth();
+    const can = useCan();
+    const canDecide = can('admissions.decide');
 
     const [status, setStatus] = useState('all');
     const {
@@ -273,14 +260,7 @@ export default function AdmissionsPage() {
                                             {a.guardianFirstName} {a.guardianLastName}
                                         </td>
                                         <td className="px-3 py-2">
-                                            <span
-                                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                    STATUS_STYLE[a.status] ??
-                                                    'bg-muted text-muted-foreground'
-                                                }`}
-                                            >
-                                                {label(a.status)}
-                                            </span>
+                                            <StatusBadge kind="application" status={a.status} />
                                             {isLapsed && (
                                                 <span
                                                     className="ml-2 inline-flex items-center gap-1 text-xs text-destructive"

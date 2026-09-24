@@ -40,18 +40,8 @@ import {
 } from '@/lib/hooks/use-fees';
 import { useCan } from '@/lib/hooks/use-can';
 import type { InvoiceStatus, InvoiceSummary } from '@/lib/api/fees';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
-
-const STATUS_STYLES: Record<InvoiceStatus, string> = {
-    DRAFT: 'bg-muted text-muted-foreground',
-    ISSUED: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
-    CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
-};
+import { Money } from '@/components/common/money';
+import { statusOf, TONE_CLASS } from '@/lib/status/registry';
 
 const PAID_STYLE = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
 const PART_STYLE = 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200';
@@ -75,7 +65,7 @@ function settlementStyle(i: InvoiceSummary): string {
     const label = settlementLabel(i);
     if (label === 'PAID') return PAID_STYLE;
     if (label === 'PART-PAID') return PART_STYLE;
-    return STATUS_STYLES[i.status];
+    return TONE_CLASS[statusOf('invoice', i.status).tone];
 }
 
 /**
@@ -258,15 +248,15 @@ export default function InvoicesPage() {
                                             {invoice.classLevel}
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
-                                            ₦{money(invoice.charges)}
+                                            <Money value={invoice.charges} />
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                                             {Number(invoice.discounts) > 0
-                                                ? `−₦${money(invoice.discounts)}`
+                                                ? <Money value={invoice.discounts} deduction />
                                                 : '—'}
                                         </td>
                                         <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                                            ₦{money(invoice.outstanding ?? invoice.total)}
+                                            <Money value={invoice.outstanding ?? invoice.total} />
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
@@ -396,7 +386,7 @@ function RunDialog({
                                 <CardContent className="pt-6">
                                     <p className="text-xs text-muted-foreground">Total</p>
                                     <p className="text-2xl font-bold tabular-nums">
-                                        ₦{money(preview.total)}
+                                        <Money value={preview.total} />
                                     </p>
                                 </CardContent>
                             </Card>

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:personas": "playwright test",
     "lint:ratchet": "node scripts/lint-ratchet.mjs",
-    "lint:baseline": "node scripts/lint-ratchet.mjs --update"
+    "lint:baseline": "node scripts/lint-ratchet.mjs --update",
+    "sync:actions": "node scripts/sync-actions.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

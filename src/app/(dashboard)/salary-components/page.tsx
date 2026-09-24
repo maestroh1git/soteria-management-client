@@ -50,6 +50,7 @@ import {
 import { ComponentType, CalculationType } from '@/lib/types/enums';
 import type { SalaryComponent } from '@/lib/types/api';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { Money } from '@/components/common/money';
 
 const APPLICABILITY_BY_ORG_TYPE: Record<string, string[]> = {
     SCHOOL: ['ALL_STAFF', 'TEACHING_STAFF', 'ADMIN_STAFF', 'SUPERVISORS', 'SUPPORT_STAFF'],
@@ -169,7 +170,7 @@ export default function SalaryComponentsPage() {
                                 </td>
                                 <td className="px-4 py-3">
                                     {comp.calculationType === CalculationType.FIXED
-                                        ? `₦${Number(comp.value).toLocaleString()}`
+                                        ? <Money value={comp.value} />
                                         : `${comp.value}%`}
                                     {comp.isBase && Number(comp.value) === 0 && (
                                         <p className="mt-1 max-w-xs text-xs text-amber-600 dark:text-amber-500">

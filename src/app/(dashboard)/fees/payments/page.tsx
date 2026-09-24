@@ -34,16 +34,10 @@ import {
 } from '@/lib/hooks/use-fees';
 import { useCan } from '@/lib/hooks/use-can';
 import { downloadReceiptPdf } from '@/lib/api/fees';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = (v ?? '0').split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
+import { fromMinorUnits, toMinorUnits } from '@/lib/utils/money';
 
 /** Kobo, so the running total of an allocation never drifts. */
-const kobo = (v: string | number) => Math.round(Number(v || 0) * 100);
-
 const METHODS = [
     { value: 'BANK_TRANSFER', label: 'Bank transfer' },
     { value: 'CASH', label: 'Cash' },
@@ -140,12 +134,12 @@ export default function PaymentsPage() {
                                             {p.method.replace('_', ' ').toLowerCase()}
                                         </td>
                                         <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                                            ₦{money(p.amount)}
+                                            <Money value={p.amount} />
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
                                             {Number(p.unallocated) > 0 ? (
                                                 <span className="text-amber-600">
-                                                    ₦{money(p.unallocated)}
+                                                    <Money value={p.unallocated} />
                                                 </span>
                                             ) : (
                                                 <span className="text-muted-foreground">—</span>
@@ -291,10 +285,10 @@ function RecordPaymentDialog({
     }, [assetAccounts, depositAccountId]);
 
     const allocatedKobo = Object.values(allocations).reduce(
-        (sum, v) => sum + kobo(v),
+        (sum, v) => sum + toMinorUnits(v),
         0,
     );
-    const amountKobo = kobo(amount);
+    const amountKobo = toMinorUnits(amount);
     const remainingKobo = amountKobo - allocatedKobo;
 
     const reset = () => {
@@ -307,7 +301,7 @@ function RecordPaymentDialog({
 
     const submit = async () => {
         const lines = Object.entries(allocations)
-            .filter(([, v]) => kobo(v) > 0)
+            .filter(([, v]) => toMinorUnits(v) > 0)
             .map(([invoiceId, v]) => ({ invoiceId, amount: Number(v) }));
 
         await record.mutateAsync({
@@ -443,9 +437,17 @@ function RecordPaymentDialog({
                                             : 'text-sm text-muted-foreground'
                                     }
                                 >
-                                    {remainingKobo < 0
-                                        ? `₦${money((-remainingKobo / 100).toFixed(2))} over the payment`
-                                        : `₦${money((remainingKobo / 100).toFixed(2))} left to apply`}
+                                    {remainingKobo < 0 ? (
+                                        <>
+                                            <Money value={fromMinorUnits(-remainingKobo)} /> over the
+                                            payment
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Money value={fromMinorUnits(remainingKobo)} /> left to
+                                            apply
+                                        </>
+                                    )}
                                 </span>
                             </div>
 
@@ -467,7 +469,7 @@ function RecordPaymentDialog({
                                                 </span>
                                             </div>
                                             <div className="text-xs text-muted-foreground">
-                                                ₦{money(row.outstanding)} outstanding
+                                                <Money value={row.outstanding} /> outstanding
                                             </div>
                                         </div>
                                         <Input

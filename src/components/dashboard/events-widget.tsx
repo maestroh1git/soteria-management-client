@@ -14,10 +14,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useUpcomingFeed } from '@/lib/hooks/use-events';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import type { EventType, FeedItem } from '@/lib/api/events';
 
-const MANAGE_ROLES = ['tenant_owner', 'ADMIN'];
 const VISIBLE = 8;
 
 // One visual identity per row type. Birthdays keep the amber cake the old
@@ -93,8 +92,8 @@ function FeedRow({ item }: { item: FeedItem }) {
 
 export function EventsWidget() {
     const { data: feed = [], isLoading, isError } = useUpcomingFeed();
-    const { hasRole } = useAuth();
-    const canManage = hasRole(MANAGE_ROLES);
+    const can = useCan();
+    const canManage = can('events.manage');
 
     const visible = feed.slice(0, VISIBLE);
     const hidden = feed.length - visible.length;

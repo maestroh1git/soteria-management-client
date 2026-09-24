@@ -18,6 +18,7 @@ import { useTenants } from '@/lib/hooks/use-admin-tenants';
 import { usePlatformAuditLogs } from '@/lib/hooks/use-platform-metrics';
 import type { PlatformAuditFilters } from '@/lib/api/platform';
 import { cn } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils/dates';
 
 const ACTION_COLORS: Record<string, string> = {
   CREATE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -55,18 +56,6 @@ function Pill({ value, map }: { value: string; map: Record<string, string> }) {
       {value}
     </span>
   );
-}
-
-function formatTs(ts: string) {
-  const d = new Date(ts);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export default function PlatformAuditPage() {
@@ -213,7 +202,7 @@ export default function PlatformAuditPage() {
                 {data.items.map((log) => (
                   <tr key={log.id} className="hover:bg-muted/30">
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                      {formatTs(log.createdAt)}
+                      {formatDateTime(log.createdAt)}
                     </td>
                     <td className="px-4 py-3 font-medium">
                       {tenantName(log.tenantId)}

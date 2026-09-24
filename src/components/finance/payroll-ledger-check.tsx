@@ -10,12 +10,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { usePayrollCheck } from '@/lib/hooks/use-finance';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = v.split('.');
-    const sign = whole.startsWith('-') ? '-' : '';
-    return `${sign}${whole.replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
+import { Money } from '@/components/common/money';
 
 /**
  * Payroll's numbers against the ledger's.
@@ -73,11 +68,11 @@ export function PayrollLedgerCheck({ payPeriodId }: { payPeriodId: string }) {
                 <CardDescription>{data.note}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3">
-                <Figure label="Payroll cost (gross)" value={money(data.payrollGross)} />
-                <Figure label="Posted to the ledger" value={money(data.postedDebits)} />
+                <Figure label="Payroll cost (gross)" value={data.payrollGross} />
+                <Figure label="Posted to the ledger" value={data.postedDebits} />
                 <Figure
                     label="Difference"
-                    value={money(data.difference)}
+                    value={data.difference}
                     tone={data.agrees ? undefined : 'text-destructive'}
                 />
             </CardContent>
@@ -100,7 +95,7 @@ function Figure({
                 {label}
             </p>
             <p className={`text-lg font-semibold tabular-nums ${tone ?? ''}`}>
-                ₦{value}
+                <Money value={value} />
             </p>
         </div>
     );

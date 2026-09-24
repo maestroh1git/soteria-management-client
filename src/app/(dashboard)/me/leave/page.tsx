@@ -31,27 +31,9 @@ import {
     useRequestOwnLeave,
     useCancelOwnLeave,
 } from '@/lib/hooks/use-self-service';
-import type { ApiError, LeaveStatus } from '@/lib/types/api';
-
-const STATUS_VARIANT: Record<
-    LeaveStatus,
-    'default' | 'secondary' | 'destructive' | 'outline'
-> = {
-    APPROVED: 'default',
-    PENDING: 'secondary',
-    REJECTED: 'destructive',
-    CANCELLED: 'outline',
-};
-
-function formatRange(start: string, end: string): string {
-    const fmt = (d: string) =>
-        new Date(d).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-        });
-    return start === end ? fmt(start) : `${fmt(start)} — ${fmt(end)}`;
-}
+import type { ApiError } from '@/lib/types/api';
+import { formatSpan } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
 
 export default function MyLeavePage() {
     const balancesQuery = useMyLeaveBalances();
@@ -172,7 +154,7 @@ export default function MyLeavePage() {
                                                     )}
                                             </td>
                                             <td className="px-3 py-2 text-muted-foreground">
-                                                {formatRange(
+                                                {formatSpan(
                                                     request.startDate,
                                                     request.endDate,
                                                 )}
@@ -181,13 +163,7 @@ export default function MyLeavePage() {
                                                 {Number(request.days)}
                                             </td>
                                             <td className="px-3 py-2">
-                                                <Badge
-                                                    variant={
-                                                        STATUS_VARIANT[request.status]
-                                                    }
-                                                >
-                                                    {request.status}
-                                                </Badge>
+                                                <StatusBadge kind="leave" status={request.status} />
                                                 {request.decisionNote && (
                                                     <span className="block text-xs text-muted-foreground">
                                                         {request.decisionNote}

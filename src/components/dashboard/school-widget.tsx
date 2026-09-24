@@ -11,6 +11,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import { useStudents } from '@/lib/hooks/use-students';
 import { useClassArms } from '@/lib/hooks/use-academics';
 import { useApplications } from '@/lib/hooks/use-admissions';
@@ -28,14 +29,9 @@ import { useApplications } from '@/lib/hooks/use-admissions';
  * reading zero teaches people to stop looking at that corner of the screen.
  */
 export function SchoolWidget() {
-    const { tenantOrgType, hasRole } = useAuth();
-    const canSee = hasRole([
-        'tenant_owner',
-        'ADMIN',
-        'admissions.registrar',
-        'admissions.officer',
-        'academic.teacher',
-    ]);
+    const { tenantOrgType } = useAuth();
+    const can = useCan();
+    const canSee = can('students.read');
     const isSchool = tenantOrgType === 'SCHOOL';
     const active = isSchool && canSee;
 
@@ -45,12 +41,7 @@ export function SchoolWidget() {
     const { data: arms } = useClassArms(undefined, active);
     // Only the registrar's side sees the admissions queue; a form teacher has
     // no business in it, and the endpoint would refuse them anyway.
-    const canSeeAdmissions = hasRole([
-        'tenant_owner',
-        'ADMIN',
-        'admissions.registrar',
-        'admissions.officer',
-    ]);
+    const canSeeAdmissions = can('admissions.read');
     const { data: applications } = useApplications(
         undefined,
         active && canSeeAdmissions,

@@ -22,6 +22,7 @@ import {
     type PublicApplicationStatus,
     type PublicAppointment,
 } from '@/lib/api/public-admissions';
+import { formatDate, formatLongDate, formatTime } from '@/lib/utils/dates';
 
 /**
  * What a parent is told, in words rather than status codes.
@@ -122,18 +123,10 @@ function Appointment({ appointment }: { appointment: PublicAppointment }) {
             </div>
 
             <p className="mt-2 text-lg font-semibold text-indigo-950 dark:text-indigo-100">
-                {when.toLocaleDateString(undefined, {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                })}
+                {formatDate(when, 'EEEE d MMMM yyyy')}
             </p>
             <p className="text-indigo-900 dark:text-indigo-200">
-                {when.toLocaleTimeString(undefined, {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                })}
+                {formatTime(when)}
             </p>
 
             {/* A room, a joining link, or an honest admission of neither —
@@ -253,10 +246,7 @@ export default function ApplicationStatusPage({
                             <Clock className="mt-0.5 h-4 w-4 shrink-0" />
                             <span>
                                 This offer expires on{' '}
-                                {new Date(status.offerExpiresAt).toLocaleDateString(
-                                    undefined,
-                                    { day: 'numeric', month: 'long', year: 'numeric' },
-                                )}
+                                {formatLongDate(status.offerExpiresAt)}
                                 .
                             </span>
                         </div>
@@ -264,11 +254,7 @@ export default function ApplicationStatusPage({
 
                     <p className="text-xs text-muted-foreground">
                         Submitted{' '}
-                        {new Date(status.submittedAt).toLocaleDateString(undefined, {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                        })}
+                        {formatLongDate(status.submittedAt)}
                     </p>
                 </CardContent>
             </Card>

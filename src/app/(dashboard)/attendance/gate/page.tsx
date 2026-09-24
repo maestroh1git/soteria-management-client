@@ -35,14 +35,9 @@ import {
     type DepartureReason,
 } from '@/lib/api/attendance';
 import { cn } from '@/lib/utils';
+import { formatTime } from '@/lib/utils/dates';
 
 const REASONS = Object.keys(DEPARTURE_REASON_LABELS) as DepartureReason[];
-
-const time = (iso: string) =>
-    new Date(iso).toLocaleTimeString('en-NG', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
 
 /**
  * The gate: signing children out during the day, and back in.
@@ -286,9 +281,9 @@ export default function GatePage() {
                                         )}
                                     </p>
                                     <p className="truncate text-xs text-muted-foreground">
-                                        Left {time(d.departedAt)}
+                                        Left {formatTime(d.departedAt)}
                                         {d.collectedBy ? ` with ${d.collectedBy}` : ''}
-                                        {d.returnedAt ? ` · back ${time(d.returnedAt)}` : ''}
+                                        {d.returnedAt ? ` · back ${formatTime(d.returnedAt)}` : ''}
                                     </p>
                                 </div>
                                 {!d.returnedAt && (

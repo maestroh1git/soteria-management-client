@@ -49,20 +49,8 @@ import {
 } from '@/lib/hooks/use-finance';
 import { formatDate } from '@/lib/utils/dates';
 import type { Expense, ExpenseStatus } from '@/lib/api/finance';
-
-const money = (v: string) => {
-    const [whole, fraction = '00'] = v.split('.');
-    return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`;
-};
-
-const STATUS_STYLE: Record<string, string> = {
-    DRAFT: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    SUBMITTED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    APPROVED: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    PAID: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    REJECTED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    CANCELLED: 'bg-muted text-muted-foreground',
-};
+import { Money } from '@/components/common/money';
+import { StatusBadge } from '@/components/common/status-badge';
 
 const ACTION_LABEL: Record<string, string> = {
     SUBMITTED: 'Send for approval',
@@ -84,10 +72,9 @@ const ACTION_ENDPOINT: Record<string, 'submit' | 'approve' | 'reject' | 'cancel'
 export default function ExpensesPage() {
     const { user } = useAuth();
     const can = useCan();
-    // Raising, submitting and paying are the finance office's; approving and
-    // rejecting are also the Approver's. The API draws the same lines.
+    // Raising is the finance office's; which moves each expense offers is the
+    // server's answer for this caller.
     const canRaise = can('expenses.raise');
-    const canDecide = can('expenses.decide');
 
     const [status, setStatus] = useState('all');
     const [raising, setRaising] = useState(false);
@@ -151,7 +138,6 @@ export default function ExpensesPage() {
                             expense={e}
                             currentUserId={user?.id}
                             canRaise={canRaise}
-                            canDecide={canDecide}
                             onPay={() => setPaying(e)}
                         />
                     ))}
@@ -174,29 +160,21 @@ export default function ExpensesPage() {
     );
 }
 
-/** Which of an expense's next states are a decision rather than the raiser's. */
-const DECISIONS: ExpenseStatus[] = ['APPROVED', 'REJECTED'];
-
 function ExpenseRow({
     expense,
     currentUserId,
     canRaise,
-    canDecide,
     onPay,
 }: {
     expense: Expense;
     currentUserId?: string;
     canRaise: boolean;
-    canDecide: boolean;
     onPay: () => void;
 }) {
     const act = useExpenseAction(expense.id);
-    // The server says which moves the expense's state allows; the caller's
-    // role says which of those are theirs. An Approver was offered Submit,
-    // Pay and Cancel, and the API refused all three.
-    const moves = expense.allowedTransitions.filter((to: ExpenseStatus) =>
-        DECISIONS.includes(to) ? canDecide : canRaise,
-    );
+    // The moves this person may make: the server filters the state machine by
+    // the caller (ROADMAP-EXECUTION.md, S2.4), so this renders what it sends.
+    const moves = expense.allowedTransitions;
 
     /**
      * The one rule worth showing rather than enforcing only on the server.
@@ -215,11 +193,7 @@ function ExpenseRow({
                         <span className="font-mono text-xs text-muted-foreground">
                             {expense.expenseNumber}
                         </span>
-                        <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[expense.status]}`}
-                        >
-                            {expense.status.toLowerCase()}
-                        </span>
+                        <StatusBadge kind="expense" status={expense.status} />
                     </div>
                     <p className="mt-1 font-medium">{expense.description}</p>
                     <p className="text-sm text-muted-foreground">
@@ -241,7 +215,7 @@ function ExpenseRow({
 
                 <div className="flex items-center gap-4">
                     <p className="text-lg font-semibold tabular-nums">
-                        ₦{money(expense.amount)}
+                        <Money value={expense.amount} />
                     </p>
                     <div className="flex flex-wrap gap-2">
                         {moves.map((to: ExpenseStatus) => {
@@ -450,7 +424,7 @@ function PayDialog({
                 <DialogHeader>
                     <DialogTitle>Record payment</DialogTitle>
                     <DialogDescription>
-                        ₦{money(expense.amount)} — {expense.description}. This posts to the
+                        <Money value={expense.amount} /> — {expense.description}. This posts to the
                         ledger at the same moment; there is no way to record one without
                         the other.
                     </DialogDescription>

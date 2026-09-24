@@ -46,18 +46,12 @@ import type {
     AssessmentOutcome,
     InterviewQuestion,
 } from '@/lib/api/admissions';
+import { formatDateTime } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
 
 const KIND_LABEL: Record<AssessmentKind, string> = {
     ENTRANCE_EXAM: 'Entrance exam',
     INTERVIEW: 'Interview',
-};
-
-const STATUS_STYLE: Record<string, string> = {
-    SCHEDULED: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
-    COMPLETED:
-        'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
-    NO_SHOW: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-    CANCELLED: 'bg-muted text-muted-foreground',
 };
 
 const OUTCOME_LABEL: Record<AssessmentOutcome, string> = {
@@ -65,13 +59,6 @@ const OUTCOME_LABEL: Record<AssessmentOutcome, string> = {
     BORDERLINE: 'Borderline',
     DECLINE: 'Not recommended',
 };
-
-function when(value: string): string {
-    return new Date(value).toLocaleString(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    });
-}
 
 /**
  * What was said at an interview that has been recorded.
@@ -250,12 +237,7 @@ export function AssessmentsPanel({
                             <span className="font-medium">
                                 {KIND_LABEL[a.kind]}
                             </span>
-                            <Badge
-                                variant="secondary"
-                                className={STATUS_STYLE[a.status] ?? ''}
-                            >
-                                {a.status.replace(/_/g, ' ').toLowerCase()}
-                            </Badge>
+                            <StatusBadge kind="assessment" status={a.status} />
                             {a.mode === 'ONLINE' && (
                                 <Badge variant="outline" className="gap-1">
                                     <Video className="h-3 w-3" />
@@ -283,7 +265,7 @@ export function AssessmentsPanel({
                         )}
 
                         <p className="mt-1 text-muted-foreground">
-                            {when(a.scheduledFor)}
+                            {formatDateTime(a.scheduledFor)}
                             {a.location && (
                                 <span className="ml-2 inline-flex items-center gap-1">
                                     <MapPin className="h-3 w-3" />

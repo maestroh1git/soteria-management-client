@@ -9,12 +9,8 @@ import {
     Mail,
     Search,
     FileText,
-    CheckCircle2,
-    Eye,
-    AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -51,13 +47,9 @@ import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice'
 import { isApiError, getApiErrorMessage } from '@/lib/utils/api-error';
 import type { Payslip } from '@/lib/types/api';
 import { PayslipStatus, PayPeriodStatus } from '@/lib/types/enums';
-
-const STATUS_CONFIG: Record<PayslipStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; icon: typeof FileText }> = {
-    [PayslipStatus.GENERATED]: { label: 'Generated', variant: 'secondary', icon: FileText },
-    [PayslipStatus.SENT]: { label: 'Sent', variant: 'default', icon: CheckCircle2 },
-    [PayslipStatus.VIEWED]: { label: 'Viewed', variant: 'outline', icon: Eye },
-    [PayslipStatus.FAILED]: { label: 'Failed', variant: 'destructive', icon: AlertCircle },
-};
+import { formatDate } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
 
 export default function PayslipsPage() {
     const [selectedPeriod, setSelectedPeriod] = useState<string>('');
@@ -105,8 +97,6 @@ export default function PayslipsPage() {
     const sendEmailMutation = useSendPayslipEmail();
     const sendBulkMutation = useSendBulkEmails();
 
-    const formatDate = (d: string | null) =>
-        d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
     // Filter payslips
     const filtered = useMemo(() => {
@@ -281,8 +271,8 @@ export default function PayslipsPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All statuses</SelectItem>
-                                {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                                    <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                                {statusOptions('payslip').map(({ value, label }) => (
+                                    <SelectItem key={value} value={value}>{label}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -315,7 +305,6 @@ export default function PayslipsPage() {
                                 </thead>
                                 <tbody>
                                     {filtered.map((payslip) => {
-                                        const cfg = STATUS_CONFIG[payslip.status];
                                         return (
                                             <tr key={payslip.id} className="border-b transition-colors hover:bg-muted/50">
                                                 <td className="px-4 py-3 font-medium">
@@ -327,7 +316,7 @@ export default function PayslipsPage() {
                                                     {payslip.fileName || '—'}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                                                    <StatusBadge kind="payslip" status={payslip.status} />
                                                 </td>
                                                 <td className="hidden lg:table-cell px-4 py-3 text-muted-foreground">
                                                     {formatDate(payslip.generatedAt)}

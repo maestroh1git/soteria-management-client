@@ -50,16 +50,10 @@ import {
 } from '@/lib/utils/validation';
 import type { LoanFilters } from '@/lib/types/api';
 import { LoanStatus, LoanType } from '@/lib/types/enums';
-
-const STATUS_CONFIG: Record<LoanStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-    [LoanStatus.PENDING]: { label: 'Pending', variant: 'secondary' },
-    [LoanStatus.APPROVED]: { label: 'Approved', variant: 'default' },
-    [LoanStatus.REJECTED]: { label: 'Rejected', variant: 'destructive' },
-    [LoanStatus.ACTIVE]: { label: 'Active', variant: 'default' },
-    [LoanStatus.FULLY_PAID]: { label: 'Fully Paid', variant: 'outline' },
-    [LoanStatus.DEFAULTED]: { label: 'Defaulted', variant: 'destructive' },
-    [LoanStatus.CANCELLED]: { label: 'Cancelled', variant: 'outline' },
-};
+import { formatDate } from '@/lib/utils/dates';
+import { formatMoney } from '@/lib/utils/money';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOptions } from '@/lib/status/registry';
 
 export default function LoansPage() {
     const router = useRouter();
@@ -99,11 +93,7 @@ export default function LoansPage() {
         });
     };
 
-    const formatDate = (d: string) =>
-        new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    const formatCurrency = (v: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'NGN' }).format(v);
 
     // Summary stats
     const allLoans = loans ?? [];
@@ -157,14 +147,14 @@ export default function LoansPage() {
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Disbursed</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                     </CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{formatCurrency(totalDisbursed)}</p></CardContent>
+                    <CardContent><p className="text-2xl font-bold">{formatMoney(totalDisbursed)}</p></CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Outstanding</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                     </CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{formatCurrency(totalOutstanding)}</p></CardContent>
+                    <CardContent><p className="text-2xl font-bold">{formatMoney(totalOutstanding)}</p></CardContent>
                 </Card>
             </div>
 
@@ -181,8 +171,8 @@ export default function LoansPage() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All statuses</SelectItem>
-                        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                            <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                        {statusOptions('loan').map(({ value, label }) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -237,7 +227,6 @@ export default function LoansPage() {
                         </thead>
                         <tbody>
                             {allLoans.map((loan) => {
-                                const cfg = STATUS_CONFIG[loan.status];
                                 return (
                                     <tr
                                         key={loan.id}
@@ -264,7 +253,7 @@ export default function LoansPage() {
                                             <CurrencyDisplay amount={Number(loan.monthlyRepayment)} />
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                                            <StatusBadge kind="loan" status={loan.status} />
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
                                             {formatDate(loan.applicationDate)}

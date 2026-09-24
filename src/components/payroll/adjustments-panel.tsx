@@ -6,7 +6,6 @@ import { Plus, Check, X, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
@@ -35,16 +34,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { getSalaryComponents } from '@/lib/api/salary-components';
 import type {
-    AdjustmentStatus,
     AdjustmentType,
     PayrollAdjustment,
 } from '@/lib/types/api';
-
-const STATUS_VARIANT: Record<AdjustmentStatus, 'default' | 'secondary' | 'destructive'> = {
-    APPROVED: 'default',
-    PENDING: 'secondary',
-    REJECTED: 'destructive',
-};
+import { StatusBadge } from '@/components/common/status-badge';
 
 const TYPE_LABEL: Record<AdjustmentType, string> = {
     EARNING: 'One-off earning',
@@ -193,9 +186,7 @@ function AdjustmentRow({
                 )}
             </td>
             <td className="px-3 py-2">
-                <Badge variant={STATUS_VARIANT[adjustment.status]}>
-                    {adjustment.status}
-                </Badge>
+                <StatusBadge kind="adjustment" status={adjustment.status} />
             </td>
             <td className="px-3 py-2">
                 <div className="flex items-center justify-end gap-1">
