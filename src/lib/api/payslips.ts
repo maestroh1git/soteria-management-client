@@ -36,7 +36,7 @@ export async function getPayslip(id: string): Promise<Payslip> {
  * Returns the full URL for direct browser download.
  */
 export function getPayslipDownloadUrl(accessToken: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   return `${baseUrl}/payslips/download/${accessToken}`;
 }
 

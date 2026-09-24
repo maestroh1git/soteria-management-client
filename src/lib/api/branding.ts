@@ -1,7 +1,10 @@
 import api from './client';
 
-const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Same-origin default (see src/lib/api/client.ts): brandingImageUrl() output is
+// only ever loaded by the browser (all consumers are 'use client'), so a
+// relative /api resolves against the app origin and keeps the bundle
+// env-agnostic. NEXT_PUBLIC_API_URL still overrides for local `next dev`.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export interface BrandingMeta {
     primaryColor: string | null;
