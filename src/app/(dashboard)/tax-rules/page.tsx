@@ -44,6 +44,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { useTaxRules, useCreateTaxRule, useUpdateTaxRule, useDeleteTaxRule } from '@/lib/hooks/use-tax';
+import { useCan } from '@/lib/hooks/use-can';
 import type { TaxRule, TaxBracket } from '@/lib/types/api';
 import { TaxRuleType, TaxBase, TAX_BASE_LABEL } from '@/lib/types/enums';
 import { formatCurrency } from '@/lib/utils/currency';
@@ -118,10 +119,12 @@ function BracketTable({ brackets }: { brackets: TaxBracket[] }) {
 
 function TaxRuleCard({
     rule,
+    canManage,
     onEdit,
     onDelete,
 }: {
     rule: TaxRule;
+    canManage: boolean;
     onEdit: (r: TaxRule) => void;
     onDelete: (r: TaxRule) => void;
 }) {
@@ -174,12 +177,16 @@ function TaxRuleCard({
                             {rule.brackets!.length} brackets
                         </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(rule)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(rule)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    {canManage && (
+                        <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(rule)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(rule)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -194,6 +201,8 @@ function TaxRuleCard({
 
 export default function TaxRulesPage() {
     const { data: rules = [], isLoading } = useTaxRules();
+    // Finance sets the rules; Payroll and Viewers read them.
+    const canManage = useCan()('tax.manage');
     const createMutation = useCreateTaxRule();
     const updateMutation = useUpdateTaxRule();
     const deleteMutation = useDeleteTaxRule();
@@ -281,10 +290,12 @@ export default function TaxRulesPage() {
                         Configure flat-rate and progressive tax rules applied during payroll.
                     </p>
                 </div>
-                <Button onClick={openCreate} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    New Tax Rule
-                </Button>
+                {canManage && (
+                    <Button onClick={openCreate} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        New Tax Rule
+                    </Button>
+                )}
             </div>
 
             {/* List */}
@@ -296,10 +307,12 @@ export default function TaxRulesPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                         Add a flat-rate or progressive tax rule to apply during payroll runs.
                     </p>
-                    <Button variant="outline" size="sm" className="mt-4 gap-2" onClick={openCreate}>
-                        <Plus className="h-4 w-4" />
-                        Add Tax Rule
-                    </Button>
+                    {canManage && (
+                        <Button variant="outline" size="sm" className="mt-4 gap-2" onClick={openCreate}>
+                            <Plus className="h-4 w-4" />
+                            Add Tax Rule
+                        </Button>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -307,6 +320,7 @@ export default function TaxRulesPage() {
                         <TaxRuleCard
                             key={rule.id}
                             rule={rule}
+                            canManage={canManage}
                             onEdit={openEdit}
                             onDelete={setDeleteTarget}
                         />

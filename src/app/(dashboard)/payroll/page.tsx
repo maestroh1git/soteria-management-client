@@ -35,6 +35,7 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { usePayPeriods, useCreatePayPeriod, useCurrentPayPeriod } from '@/lib/hooks/use-payroll';
 import { useEmployeesList, useSalaryComponentsList } from '@/lib/hooks/use-onboarding';
+import { useCan } from '@/lib/hooks/use-can';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
 import { createPayPeriodSchema, type CreatePayPeriodValues } from '@/lib/utils/validation';
 import type { PayPeriodFilters } from '@/lib/types/api';
@@ -58,10 +59,15 @@ export default function PayrollPage() {
     const { data: currentPeriod } = useCurrentPayPeriod();
     const createMutation = useCreatePayPeriod();
 
+    const can = useCan();
+    const canCreate = can('payPeriods.create');
     // Processing payroll yields nothing without active employees that have
-    // salary components — surface the missing prerequisite up front.
-    const { data: employees } = useEmployeesList();
-    const { data: components } = useSalaryComponentsList();
+    // salary components — surface the missing prerequisite up front. Only to
+    // the people who run payroll: an Approver or the finance office can do
+    // nothing about it, and cannot read either list.
+    const setsUp = can('payroll.process');
+    const { data: employees } = useEmployeesList(setsUp);
+    const { data: components } = useSalaryComponentsList(setsUp);
     const missingEmployees = employees !== undefined && employees.length === 0;
     const missingComponents =
         !missingEmployees && components !== undefined && components.length === 0;
@@ -91,10 +97,12 @@ export default function PayrollPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Payroll</h1>
                     <p className="text-muted-foreground">Manage pay periods and process payroll</p>
                 </div>
-                <Button onClick={() => setShowCreate(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Pay Period
-                </Button>
+                {canCreate && (
+                    <Button onClick={() => setShowCreate(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Pay Period
+                    </Button>
+                )}
             </div>
 
             {missingEmployees && (
@@ -192,9 +200,13 @@ export default function PayrollPage() {
                     isError={isError}
                     subject="the pay periods"
                     title="No pay periods"
-                    description="Create a pay period to get started with payroll."
-                    actionLabel="Create Pay Period"
-                    onAction={() => setShowCreate(true)}
+                    description={
+                        canCreate
+                            ? 'Create a pay period to get started with payroll.'
+                            : 'Payroll has not opened a pay period yet.'
+                    }
+                    actionLabel={canCreate ? 'Create Pay Period' : undefined}
+                    onAction={canCreate ? () => setShowCreate(true) : undefined}
                 />
             ) : (
                 <div className="rounded-lg border bg-card">

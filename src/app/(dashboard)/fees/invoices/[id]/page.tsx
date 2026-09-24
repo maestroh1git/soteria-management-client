@@ -24,7 +24,8 @@ import {
     useInvoice,
     useIssueInvoice,
 } from '@/lib/hooks/use-fees';
-import { downloadInvoicePdf } from '@/lib/api/fees';
+import { downloadInvoicePdf, type InvoiceStatus } from '@/lib/api/fees';
+import { useCan } from '@/lib/hooks/use-can';
 
 const money = (v: string) => {
     const [whole, fraction = '00'] = (v ?? '0').split('.');
@@ -46,6 +47,7 @@ export default function InvoiceDetailPage() {
     const { data: invoice, isLoading, isError } = useInvoice(params.id);
     const issue = useIssueInvoice();
     const cancel = useCancelInvoice();
+    const canWrite = useCan()('fees.write');
     const [cancelOpen, setCancelOpen] = useState(false);
     const [reason, setReason] = useState('');
 
@@ -77,7 +79,10 @@ export default function InvoiceDetailPage() {
         );
     }
 
-    const can = (status: string) => invoice.allowedTransitions?.includes(status as any);
+    // The server says which moves the invoice's state allows; the caller's
+    // role says whether they may make them. Both, or no button.
+    const can = (status: string) =>
+        canWrite && invoice.allowedTransitions?.includes(status as InvoiceStatus);
     const charges = invoice.lines.filter((l) => l.kind === 'CHARGE');
     const discounts = invoice.lines.filter((l) => l.kind === 'DISCOUNT');
 

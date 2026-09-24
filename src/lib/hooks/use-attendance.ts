@@ -11,6 +11,7 @@ import {
     getCollectors,
     getDaySummary,
     getDepartures,
+    getMyClass,
     getMyClasses,
     getRegister,
     getStudentSummary,
@@ -39,6 +40,16 @@ export function useRegister(classArmId?: string, date?: string) {
     });
 }
 
+export function useMyClass(armId?: string) {
+    return useQuery({
+        queryKey: ['attendance', 'my-classes', armId],
+        queryFn: () => getMyClass(armId as string),
+        enabled: !!armId,
+        staleTime: 30 * 1000,
+        retry: false,
+    });
+}
+
 export function useMyClasses() {
     return useQuery({
         queryKey: ['attendance', 'my-classes'],
@@ -47,11 +58,12 @@ export function useMyClasses() {
     });
 }
 
-export function useDaySummary(date?: string) {
+export function useDaySummary(date?: string, enabled = true) {
     return useQuery({
         queryKey: ['attendance', 'summary', 'day', date ?? 'today'],
         queryFn: () => getDaySummary(date),
         staleTime: 60 * 1000,
+        enabled,
     });
 }
 

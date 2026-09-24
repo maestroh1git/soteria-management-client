@@ -54,10 +54,13 @@ const TYPE_LABEL: Record<AdjustmentType, string> = {
 
 export function AdjustmentsPanel({
     payPeriodId,
+    canRaise,
     canApprove,
     readOnly,
 }: {
     payPeriodId: string;
+    /** Raising an adjustment and deciding it are separate rights. */
+    canRaise: boolean;
     canApprove: boolean;
     /** Closed periods have already produced advices; nothing may change. */
     readOnly?: boolean;
@@ -81,7 +84,7 @@ export function AdjustmentsPanel({
                         Only approved adjustments are applied when payroll runs.
                     </p>
                 </div>
-                {!readOnly && (
+                {!readOnly && canRaise && (
                     <Button size="sm" onClick={() => setDialogOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" /> Add
                     </Button>
@@ -120,6 +123,7 @@ export function AdjustmentsPanel({
                                         key={adj.id}
                                         adjustment={adj}
                                         canApprove={canApprove && !readOnly}
+                                        canDelete={canRaise && !readOnly}
                                         onApprove={() => approveMutation.mutate(adj.id)}
                                         onReject={() => rejectMutation.mutate(adj.id)}
                                         onDelete={() => deleteMutation.mutate(adj.id)}
@@ -148,6 +152,7 @@ export function AdjustmentsPanel({
 function AdjustmentRow({
     adjustment,
     canApprove,
+    canDelete,
     onApprove,
     onReject,
     onDelete,
@@ -155,6 +160,7 @@ function AdjustmentRow({
 }: {
     adjustment: PayrollAdjustment;
     canApprove: boolean;
+    canDelete: boolean;
     onApprove: () => void;
     onReject: () => void;
     onDelete: () => void;
@@ -217,7 +223,7 @@ function AdjustmentRow({
                             </Button>
                         </>
                     )}
-                    {adjustment.status === 'PENDING' && (
+                    {adjustment.status === 'PENDING' && canDelete && (
                         <Button
                             variant="ghost"
                             size="icon"

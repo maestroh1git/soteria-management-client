@@ -39,7 +39,7 @@ type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 export default function ChangePasswordPage() {
     const router = useRouter();
     const changePasswordMutation = useChangePassword();
-    const { setUser, setToken } = useAuthStore();
+    const applySession = useAuthStore((s) => s.applySession);
     const [serverError, setServerError] = useState<string | null>(null);
 
     const form = useForm<ChangePasswordValues>({
@@ -59,21 +59,12 @@ export default function ChangePasswordPage() {
                 newPassword: values.newPassword,
             });
 
-            // Update store with new user data and token
-            if (result.user) {
-                setUser(result.user);
-            }
-            if (result.token) {
-                setToken(result.token);
-            }
-
-            // Clear the must-change-password cookie
-            document.cookie = 'must-change-password=; path=/; max-age=0';
-
-            // Update user-roles cookie if needed
-            if (result.user?.systemRoles) {
-                const maxAge = 60 * 60 * 24 * 7;
-                document.cookie = `user-roles=${encodeURIComponent(JSON.stringify(result.user.systemRoles))}; path=/; max-age=${maxAge}`;
+            // The same session, now with the flag cleared: store, token and
+            // cookies through the one writer every sign-in uses.
+            const token = result.token ?? useAuthStore.getState().token;
+            const user = result.user ?? useAuthStore.getState().user;
+            if (token && user) {
+                applySession({ token, user: { ...user, mustChangePassword: false } });
             }
 
             router.push('/');

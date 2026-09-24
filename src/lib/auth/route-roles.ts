@@ -8,6 +8,10 @@
  * so nothing leaked; typing the URL simply rendered a broken page instead of a
  * clean refusal, and the middleware map read as authoritative when it was not.
  *
+ * Since Wave 1 (ROADMAP-EXECUTION.md, C1.2) every entry admits the people the
+ * API lets read the page's data — no more, no fewer — and the pages hide the
+ * actions a reader may not take through `can()` (lib/auth/actions.ts).
+ *
  * Deliberately a plain module: no React, no icons, no imports at all. The
  * middleware runs in the edge runtime, and pulling nav-config in would drag
  * lucide with it.
@@ -36,7 +40,7 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
   ],
   "/audit-logs": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
   "/banking": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
-  "/banks": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER"],
+  "/banks": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER", "VIEWER"],
   "/budgets": ["tenant_owner", "ADMIN", "FINANCE_ADMIN", "APPROVER"],
   "/classes": [
     "tenant_owner",
@@ -50,7 +54,7 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
   "/expenses": ["tenant_owner", "ADMIN", "FINANCE_ADMIN", "APPROVER"],
   "/fees": ["tenant_owner", "ADMIN", "FINANCE_ADMIN", "admissions.registrar"],
   "/grades": ["tenant_owner", "ADMIN"],
-  "/leave": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER", "APPROVER"],
+  "/leave": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER", "APPROVER", "VIEWER"],
   "/ledger": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
   "/loans": [
     "tenant_owner",
@@ -58,6 +62,7 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
     "PAYROLL_OFFICER",
     "FINANCE_ADMIN",
     "APPROVER",
+    "VIEWER",
   ],
   "/me": undefined,
   "/payroll": [
@@ -66,10 +71,17 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
     "PAYROLL_OFFICER",
     "FINANCE_ADMIN",
     "APPROVER",
+    "VIEWER",
   ],
-  "/payslips": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER"],
+  "/payslips": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER", "VIEWER"],
   "/portal": ["PARENT"],
-  "/reports": ["tenant_owner", "ADMIN", "FINANCE_ADMIN", "VIEWER"],
+  "/reports": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "VIEWER",
+  ],
   "/roles": ["tenant_owner", "ADMIN"],
   "/salary-components": ["tenant_owner", "ADMIN", "PAYROLL_OFFICER"],
   "/settings": ["tenant_owner", "ADMIN"],
@@ -80,12 +92,41 @@ export const ROUTE_ROLES: Record<string, string[] | undefined> = {
     "admissions.officer",
     "academic.teacher",
   ],
-  "/tax-rules": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
+  "/tax-rules": [
+    "tenant_owner",
+    "ADMIN",
+    "PAYROLL_OFFICER",
+    "FINANCE_ADMIN",
+    "VIEWER",
+  ],
   "/awards": ["tenant_owner", "ADMIN", "academic.teacher", "VIEWER"],
-  "/attendance/at-risk": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
-  "/attendance/calendar": ["tenant_owner", "ADMIN"],
+  // The people who make the calls: Educators and the attendance office, as
+  // the API has always allowed (AttendanceController.REPORT).
+  "/attendance/at-risk": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "VIEWER",
+    "academic.teacher",
+    "academic.attendance_officer",
+  ],
+  // Read by staff who plan around it; edited by the office (the screen asks
+  // `can('attendance.calendar.manage')`).
+  "/attendance/calendar": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "VIEWER",
+    "academic.teacher",
+    "academic.attendance_officer",
+  ],
   "/attendance/gate": ["tenant_owner", "ADMIN", "academic.attendance_officer"],
-  "/fees/arrears": ["tenant_owner", "ADMIN", "FINANCE_ADMIN"],
+  "/fees/arrears": [
+    "tenant_owner",
+    "ADMIN",
+    "FINANCE_ADMIN",
+    "admissions.registrar",
+  ],
   "/fees/invoices": [
     "tenant_owner",
     "ADMIN",

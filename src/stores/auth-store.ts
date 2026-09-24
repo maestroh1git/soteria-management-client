@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@/lib/types/api';
 import { authApi, type LoginRequest, type RegisterRequest } from '@/lib/api/auth';
+import { clearSession, startSession } from '@/lib/utils/session';
 
 interface AuthState {
   user: User | null;
@@ -18,6 +19,8 @@ interface AuthState {
   hasRole: (roles: string[]) => boolean;
   setUser: (user: User) => void;
   setToken: (token: string) => void;
+  /** Signed in by any route — login, invite, reset: store, token and cookies. */
+  applySession: (session: { token: string; user: User }) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -33,13 +36,8 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await authApi.login(data);
-          localStorage.setItem('auth-token', response.token);
-          set({
-            user: response.user,
-            token: response.token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
+          get().applySession(response);
+          set({ isLoading: false });
         } catch (err: unknown) {
           const message =
             err && typeof err === 'object' && 'message' in err
@@ -54,13 +52,8 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await authApi.register(data);
-          localStorage.setItem('auth-token', response.token);
-          set({
-            user: response.user,
-            token: response.token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
+          get().applySession(response);
+          set({ isLoading: false });
         } catch (err: unknown) {
           const message =
             err && typeof err === 'object' && 'message' in err
@@ -72,10 +65,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        localStorage.removeItem('auth-token');
-        document.cookie = 'auth-token=; path=/; max-age=0';
-        document.cookie = 'must-change-password=; path=/; max-age=0';
-        document.cookie = 'user-roles=; path=/; max-age=0';
+        clearSession();
         set({
           user: null,
           token: null,
@@ -91,6 +81,11 @@ export const useAuthStore = create<AuthState>()(
       setToken: (token) => {
         localStorage.setItem('auth-token', token);
         set({ token });
+      },
+
+      applySession: ({ token, user }) => {
+        startSession({ token, user });
+        set({ user, token, isAuthenticated: true });
       },
 
       hasRole: (roles: string[]) => {

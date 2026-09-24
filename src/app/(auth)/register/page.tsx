@@ -82,7 +82,6 @@ export default function RegisterPage() {
                 organizationName: values.organizationName,
                 organizationType: values.organizationType as any,
             });
-            document.cookie = `auth-token=true; path=/; max-age=${60 * 60 * 24 * 7}`;
             router.push('/');
         } catch (err: unknown) {
             setServerError(getApiErrorMessage(err, 'Registration failed. Please try again.'));

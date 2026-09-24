@@ -1,4 +1,5 @@
 import api from './client';
+import type { Student, StudentMedical } from './students';
 
 export type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
 
@@ -232,6 +233,24 @@ export async function submitRegister(dto: {
     correctionNote?: string;
 }): Promise<SubmitResult> {
     return (await api.post('/attendance/register', dto)) as unknown as SubmitResult;
+}
+
+/**
+ * One class I teach: its roster, the medical facts a teacher must know, and
+ * who has been signed out at the gate today (GET /attendance/my-classes/:armId).
+ * Identity-first: the class's form teacher may open it whatever their system
+ * roles, as may the office and Educators.
+ */
+export interface MyClassView {
+    classArmId: string;
+    className: string;
+    pupils: Student[];
+    medicalAlerts: Array<{ student: Student; medical: StudentMedical }>;
+    signedOutToday: Departure[];
+}
+
+export async function getMyClass(armId: string): Promise<MyClassView> {
+    return (await api.get(`/attendance/my-classes/${armId}`)) as unknown as MyClassView;
 }
 
 export async function getMyClasses(): Promise<{

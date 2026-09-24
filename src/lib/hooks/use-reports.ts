@@ -108,10 +108,11 @@ export function useMonthlySummary(
   });
 }
 
-export function useTaxSummary(year?: number) {
+export function useTaxSummary(year?: number, enabled = true) {
   return useQuery({
     queryKey: ['reports', 'tax-summary', year],
     queryFn: () => getTaxSummary(year),
+    enabled,
   });
 }
 

@@ -41,6 +41,7 @@ import {
     useSendPayslipEmail,
     useSendBulkEmails,
 } from '@/lib/hooks/use-reports';
+import { useCan } from '@/lib/hooks/use-can';
 import { toast } from 'sonner';
 import {
     downloadPayslip,
@@ -97,6 +98,9 @@ export default function PayslipsPage() {
                 p.status === PayPeriodStatus.CLOSED,
         );
 
+    // Generating, sending and bulk-downloading are Payroll's. A Viewer reads
+    // the list and opens any single payslip.
+    const canManage = useCan()('payslips.manage');
     const generateBulkMutation = useGenerateBulkPayslips();
     const sendEmailMutation = useSendPayslipEmail();
     const sendBulkMutation = useSendBulkEmails();
@@ -150,50 +154,52 @@ export default function PayslipsPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Payslips</h1>
                     <p className="text-muted-foreground">Generate, download, and email employee payslips</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        disabled={!selectedPeriod || downloadingAll}
-                        onClick={async () => {
-                            const period = periods?.find((p) => p.id === selectedPeriod);
-                            setDownloadingAll(true);
-                            try {
-                                await downloadPayPeriodPayslips(
-                                    selectedPeriod,
-                                    period?.name ?? 'period',
-                                );
-                            } catch (e) {
-                                // Most often: nothing generated yet. The server
-                                // says which, so pass it straight through.
-                                toast.error(
-                                    (e as Error).message ||
-                                        'Could not download the payslips',
-                                );
-                            } finally {
-                                setDownloadingAll(false);
-                            }
-                        }}
-                    >
-                        {downloadingAll ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Download className="mr-2 h-4 w-4" />
-                        )}
-                        Download All
-                    </Button>
-                    <Button
-                        variant="outline"
-                        disabled={!selectedPeriod}
-                        onClick={() => setShowBulkSend(true)}
-                    >
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send All
-                    </Button>
-                    <Button disabled={!selectedPeriod} onClick={() => setShowBulkGenerate(true)}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Generate All
-                    </Button>
-                </div>
+                {canManage && (
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            disabled={!selectedPeriod || downloadingAll}
+                            onClick={async () => {
+                                const period = periods?.find((p) => p.id === selectedPeriod);
+                                setDownloadingAll(true);
+                                try {
+                                    await downloadPayPeriodPayslips(
+                                        selectedPeriod,
+                                        period?.name ?? 'period',
+                                    );
+                                } catch (e) {
+                                    // Most often: nothing generated yet. The server
+                                    // says which, so pass it straight through.
+                                    toast.error(
+                                        (e as Error).message ||
+                                            'Could not download the payslips',
+                                    );
+                                } finally {
+                                    setDownloadingAll(false);
+                                }
+                            }}
+                        >
+                            {downloadingAll ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Download className="mr-2 h-4 w-4" />
+                            )}
+                            Download All
+                        </Button>
+                        <Button
+                            variant="outline"
+                            disabled={!selectedPeriod}
+                            onClick={() => setShowBulkSend(true)}
+                        >
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send All
+                        </Button>
+                        <Button disabled={!selectedPeriod} onClick={() => setShowBulkGenerate(true)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Generate All
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {noProcessedPayroll && (
@@ -353,14 +359,16 @@ export default function PayslipsPage() {
                                                         >
                                                             <FileDown className="h-4 w-4" />
                                                         </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={sendEmailMutation.isPending}
-                                                            onClick={() => sendEmailMutation.mutate(payslip.id)}
-                                                        >
-                                                            <Send className="h-4 w-4" />
-                                                        </Button>
+                                                        {canManage && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                disabled={sendEmailMutation.isPending}
+                                                                onClick={() => sendEmailMutation.mutate(payslip.id)}
+                                                            >
+                                                                <Send className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

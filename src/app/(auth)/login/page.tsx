@@ -51,21 +51,10 @@ function LoginForm() {
         try {
             await login(values);
 
-            // Read user from store after login
+            // The store's login applied the session (token and cookies).
             const user = useAuthStore.getState().user;
-            const maxAge = 60 * 60 * 24 * 7;
 
-            // Set auth cookie
-            document.cookie = `auth-token=true; path=/; max-age=${maxAge}`;
-
-            // Set user roles cookie for middleware
-            if (user?.systemRoles) {
-                document.cookie = `user-roles=${encodeURIComponent(JSON.stringify(user.systemRoles))}; path=/; max-age=${maxAge}`;
-            }
-
-            // Check if user must change password
             if (user?.mustChangePassword) {
-                document.cookie = `must-change-password=true; path=/; max-age=${maxAge}`;
                 router.push('/change-password');
                 return;
             }

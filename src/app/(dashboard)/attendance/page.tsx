@@ -15,8 +15,8 @@ import { EmptyState } from '@/components/common/empty-state';
 import { useClassArms } from '@/lib/hooks/use-academics';
 import { useMyClasses } from '@/lib/hooks/use-attendance';
 import { RegisterScreen } from './register-screen';
+import { todayIso } from '@/lib/utils/dates';
 
-const today = () => new Date().toISOString().slice(0, 10);
 
 /**
  * Taking the register.
@@ -37,7 +37,7 @@ export default function AttendancePage() {
         isLoading: loadingArms,
         isError: armsFailed,
     } = useClassArms();
-    const [date, setDate] = useState(today());
+    const [date, setDate] = useState(todayIso());
     const [chosen, setChosen] = useState<string | null>(null);
 
     if (loadingMine || loadingArms) {
@@ -95,7 +95,7 @@ export default function AttendancePage() {
                             id="register-day"
                             type="date"
                             value={date}
-                            max={today()}
+                            max={todayIso()}
                             onChange={(e) => setDate(e.target.value)}
                             className="w-44"
                         />

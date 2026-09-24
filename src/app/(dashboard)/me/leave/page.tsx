@@ -26,11 +26,11 @@ import {
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import {
     useMyLeaveBalances,
+    useMyLeaveTypes,
     useMyLeaveRequests,
     useRequestOwnLeave,
     useCancelOwnLeave,
 } from '@/lib/hooks/use-self-service';
-import { useLeaveTypes } from '@/lib/hooks/use-leave';
 import type { ApiError, LeaveStatus } from '@/lib/types/api';
 
 const STATUS_VARIANT: Record<
@@ -242,7 +242,7 @@ function RequestOwnLeaveDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const { data: types = [] } = useLeaveTypes();
+    const { data: types = [] } = useMyLeaveTypes();
     const request = useRequestOwnLeave();
 
     const [leaveTypeId, setLeaveTypeId] = useState('');

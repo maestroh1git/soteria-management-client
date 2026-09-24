@@ -3,6 +3,7 @@ import type {
   EmployeeCompleteness,
   LeaveBalance,
   LeaveRequest,
+  LeaveType,
   Loan,
   YtdTotals,
 } from '@/lib/types/api';
@@ -137,6 +138,15 @@ export async function getMyLeaveBalances(
   return (await api.get(
     `/me/leave/balances${query}`,
   )) as unknown as LeaveBalance[];
+}
+
+/**
+ * The leave I can ask for. Not `/leave/types`: that is the leave office's
+ * endpoint, and it refused everyone outside payroll — an Educator opened My
+ * Leave to a 403 and could not request leave at all.
+ */
+export async function getMyLeaveTypes(): Promise<LeaveType[]> {
+  return (await api.get('/me/leave/types')) as unknown as LeaveType[];
 }
 
 export async function getMyLeaveRequests(): Promise<LeaveRequest[]> {

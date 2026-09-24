@@ -14,7 +14,17 @@ export interface ClassArm {
     capacity: number | null;
     levelId: string;
     formTeacherId: string | null;
+    /** The educator's name, sent with the arm so nobody needs the staff list. */
+    formTeacherName?: string | null;
     level?: ClassLevel;
+}
+
+/** Someone who can be made a class's educator (GET /academics/educators). */
+export interface EducatorOption {
+    id: string;
+    name: string;
+    role: string | null;
+    department: string | null;
 }
 
 export interface AcademicSession {
@@ -131,6 +141,10 @@ export async function updateClassLevel(
         `/academics/levels/${id}`,
         dto,
     )) as unknown as ClassLevel;
+}
+
+export async function getEducatorOptions(): Promise<EducatorOption[]> {
+    return (await api.get('/academics/educators')) as unknown as EducatorOption[];
 }
 
 export async function getClassArms(levelId?: string): Promise<ClassArm[]> {

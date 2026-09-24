@@ -25,14 +25,19 @@ import {
 import { toast } from 'sonner';
 
 // ── Employee list & detail ──────────────────────────────────
-export function useEmployees(filters?: {
-  status?: string;
-  roleId?: string;
-  search?: string;
-}) {
+export function useEmployees(
+  filters?: {
+    status?: string;
+    roleId?: string;
+    search?: string;
+  },
+  /** Off for anyone who may not read the staff list, so it never 403s. */
+  enabled = true,
+) {
   return useQuery({
     queryKey: ['employees', filters],
     queryFn: () => getEmployees(filters),
+    enabled,
   });
 }
 

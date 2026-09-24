@@ -39,6 +39,7 @@ import {
 import { EmptyState } from '@/components/common/empty-state';
 import { ExpenseReceipts } from '@/components/finance/expense-receipts';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCan } from '@/lib/hooks/use-can';
 import {
     useExpenses,
     useAccounts,
@@ -81,15 +82,20 @@ const ACTION_ENDPOINT: Record<string, 'submit' | 'approve' | 'reject' | 'cancel'
 };
 
 export default function ExpensesPage() {
-    const { user, hasRole } = useAuth();
-    const canRaise = hasRole(['tenant_owner', 'ADMIN', 'FINANCE_ADMIN']);
+    const { user } = useAuth();
+    const can = useCan();
+    // Raising, submitting and paying are the finance office's; approving and
+    // rejecting are also the Approver's. The API draws the same lines.
+    const canRaise = can('expenses.raise');
+    const canDecide = can('expenses.decide');
 
     const [status, setStatus] = useState('all');
     const [raising, setRaising] = useState(false);
     const [paying, setPaying] = useState<Expense | null>(null);
 
     const { data: expenses = [], isLoading, isError } = useExpenses(status);
-    const { data: accounts = [] } = useAccounts();
+    // Accounts only feed the raise and pay forms.
+    const { data: accounts = [] } = useAccounts(undefined, canRaise);
 
     const expenseAccounts = accounts.filter((a) => a.type === 'EXPENSE');
     const assetAccounts = accounts.filter((a) => a.type === 'ASSET');
@@ -144,6 +150,8 @@ export default function ExpensesPage() {
                             key={e.id}
                             expense={e}
                             currentUserId={user?.id}
+                            canRaise={canRaise}
+                            canDecide={canDecide}
                             onPay={() => setPaying(e)}
                         />
                     ))}
@@ -166,16 +174,29 @@ export default function ExpensesPage() {
     );
 }
 
+/** Which of an expense's next states are a decision rather than the raiser's. */
+const DECISIONS: ExpenseStatus[] = ['APPROVED', 'REJECTED'];
+
 function ExpenseRow({
     expense,
     currentUserId,
+    canRaise,
+    canDecide,
     onPay,
 }: {
     expense: Expense;
     currentUserId?: string;
+    canRaise: boolean;
+    canDecide: boolean;
     onPay: () => void;
 }) {
     const act = useExpenseAction(expense.id);
+    // The server says which moves the expense's state allows; the caller's
+    // role says which of those are theirs. An Approver was offered Submit,
+    // Pay and Cancel, and the API refused all three.
+    const moves = expense.allowedTransitions.filter((to: ExpenseStatus) =>
+        DECISIONS.includes(to) ? canDecide : canRaise,
+    );
 
     /**
      * The one rule worth showing rather than enforcing only on the server.
@@ -212,7 +233,8 @@ function ExpenseRow({
                         expenseId={expense.id}
                         count={expense.receiptCount ?? 0}
                         editable={
-                            expense.status === 'DRAFT' || expense.status === 'SUBMITTED'
+                            canRaise &&
+                            (expense.status === 'DRAFT' || expense.status === 'SUBMITTED')
                         }
                     />
                 </div>
@@ -222,7 +244,7 @@ function ExpenseRow({
                         ₦{money(expense.amount)}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                        {expense.allowedTransitions.map((to: ExpenseStatus) => {
+                        {moves.map((to: ExpenseStatus) => {
                             if (to === 'PAID') {
                                 return (
                                     <Button key={to} size="sm" onClick={onPay}>

@@ -59,7 +59,14 @@ export default function MyClassesPage() {
                     <CardContent className="space-y-5 py-5">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                                <h2 className="text-lg font-semibold">{c.className}</h2>
+                                <h2 className="text-lg font-semibold">
+                                    <Link
+                                        href={`/me/classes/${c.classArmId}`}
+                                        className="hover:underline"
+                                    >
+                                        {c.className}
+                                    </Link>
+                                </h2>
                                 <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                                     <Users className="h-3.5 w-3.5" />
                                     <span className="tabular-nums">{c.enrolled}</span> pupils
@@ -91,7 +98,7 @@ export default function MyClassesPage() {
                                     </span>
                                 </p>
                                 <Button asChild variant="outline" size="sm">
-                                    <Link href="/attendance">Amend</Link>
+                                    <Link href={`/me/classes/${c.classArmId}/register`}>Amend</Link>
                                 </Button>
                             </div>
                         ) : (
@@ -100,7 +107,7 @@ export default function MyClassesPage() {
                                     Register not taken yet
                                 </p>
                                 <Button asChild className="mt-3 h-11 w-full sm:w-auto">
-                                    <Link href="/attendance">
+                                    <Link href={`/me/classes/${c.classArmId}/register`}>
                                         Take the register for {c.className}
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Link>

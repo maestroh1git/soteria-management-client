@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/empty-state';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { AwardDialog } from './award-dialog';
+import { useCan } from '@/lib/hooks/use-can';
 import { useAwards, useDeleteAward } from '@/lib/hooks/use-attendance';
 import { AWARD_CATEGORY_LABELS, type AwardCategory } from '@/lib/api/attendance';
 
@@ -29,6 +30,9 @@ export function StudentAwards({
 }) {
     const { data: awards = [], isLoading, isError } = useAwards(studentId);
     const remove = useDeleteAward(studentId);
+    // Educators and the office grant awards. A Registrar or Admissions Officer
+    // reading the same pupil sees the list, not the buttons the API refuses.
+    const canGrant = useCan()('awards.grant');
     const [adding, setAdding] = useState(false);
     const [removing, setRemoving] = useState<{ id: string; title: string } | null>(
         null,
@@ -51,10 +55,12 @@ export function StudentAwards({
                         ? 'Nothing recorded yet.'
                         : `${awards.length} ${awards.length === 1 ? 'award' : 'awards'}.`}
                 </p>
-                <Button size="sm" onClick={() => setAdding(true)}>
-                    <Plus className="mr-1.5 h-4 w-4" />
-                    Recognise
-                </Button>
+                {canGrant && (
+                    <Button size="sm" onClick={() => setAdding(true)}>
+                        <Plus className="mr-1.5 h-4 w-4" />
+                        Recognise
+                    </Button>
+                )}
             </div>
 
             {isError ? (
@@ -100,17 +106,19 @@ export function StudentAwards({
                                             </p>
                                         )}
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 flex-none"
-                                        aria-label={`Withdraw ${a.title}`}
-                                        onClick={() =>
-                                            setRemoving({ id: a.id, title: a.title })
-                                        }
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {canGrant && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 flex-none"
+                                            aria-label={`Withdraw ${a.title}`}
+                                            onClick={() =>
+                                                setRemoving({ id: a.id, title: a.title })
+                                            }
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </CardContent>
                             </Card>
                         </li>

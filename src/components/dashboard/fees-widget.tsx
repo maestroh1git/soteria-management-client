@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useSessions } from '@/lib/hooks/use-academics';
 import { useIncomeStatement } from '@/lib/hooks/use-finance';
+import { useCan } from '@/lib/hooks/use-can';
 import { useFeeSummary } from '@/lib/hooks/use-fees';
 
 const money = (v: string) => {
@@ -42,13 +43,18 @@ const signedMoney = (v: string) => {
  */
 export function FeesWidget() {
     const { tenantOrgType } = useAuth();
-    const { data: summary } = useFeeSummary();
+    const can = useCan();
+    const isSchool = tenantOrgType === 'SCHOOL';
+    // Fees for those who read them; the surplus line only for those who read
+    // the ledger. Asked of everyone, both came back 403 on most dashboards.
+    const { data: summary } = useFeeSummary(undefined, isSchool && can('fees.read'));
     const { data: sessions } = useSessions();
 
     const current = sessions?.find((s) => s.isCurrent);
     const { data: income } = useIncomeStatement(
         current?.startDate,
         current?.endDate,
+        isSchool && can('ledger.read'),
     );
 
     if (tenantOrgType !== 'SCHOOL') return null;
