@@ -24,8 +24,8 @@ run in parallel unless a dependency is named.
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
-| 4 Reorganise | **In progress**: C4.1 navigation and C4.2 Setup done | branch `claude/zealous-keller-5aeha8` |
-| 5 | Not started | — |
+| 4 Reorganise | **In progress**: C4.1, C4.2, C4.3, C4.7, C4.9 done | branch `claude/zealous-keller-5aeha8` |
+| 5 Finish | **In progress**: 5.1–5.3 done with the Fees hub; the report exports half of 5.7 | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -96,8 +96,32 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 - **Checks:** persona tests 21/21 (each persona also opens every Setup page
   they are shown; old URLs land on the new ones); API unit 808/808, e2e 512
   passed (2 skipped); audit 0; lint ratchet 45 file/rule pairs.
-- **Next in Wave 4:** C4.3 Team & access (splits Organisation & access),
-  then the record hubs C4.4–C4.7.
+- **C4.3 Team & access** (`/setup/team`): everyone who can sign in, their
+  staff record, access and status; access chips as the view by access;
+  change access, activity, resend a waiting invite (new
+  `POST /users/:id/resend-invite`), deactivate or reactivate. Organisation
+  keeps profile, branding and reference data, with tabs in `?tab=`.
+- **C4.7 Fees hub**: one sidebar entry, tabs Price list · Invoices ·
+  Receipts · Concessions · Optional fees · Arrears (`SectionTabs`, for the
+  next hubs). With it, Wave 5's fee items:
+  - **5.1 Concessions** under D3: raised by Finance or the Registrar,
+    decided by the Owner, an Admin or an Approver, never by whoever raised
+    it; sibling suggestions, never applied automatically.
+  - **5.2 Optional fees**: who takes transport, lunch, clubs, with a
+    per-pupil price.
+  - **5.3** Apply a receipt's credit to unpaid invoices; clear a price cell
+    to remove a price.
+- **C4.9 Approvals** (`/approvals`, `GET /approvals`): pay runs, pay
+  adjustments, leave, loans, expenses and concessions waiting on you, decided
+  in place; a live count in the sidebar.
+- **Access changes this round:** concessions follow D3 (new
+  `fees.concessions.*` actions); Finance may search the roll
+  (`students.list`) to pick whom a concession or payment is for, not open
+  the record.
+- **Checks:** persona tests 29/29; API unit 808/808, e2e 523 passed (2
+  skipped); audit 0 (16 hooks still unbuilt, down from 25); lint ratchet 44.
+- **Next in Wave 4:** the record hubs C4.4 (staff), C4.5 (pupil), C4.6
+  (pay run), then C4.8 Today, C4.10 persona homes, C4.11 portal and console.
 
 ### Left for later waves
 
