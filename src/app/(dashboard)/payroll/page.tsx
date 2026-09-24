@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -221,7 +222,14 @@ export default function PayrollPage() {
                                         onClick={() => router.push(`/payroll/${period.id}`)}
                                     >
                                         <td className="px-4 py-3 font-medium">
-                                            {period.name}
+                                            {/* The keyboard path; the row click is the mouse's. */}
+                                            <Link
+                                                href={`/payroll/${period.id}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="hover:underline underline-offset-2"
+                                            >
+                                                {period.name}
+                                            </Link>
                                             {isCurrent && (
                                                 <span className="ml-2 text-xs text-primary">(Current)</span>
                                             )}

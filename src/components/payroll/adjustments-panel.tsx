@@ -133,11 +133,15 @@ export function AdjustmentsPanel({
                 )}
             </CardContent>
 
-            <AdjustmentFormDialog
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
-                payPeriodId={payPeriodId}
-            />
+            {/* Only for those who raise adjustments: its staff list is theirs
+                to read, and an Approver opening the run was refused it. */}
+            {canRaise && (
+                <AdjustmentFormDialog
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    payPeriodId={payPeriodId}
+                />
+            )}
         </Card>
     );
 }
