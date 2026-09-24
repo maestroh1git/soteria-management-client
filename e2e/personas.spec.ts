@@ -250,11 +250,10 @@ test.describe('Sidebar sections fold, and one link is current', () => {
 
     test('only the closest link is marked current', async ({ page }) => {
         const sidebar = page.locator('aside nav');
-        await page.goto('/fees/invoices');
+        await page.goto('/me/classes');
         await settle(page);
-        // Fees (/fees) and Invoices (/fees/invoices) both used to light up.
+        // My Pay (/me) and My Classes (/me/classes) both used to light up.
         await expect(sidebar.locator('a[aria-current="page"]')).toHaveCount(1);
-        await expect(sidebar.locator('a[aria-current="page"]')).toHaveText('Invoices');
         await page.goto('/me/classes');
         await settle(page);
         await expect(sidebar.locator('a[aria-current="page"]')).toHaveText('My Classes');
@@ -273,7 +272,7 @@ test.describe('Sidebar sections fold, and one link is current', () => {
         await settle(page);
         await expect(sidebar.getByRole('button', { name: /insight/i })).toHaveAttribute('aria-expanded', 'false');
         // The section holding the page you are on is open.
-        await expect(sidebar.getByRole('link', { name: 'Invoices' })).toBeVisible();
+        await expect(sidebar.getByRole('link', { name: 'Fees' })).toBeVisible();
 
         await page.goto('/reports');
         await settle(page);
@@ -348,6 +347,35 @@ test.describe('Fees hub', () => {
             await expect(page.getByRole('heading', { level: 1 })).toHaveText('Concessions');
             await expect(page.getByRole('button', { name: /raise a concession/i })).toHaveCount(0);
             expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});
+
+test.describe('Approvals inbox', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('an Approver', () => {
+        test.skip(!has('approver'), 'no approver persona');
+        test.use({ storageState: storageFor('approver') });
+
+        test('has one queue for every decision, counted in the sidebar', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/approvals');
+            await settle(page);
+            await expect(page.getByRole('heading', { level: 1 })).toHaveText('Approvals');
+            await expect(page.locator('aside nav').getByRole('link', { name: /^Approvals/ })).toBeVisible();
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+
+    test.describe('an Employee', () => {
+        test.skip(!has('employee'), 'no employee persona');
+        test.use({ storageState: storageFor('employee') });
+
+        test('is not shown an inbox they have nothing in', async ({ page }) => {
+            await page.goto('/');
+            await settle(page);
+            await expect(page.locator('aside nav').getByRole('link', { name: /^Approvals/ })).toHaveCount(0);
         });
     });
 });

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { Separator } from '@/components/ui/separator';
 import type { NavGroup } from './nav-config';
+import { useApprovals } from '@/features/approvals/hooks';
 
 /**
  * The one link the current page belongs to: the longest href the path starts
@@ -48,6 +49,10 @@ export function NavGroups({
     const pathname = usePathname();
     const { collapsedNavGroups, toggleNavGroup, expandNavGroup } = useUIStore();
     const activeHref = activeHrefFor(pathname, groups);
+    const wantsApprovals = groups.some((g) => g.items.some((i) => i.count === 'approvals'));
+    const { data: approvals } = useApprovals(wantsApprovals);
+    const countFor = (item: NavGroup['items'][number]) =>
+        item.count === 'approvals' ? (approvals?.total ?? 0) : 0;
     const activeGroup = groups.find((g) => g.items.some((i) => i.href === activeHref))?.label;
 
     // Wait for the saved folds to load (the store rehydrates after the first
@@ -102,6 +107,7 @@ export function NavGroups({
                         <div id={id} hidden={!open} className="space-y-1">
                             {group.items.map((item) => {
                                 const isActive = item.href === activeHref;
+                                const count = countFor(item);
                                 return (
                                     <Link
                                         key={item.href}
@@ -117,11 +123,29 @@ export function NavGroups({
                                             rail && 'justify-center px-2',
                                         )}
                                     >
-                                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                                        <span className="relative">
+                                            <item.icon className="h-4 w-4 flex-shrink-0" />
+                                            {rail && count > 0 && (
+                                                <span className="absolute -right-1.5 -top-1.5 h-2 w-2 rounded-full bg-amber-500" />
+                                            )}
+                                        </span>
                                         {rail ? (
-                                            <span className="sr-only">{item.title}</span>
+                                            <span className="sr-only">
+                                                {item.title}
+                                                {count > 0 && `, ${count} waiting`}
+                                            </span>
                                         ) : (
-                                            <span>{item.title}</span>
+                                            <span className="flex flex-1 items-center justify-between">
+                                                {item.title}
+                                                {count > 0 && (
+                                                    <span
+                                                        className="rounded-full bg-amber-100 px-2 text-xs font-semibold tabular-nums text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                                        aria-label={`${count} waiting`}
+                                                    >
+                                                        {count}
+                                                    </span>
+                                                )}
+                                            </span>
                                         )}
                                     </Link>
                                 );

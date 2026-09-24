@@ -27,6 +27,7 @@ import {
   Banknote,
   TreePalm,
   ArrowLeftRight,
+  Inbox,
 } from "lucide-react";
 
 export interface NavItem {
@@ -44,6 +45,8 @@ export interface NavItem {
   orgTypes?: string[];
   /** Titled with the school's word for its learners (lib/copy/glossary). */
   learnerTerm?: boolean;
+  /** Show a live count beside the title. */
+  count?: "approvals";
 }
 
 export interface NavGroup {
@@ -77,7 +80,11 @@ export const navigation: NavGroup[] = [
   },
   {
     label: "Home",
-    items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
+    items: [
+      { title: "Dashboard", href: "/", icon: LayoutDashboard },
+      // One queue for every decision (C4.9), with how many wait on you.
+      { title: "Approvals", href: "/approvals", icon: Inbox, count: "approvals" },
+    ],
   },
   {
     label: "People",

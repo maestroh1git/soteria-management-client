@@ -28,6 +28,16 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/portal': 'guardians',
   '/admin': 'platform.read',
 
+  // Everyone who decides anything; the inbox holds only what they decide.
+  '/approvals': [
+    'payroll.approve',
+    'payroll.adjustments.decide',
+    'leave.decide',
+    'expenses.decide',
+    'fees.concessions.decide',
+    'loans.decide',
+  ],
+
   // People
   '/employees': 'employees.read',
   '/students': 'students.read',
