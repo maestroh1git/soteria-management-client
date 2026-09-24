@@ -49,6 +49,7 @@ import {
 import type { FeeCategory } from '@/lib/api/fees';
 import { Money } from '@/components/common/money';
 import { formatAmount } from '@/lib/utils/money';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 type FeeItemRow = NonNullable<ReturnType<typeof useFeeItems>['data']>[number];
 
@@ -62,6 +63,8 @@ const CATEGORIES: FeeCategory[] = [
     'OTHER',
 ];
 
+const FEES_TABS = ['prices', 'catalogue'] as const;
+
 /**
  * The fee catalogue and the price list.
  *
@@ -73,6 +76,7 @@ const CATEGORIES: FeeCategory[] = [
  * Nothing on this page bills anybody. Invoicing is S2.
  */
 export default function FeesPage() {
+    const [tab, setTab] = useTabParam(FEES_TABS);
     const { data: sessions } = useSessions();
     const [sessionId, setSessionId] = useState<string>();
     const [termId, setTermId] = useState<string>();
@@ -156,7 +160,7 @@ export default function FeesPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="prices">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="prices">Price list</TabsTrigger>
                     <TabsTrigger value="catalogue">Fees charged</TabsTrigger>

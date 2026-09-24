@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
     Upload,
     FileSpreadsheet,
     AlertTriangle,
     CheckCircle2,
     Loader2,
-    ArrowLeft,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -31,6 +29,7 @@ import {
     commitImport,
     type ImportPreview,
 } from '@/lib/api/employee-import';
+import { PageHeader } from '@/components/layout/page-header';
 
 /**
  * Roster upload.
@@ -93,19 +92,11 @@ export default function ImportStaffPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/employees" aria-label="Back to employees">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-semibold">Import staff</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Upload a CSV or Excel file to create many employees at once.
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Import staff"
+                description="Upload a CSV or Excel file to create many employees at once."
+                crumbs={[{ label: 'Import' }]}
+            />
 
             <Card>
                 <CardHeader>

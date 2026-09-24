@@ -49,6 +49,7 @@ import { StudentDocuments } from '@/components/students/student-documents';
 import { formatDate } from '@/lib/utils/dates';
 import type { StudentGuardianLink } from '@/lib/api/students';
 import { AddGuardianDialog } from '@/components/students/add-guardian-dialog';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENOTYPES = ['AA', 'AS', 'SS', 'AC', 'SC'];
@@ -56,11 +57,14 @@ const GENOTYPES = ['AA', 'AS', 'SS', 'AC', 'SC'];
 /** Sickle cell disease. Worth calling out rather than showing as two letters. */
 const SICKLE = ['SS', 'SC'];
 
+const STUDENT_TABS = ['bio', 'guardians', 'medical', 'awards', 'documents'] as const;
+
 export default function StudentDetailPage({
     params,
 }: {
     params: Promise<{ id: string }>;
 }) {
+    const [tab, setTab] = useTabParam(STUDENT_TABS);
     const { id } = use(params);
     const can = useCan();
     const canEdit = can('students.manage');
@@ -159,7 +163,7 @@ export default function StudentDetailPage({
                 </div>
             )}
 
-            <Tabs defaultValue="bio">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="bio">Biodata</TabsTrigger>
                     <TabsTrigger value="guardians">

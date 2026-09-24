@@ -241,3 +241,21 @@ export function filterNavigation(
     }))
     .filter((group) => group.items.length > 0);
 }
+
+/**
+ * The sidebar entry a path lives under — the longest href that is a prefix of
+ * it. Breadcrumbs start here, so a record's trail names the section the way
+ * the sidebar does.
+ */
+export function sectionFor(pathname: string): NavItem | null {
+  let best: NavItem | null = null;
+  for (const group of navigation) {
+    for (const item of group.items) {
+      const match =
+        pathname === item.href ||
+        (item.href !== "/" && pathname.startsWith(item.href + "/"));
+      if (match && (!best || item.href.length > best.href.length)) best = item;
+    }
+  }
+  return best;
+}

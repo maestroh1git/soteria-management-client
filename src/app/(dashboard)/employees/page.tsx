@@ -14,6 +14,7 @@ import {
     AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -205,40 +206,38 @@ export default function EmployeesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
-                    <p className="text-muted-foreground">
-                        Manage your staff directory
-                    </p>
-                </div>
-                {canManage && (
-                    <div className="flex gap-2">
-                        {/* Import stays available even with no roles yet: it can
-                            create them from the file. */}
-                        <Link href="/employees/import">
-                            <Button variant="outline">
-                                <Upload className="mr-2 h-4 w-4" /> Import
-                            </Button>
-                        </Link>
-                        {needsRole ? (
-                            <Button
-                                disabled
-                                title="Create a role first"
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600"
-                            >
-                                <Plus className="mr-2 h-4 w-4" /> Add Employee
-                            </Button>
-                        ) : (
-                            <Link href="/employees/new">
-                                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                                    <Plus className="mr-2 h-4 w-4" /> Add Employee
+            <PageHeader
+                title="Employees"
+                description="Manage your staff directory"
+                actions={
+                    canManage && (
+                        <div className="flex gap-2">
+                            {/* Import stays available even with no roles yet: it can
+                                create them from the file. */}
+                            <Link href="/employees/import">
+                                <Button variant="outline">
+                                    <Upload className="mr-2 h-4 w-4" /> Import
                                 </Button>
                             </Link>
-                        )}
-                    </div>
-                )}
-            </div>
+                            {needsRole ? (
+                                <Button
+                                    disabled
+                                    title="Create a role first"
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                                >
+                                    <Plus className="mr-2 h-4 w-4" /> Add Employee
+                                </Button>
+                            ) : (
+                                <Link href="/employees/new">
+                                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                                        <Plus className="mr-2 h-4 w-4" /> Add Employee
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
+                    )
+                }
+            />
 
             {needsRole && (
                 <PrerequisiteNotice

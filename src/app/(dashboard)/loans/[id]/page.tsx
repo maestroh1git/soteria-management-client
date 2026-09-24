@@ -46,8 +46,12 @@ import { LoanStatus, LoanType } from '@/lib/types/enums';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
 import { formatMoney } from '@/lib/utils/money';
 import { StatusBadge } from '@/components/common/status-badge';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
+
+const LOAN_TABS = ['details', 'repayments', 'history'] as const;
 
 export default function LoanDetailPage() {
+    const [tab, setTab] = useTabParam(LOAN_TABS);
     const params = useParams();
     const router = useRouter();
     const loanId = params.id as string;
@@ -151,7 +155,7 @@ export default function LoanDetailPage() {
                 </Button>
             )}
 
-            <Tabs defaultValue="details">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="repayments">Repayments</TabsTrigger>

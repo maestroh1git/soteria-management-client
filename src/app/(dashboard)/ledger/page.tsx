@@ -35,6 +35,7 @@ import {
 import { formatDate } from '@/lib/utils/dates';
 import { Money } from '@/components/common/money';
 import { formatAmount } from '@/lib/utils/money';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 /**
  * Amounts arrive as strings from Postgres `numeric` and are formatted, never
@@ -49,7 +50,10 @@ const SOURCE_LABEL: Record<string, string> = {
     MANUAL: 'Manual',
 };
 
+const LEDGER_TABS = ['accounts', 'entries'] as const;
+
 export default function LedgerPage() {
+    const [tab, setTab] = useTabParam(LEDGER_TABS);
     const [sourceType, setSourceType] = useState('all');
     const [openEntry, setOpenEntry] = useState<string | undefined>();
 
@@ -105,7 +109,7 @@ export default function LedgerPage() {
                 </Card>
             )}
 
-            <Tabs defaultValue="accounts">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="accounts">Accounts</TabsTrigger>
                     <TabsTrigger value="entries">Journal</TabsTrigger>

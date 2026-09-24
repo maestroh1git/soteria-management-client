@@ -1,8 +1,8 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -23,6 +23,8 @@ import { useCan } from '@/lib/hooks/use-can';
 import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
+import { PageHeader } from '@/components/layout/page-header';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 export default function EmployeeDetailPage({
     params,
@@ -42,9 +44,16 @@ export default function EmployeeDetailPage({
     // PATCH /employees/:id is held to the same roles — a VIEWER may look, not edit.
     const canManageEmployee = can('employees.manage');
     const { data: employee, isLoading, isError } = useEmployee(id);
-    // Controlled so the completeness panel can send the user to the tab a gap
-    // is actually fixed on.
-    const [tab, setTab] = useState('overview');
+    // In the URL, so the completeness panel (and any link) can send the user to
+    // the tab a gap is actually fixed on. Tabs they may not see are not tabs.
+    const tabs = useMemo(
+        () =>
+            canViewSensitive
+                ? (['overview', 'salary', 'bank', 'history'] as const)
+                : (['overview', 'history'] as const),
+        [canViewSensitive],
+    );
+    const [tab, setTab] = useTabParam<(typeof tabs)[number]>(tabs);
     const {
         data: history = [],
         isLoading: historyLoading,
@@ -63,33 +72,22 @@ export default function EmployeeDetailPage({
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link href="/employees">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            {employee.firstName} {employee.lastName}
-                        </h1>
-                        <StatusBadge kind="employee" status={employee.status} />
-                    </div>
-                    <p className="text-muted-foreground">
-                        {employee.employeeNumber} · {employee.role?.name ?? 'No role'}
-                    </p>
-                </div>
-                {canManageEmployee && (
-                    <Link href={`/employees/${id}/edit`}>
-                        <Button variant="outline" size="sm">
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                        </Button>
-                    </Link>
-                )}
-            </div>
+            <PageHeader
+                title={`${employee.firstName} ${employee.lastName}`}
+                badge={<StatusBadge kind="employee" status={employee.status} />}
+                description={`${employee.employeeNumber} · ${employee.role?.name ?? 'No role'}`}
+                crumbs={[{ label: `${employee.firstName} ${employee.lastName}` }]}
+                actions={
+                    canManageEmployee && (
+                        <Link href={`/employees/${id}/edit`}>
+                            <Button variant="outline" size="sm">
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                            </Button>
+                        </Link>
+                    )
+                }
+            />
 
             <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>

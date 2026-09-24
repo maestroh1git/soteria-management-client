@@ -13,10 +13,13 @@ import { useIncomeStatement } from '@/lib/hooks/use-finance';
 import { useCan } from '@/lib/hooks/use-can';
 import { useCollectionByTerm, useDebtors } from '@/lib/hooks/use-fees';
 import { Money } from '@/components/common/money';
+import { useTabParam } from '@/lib/hooks/use-tab-param';
 
 /** Blank rather than a zero, so the eye lands on the buckets that matter. */
 const cell = (v: string) =>
     Number(v) === 0 ? <span className="text-muted-foreground">—</span> : <Money value={v} />;
+
+const ARREARS_TABS = ['debtors', 'terms', 'net'] as const;
 
 /**
  * Who owes what, how the term is collecting, and what the school actually
@@ -27,6 +30,7 @@ const cell = (v: string) =>
  * nobody ever compares them.
  */
 export default function ArrearsPage() {
+    const [tab, setTab] = useTabParam(ARREARS_TABS);
     const { data: debtors, isLoading, isError } = useDebtors();
     const { data: sessions } = useSessions();
     const [sessionId, setSessionId] = useState<string>();
@@ -55,7 +59,7 @@ export default function ArrearsPage() {
                 </p>
             </div>
 
-            <Tabs defaultValue="debtors">
+            <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="debtors">Who owes</TabsTrigger>
                     <TabsTrigger value="terms">By term</TabsTrigger>

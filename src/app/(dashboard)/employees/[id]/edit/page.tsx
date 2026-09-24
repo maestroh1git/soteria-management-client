@@ -2,16 +2,14 @@
 
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { EmployeeForm } from '@/components/employees/employee-form';
 import { useEmployee, useUpdateEmployee } from '@/lib/hooks/use-employees';
 import { toUpdateEmployeeDto } from '@/lib/utils/employee-dto';
 import { type CreateEmployeeValues } from '@/lib/utils/validation';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function EditEmployeePage({
     params,
@@ -75,21 +73,14 @@ export default function EditEmployeePage({
 
     return (
         <div className="space-y-6 max-w-3xl">
-            <div className="flex items-center gap-4">
-                <Link href={`/employees/${id}`}>
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Edit {employee.firstName} {employee.lastName}
-                    </h1>
-                    <p className="text-muted-foreground">
-                        {employee.employeeNumber} · update this staff member&apos;s details
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title={`Edit ${employee.firstName} ${employee.lastName}`}
+                description={`${employee.employeeNumber} · update this staff member's details`}
+                crumbs={[
+                    { label: `${employee.firstName} ${employee.lastName}`, href: `/employees/${id}` },
+                    { label: 'Edit' },
+                ]}
+            />
 
             <EmployeeForm
                 mode="edit"
