@@ -20,6 +20,8 @@ import {
 import type { PublicAppointment } from '@/lib/api/public-admissions';
 import { useApplicationStatus } from '@/lib/hooks/use-public';
 import { formatDate, formatLongDate, formatTime } from '@/lib/utils/dates';
+import { OfferAnswer } from '@/features/public/offer-answer';
+import { FamilyDocuments } from '@/features/public/family-documents';
 
 /**
  * What a parent is told, in words rather than status codes.
@@ -49,7 +51,7 @@ const SAY: Record<string, { title: string; detail: string; tone: string }> = {
     },
     OFFERED: {
         title: 'A place has been offered',
-        detail: 'Contact the school to accept. Offers do expire.',
+        detail: 'Accept or decline below. Offers do expire.',
         tone: 'text-amber-700 dark:text-amber-300',
     },
     ACCEPTED: {
@@ -231,16 +233,29 @@ export default function ApplicationStatusPage({
                         </p>
                     </div>
 
-                    {status.offerExpiresAt && (
-                        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-                            <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-                            <span>
-                                This offer expires on{' '}
-                                {formatLongDate(status.offerExpiresAt)}
-                                .
-                            </span>
-                        </div>
+                    {status.canRespondToOffer ? (
+                        <OfferAnswer
+                            token={token}
+                            childFirstName={status.childFirstName}
+                            expiresAt={status.offerExpiresAt}
+                        />
+                    ) : (
+                        status.offerExpiresAt && (
+                            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                                <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+                                <span>
+                                    This offer expired on {formatLongDate(status.offerExpiresAt)}. Contact the
+                                    school if this is a mistake.
+                                </span>
+                            </div>
+                        )
                     )}
+
+                    <FamilyDocuments
+                        token={token}
+                        documents={status.documents ?? []}
+                        canUpload={status.canUpload ?? false}
+                    />
 
                     <p className="text-xs text-muted-foreground">
                         Submitted{' '}
