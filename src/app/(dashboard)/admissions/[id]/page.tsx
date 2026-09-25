@@ -47,6 +47,7 @@ import { useClassArms } from '@/lib/hooks/use-academics';
 import { useCan } from '@/lib/hooks/use-can';
 import { AssessmentsPanel } from '@/components/admissions/assessments-panel';
 import { VettingPanel } from '@/components/admissions/vetting-panel';
+import { DuplicatesCard } from '@/features/admissions/duplicates-card';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
 import { SUPPORT_NEED_LABELS } from '@/lib/support-needs';
@@ -164,6 +165,8 @@ export default function ApplicationDetailPage({
                     {label(application.status)}
                 </Badge>
             </div>
+
+            <DuplicatesCard application={application} canDecide={canDecide} />
 
             {/* Actions come from the SERVER's allowedTransitions. This component
                 knows no admissions rules, so it cannot drift from them. */}

@@ -18,7 +18,13 @@ import {
     getFlags,
     raiseFlag,
     clearFlag,
+    getCriteria,
     getCriteriaVerdict,
+    getPossibleDuplicates,
+    getRetentionDue,
+    purgeRetention,
+    removeCriteria,
+    setCriteria,
     getInterviewTemplates,
     getTemplateInterviews,
     createInterviewTemplate,
@@ -333,5 +339,92 @@ export function useAssessors(enabled = true) {
         queryFn: getAssessors,
         enabled,
         staleTime: 5 * 60 * 1000,
+    });
+}
+
+// ── Criteria, duplicates and retention (5.10) ────────────────────────────────
+
+/** The standard for each class level in a session. */
+export function useCriteria(sessionId?: string) {
+    return useQuery({
+        queryKey: ['admissions', 'criteria', sessionId],
+        queryFn: () => getCriteria(sessionId),
+        enabled: !!sessionId,
+    });
+}
+
+export function useSetCriteria() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: setCriteria,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions', 'criteria'] });
+            qc.invalidateQueries({ queryKey: ['admissions', 'applications'] });
+            toast.success('Criteria saved');
+        },
+    });
+}
+
+export function useRemoveCriteria() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: removeCriteria,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admissions', 'criteria'] });
+            qc.invalidateQueries({ queryKey: ['admissions', 'applications'] });
+            toast.success('Criteria removed');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not remove the criteria'),
+    });
+}
+
+/** Other applications that may be for the same child (same name and date of birth). */
+export function usePossibleDuplicates(application?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+}) {
+    return useQuery({
+        queryKey: [
+            'admissions',
+            'applications',
+            'duplicates',
+            application?.firstName,
+            application?.lastName,
+            application?.dateOfBirth,
+        ],
+        queryFn: () =>
+            getPossibleDuplicates({
+                firstName: application!.firstName,
+                lastName: application!.lastName,
+                dateOfBirth: application!.dateOfBirth.slice(0, 10),
+            }),
+        enabled: !!application,
+        select: (rows) => rows.filter((r) => r.id !== application?.id),
+    });
+}
+
+export function useRetentionDue(enabled = true) {
+    return useQuery({
+        queryKey: ['admissions', 'applications', 'retention'],
+        queryFn: getRetentionDue,
+        enabled,
+    });
+}
+
+export function usePurgeRetention() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: purgeRetention,
+        onSuccess: ({ purged }) => {
+            qc.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success(
+                purged === 0
+                    ? 'Nothing was due for deletion'
+                    : `${purged} ${purged === 1 ? 'application' : 'applications'} deleted`,
+            );
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not delete the applications'),
     });
 }
