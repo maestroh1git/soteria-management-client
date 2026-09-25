@@ -3,6 +3,7 @@
 import { use, useEffect, useState, useId } from 'react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CopyButton } from '@/components/common/copy-button';
+import { SupportNeedsFields } from '@/components/common/support-needs-fields';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +68,8 @@ export default function ApplyPage({
         guardianRelationship: 'MOTHER',
     });
     const set = (k: string, v: string) => setForm({ ...form, [k]: v });
+    const [supportNeeds, setSupportNeeds] = useState<string[]>([]);
+    const [supportNotes, setSupportNotes] = useState('');
 
     useEffect(() => {
         getPublicSchool(slug)
@@ -93,6 +96,8 @@ export default function ApplyPage({
                     ...form,
                     middleName: form.middleName.trim() || undefined,
                     previousSchool: form.previousSchool.trim() || undefined,
+                    supportNeeds: supportNeeds.length ? supportNeeds : undefined,
+                    supportNotes: supportNotes.trim() || undefined,
                     guardianEmail: form.guardianEmail.trim() || undefined,
                 }),
             );
@@ -258,6 +263,25 @@ export default function ApplyPage({
                             onChange={(v) => set('previousSchool', v)}
                         />
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Support your child needs</CardTitle>
+                    <CardDescription>
+                        So the school is ready for them from the first day. Optional, and seen
+                        only by the staff who need to know.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <SupportNeedsFields
+                        idPrefix="apply-support"
+                        needs={supportNeeds}
+                        notes={supportNotes}
+                        onNeedsChange={setSupportNeeds}
+                        onNotesChange={setSupportNotes}
+                    />
                 </CardContent>
             </Card>
 

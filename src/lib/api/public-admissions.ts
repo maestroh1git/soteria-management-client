@@ -54,6 +54,9 @@ export interface ApplyPayload {
     dateOfBirth: string;
     gender: string;
     previousSchool?: string;
+    /** What the child needs support with (5.15), and in the family's words. */
+    supportNeeds?: string[];
+    supportNotes?: string;
     guardianFirstName: string;
     guardianLastName: string;
     guardianPhone: string;

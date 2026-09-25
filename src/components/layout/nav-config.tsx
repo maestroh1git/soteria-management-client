@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Trophy,
   ListChecks,
+  CalendarClock,
   type LucideIcon,
   Presentation,
   Banknote,
@@ -103,6 +104,7 @@ export const navigation: NavGroup[] = [
     label: "Admissions",
     items: [
       { title: "Applications", href: "/admissions", icon: ClipboardList, orgTypes: ["SCHOOL"] },
+      { title: "Assessment diary", href: "/admissions/diary", icon: CalendarClock, orgTypes: ["SCHOOL"] },
       { title: "Question sets", href: "/admissions/question-sets", icon: ListChecks, orgTypes: ["SCHOOL"] },
     ],
   },

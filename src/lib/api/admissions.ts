@@ -29,6 +29,8 @@ export interface AdmissionApplication {
     dateOfBirth: string;
     gender: string;
     previousSchool: string | null;
+    supportNeeds?: string[];
+    supportNotes?: string | null;
     guardianFirstName: string;
     guardianLastName: string;
     guardianPhone: string;
@@ -196,6 +198,10 @@ export async function scheduleAssessment(
         mode?: AssessmentMode;
         scheduledFor: string;
         location?: string;
+        /** Who takes it; the API refuses a clash with their other sittings. */
+        assessorId?: string;
+        /** The slot's length in minutes (default 30). */
+        durationMinutes?: number;
     },
 ): Promise<AdmissionAssessment> {
     return (await api.post(
@@ -206,7 +212,7 @@ export async function scheduleAssessment(
 
 export async function rescheduleAssessment(
     id: string,
-    dto: { scheduledFor: string; location?: string },
+    dto: { scheduledFor: string; location?: string; durationMinutes?: number },
 ): Promise<AdmissionAssessment> {
     return (await api.patch(
         `/admissions/assessments/${id}/reschedule`,
@@ -256,6 +262,9 @@ export interface InterviewTemplate {
     id: string;
     name: string;
     active: boolean;
+    /** The class level it is for; null is the school's default (5.10). */
+    classLevelId?: string | null;
+    classLevelName?: string | null;
     createdAt: string;
     questions?: InterviewQuestion[];
     /** Sittings that have happened. What a set is kept for. */
@@ -319,6 +328,8 @@ export async function getInterviewTemplates(): Promise<InterviewTemplate[]> {
 
 export async function createInterviewTemplate(dto: {
     name: string;
+    /** Leave out for the school's default set. */
+    classLevelId?: string;
     questions: Array<{
         prompt: string;
         kind?: QuestionKind;
@@ -413,4 +424,48 @@ export async function getCriteriaVerdict(
         `/admissions/applications/${applicationId}/criteria`,
     )) as unknown as CriteriaVerdict | null;
     return verdict && Object.keys(verdict).length > 0 ? verdict : null;
+}
+
+/** One sitting in the admissions diary (5.16). */
+export interface DiaryEntry {
+    id: string;
+    kind: AssessmentKind;
+    mode: AssessmentMode;
+    status: AssessmentStatus;
+    scheduledFor: string;
+    durationMinutes: number;
+    location: string | null;
+    outcome: AssessmentOutcome | null;
+    score: string | null;
+    applicationId: string;
+    applicationNumber: string;
+    candidate: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    gender: string;
+    previousSchool: string | null;
+    supportNeeds: string[];
+    supportNotes: string | null;
+    classLevel: string | null;
+    assessorId: string | null;
+    assessor: string | null;
+    questionSet: string | null;
+}
+
+export async function getDiary(params: {
+    from: string;
+    to: string;
+    assessorId?: string;
+}): Promise<DiaryEntry[]> {
+    return (await api.get('/admissions/assessments', { params })) as unknown as DiaryEntry[];
+}
+
+/** Staff who can take a sitting (id, name "Surname, First", position). */
+export async function getAssessors(): Promise<Array<{ id: string; name: string; role: string | null }>> {
+    return (await api.get('/admissions/assessors')) as unknown as Array<{
+        id: string;
+        name: string;
+        role: string | null;
+    }>;
 }

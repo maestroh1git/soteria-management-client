@@ -45,6 +45,8 @@ import { InviteParentButton } from '@/features/students/record/invite-parent-but
 import { AttendanceTab } from '@/features/students/record/attendance-tab';
 import { FeesTab } from '@/features/students/record/fees-tab';
 import { AdmissionTab } from '@/features/students/record/admission-tab';
+import { SupportCard } from '@/features/students/record/support-card';
+import { SUPPORT_NEED_LABELS } from '@/lib/support-needs';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENOTYPES = ['AA', 'AS', 'SS', 'AC', 'SC'];
@@ -136,10 +138,11 @@ export default function StudentDetailPage({
     };
 
     const hasAlerts =
-        medical &&
-        (medical.allergies?.trim() ||
-            medical.chronicConditions?.trim() ||
-            (medical.genotype && SICKLE.includes(medical.genotype)));
+        (medical &&
+            (medical.allergies?.trim() ||
+                medical.chronicConditions?.trim() ||
+                (medical.genotype && SICKLE.includes(medical.genotype)))) ||
+        (student.supportNeeds?.length ?? 0) > 0;
 
     return (
         <div className="space-y-6">
@@ -164,6 +167,11 @@ export default function StudentDetailPage({
                             Medical alert
                         </p>
                         <ul className="list-inside list-disc text-amber-900/90 dark:text-amber-200/90">
+                            {!!student.supportNeeds?.length && (
+                                <li>
+                                    Support: {student.supportNeeds.map((n) => SUPPORT_NEED_LABELS[n] ?? n).join(', ')}
+                                </li>
+                            )}
                             {medical?.allergies && <li>Allergies: {medical.allergies}</li>}
                             {medical?.chronicConditions && (
                                 <li>{medical.chronicConditions}</li>
@@ -312,6 +320,7 @@ export default function StudentDetailPage({
                 )}
 
                 <TabsContent value="medical" className="space-y-4">
+                    <SupportCard student={student} canEdit={canEdit} />
                     <Card>
                         <CardHeader className="flex flex-row items-start justify-between">
                             <div>

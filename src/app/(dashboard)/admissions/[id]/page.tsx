@@ -49,6 +49,7 @@ import { AssessmentsPanel } from '@/components/admissions/assessments-panel';
 import { VettingPanel } from '@/components/admissions/vetting-panel';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
+import { SUPPORT_NEED_LABELS } from '@/lib/support-needs';
 
 const label = (s: string) => s.replace(/_/g, ' ').toLowerCase();
 
@@ -220,6 +221,19 @@ export default function ApplicationDetailPage({
                         <Field label="Session" value={application.session?.name ?? '—'} />
                         <Field label="Previous school" value={application.previousSchool ?? '—'} />
                         <Field label="Applied" value={formatDate(application.createdAt)} />
+                        <div className="sm:col-span-2">
+                            <Field
+                                label="Support needs"
+                                value={
+                                    application.supportNeeds?.length
+                                        ? application.supportNeeds.map((n) => SUPPORT_NEED_LABELS[n] ?? n).join(', ')
+                                        : 'None given'
+                                }
+                            />
+                            {application.supportNotes && (
+                                <p className="mt-1 whitespace-pre-line text-sm">{application.supportNotes}</p>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 

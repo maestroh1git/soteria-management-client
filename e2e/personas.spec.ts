@@ -579,3 +579,53 @@ test.describe('Today (C4.8) and the class week (5.4)', () => {
         });
     });
 });
+
+test.describe('Feedback round (5.10, 5.15, 5.16)', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('the admissions office', () => {
+        test.skip(!has('admissions'), 'no admissions persona');
+        test.use({ storageState: storageFor('admissions') });
+
+        test('reads the assessment diary a week at a time', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/admissions');
+            await settle(page);
+            await page.locator('aside nav').getByRole('link', { name: 'Assessment diary' }).click();
+            await page.waitForURL(/\/admissions\/diary$/);
+            await settle(page);
+            await expect(page.getByRole('heading', { level: 1 })).toHaveText('Assessment diary');
+            await page.getByRole('button', { name: 'Next week' }).click();
+            await settle(page);
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+
+    test.describe('a registrar', () => {
+        test.skip(!has('registrar'), 'no registrar persona');
+        test.use({ storageState: storageFor('registrar') });
+
+        test('chooses which class a new question set is for', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/admissions/question-sets');
+            await settle(page);
+            await page.getByRole('button', { name: /publish a new set/i }).click();
+            await expect(page.getByRole('dialog').getByLabel('For')).toBeVisible();
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+
+        test('finds a pupil by surname first, and every name opens a record', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/students');
+            await settle(page);
+            const first = page.locator('main table a[href^="/students/"]').filter({ hasText: ',' }).first();
+            await expect(first).toBeVisible();
+            const name = (await first.innerText()).trim();
+            const [surname, given] = name.split(',').map((s) => s.trim());
+            await page.getByPlaceholder(/name or admission/i).fill(`${given} ${surname}`);
+            await settle(page);
+            await expect(page.locator('main table a[href^="/students/"]').filter({ hasText: surname }).first()).toBeVisible();
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});

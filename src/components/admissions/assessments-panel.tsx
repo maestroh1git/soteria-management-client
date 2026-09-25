@@ -37,6 +37,7 @@ import {
     useInterviewTemplates,
     useRescheduleAssessment,
     useScheduleAssessment,
+    useAssessors,
     useSettleAssessment,
 } from '@/lib/hooks/use-admissions';
 import type {
@@ -48,6 +49,9 @@ import type {
 } from '@/lib/api/admissions';
 import { formatDateTime } from '@/lib/utils/dates';
 import { StatusBadge } from '@/components/common/status-badge';
+
+/** No assessor chosen yet, in the picker. */
+const NOBODY = '__nobody__';
 
 const KIND_LABEL: Record<AssessmentKind, string> = {
     ENTRANCE_EXAM: 'Entrance exam',
@@ -117,6 +121,9 @@ export function AssessmentsPanel({
     const [mode, setMode] = useState<'IN_PERSON' | 'ONLINE'>('IN_PERSON');
     const [scheduledFor, setScheduledFor] = useState('');
     const [location, setLocation] = useState('');
+    const [assessorId, setAssessorId] = useState(NOBODY);
+    const [duration, setDuration] = useState('30');
+    const { data: assessors = [] } = useAssessors(booking);
 
     const [recording, setRecording] = useState<AdmissionAssessment | null>(null);
     const [score, setScore] = useState('');
@@ -154,10 +161,14 @@ export function AssessmentsPanel({
             mode,
             scheduledFor: new Date(scheduledFor).toISOString(),
             location: location || undefined,
+            assessorId: assessorId === NOBODY ? undefined : assessorId,
+            durationMinutes: Number(duration),
         });
         setBooking(false);
         setScheduledFor('');
         setLocation('');
+        setAssessorId(NOBODY);
+        setDuration('30');
     };
 
     const submitResult = async () => {
@@ -191,7 +202,7 @@ export function AssessmentsPanel({
     };
 
     return (
-        <Card>
+        <Card id="assessments" className="scroll-mt-20">
             <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                 <div>
                     <CardTitle className="text-lg">Assessments</CardTitle>
@@ -418,6 +429,42 @@ export function AssessmentsPanel({
                                     setScheduledFor(e.target.value)
                                 }
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="duration">How long</Label>
+                            <Select value={duration} onValueChange={setDuration}>
+                                <SelectTrigger id="duration">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {['15', '30', '45', '60', '90', '120'].map((m) => (
+                                        <SelectItem key={m} value={m}>
+                                            {m} minutes
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="assessor">Taken by</Label>
+                            <Select value={assessorId} onValueChange={setAssessorId}>
+                                <SelectTrigger id="assessor">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={NOBODY}>Not decided yet</SelectItem>
+                                    {assessors.map((a) => (
+                                        <SelectItem key={a.id} value={a.id}>
+                                            {a.name}
+                                            {a.role ? ` · ${a.role}` : ''}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                Someone already booked at that time is refused, so nobody is in two
+                                rooms at once.
+                            </p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="location">

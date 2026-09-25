@@ -47,6 +47,7 @@ import {
     useTemplateInterviews,
 } from '@/lib/hooks/use-admissions';
 import { useCan } from '@/lib/hooks/use-can';
+import { useClassLevels } from '@/lib/hooks/use-academics';
 import type { InterviewTemplate, QuestionKind } from '@/lib/api/admissions';
 
 const KIND_LABEL: Record<QuestionKind, string> = {
@@ -243,6 +244,9 @@ function QuestionList({ template }: { template: InterviewTemplate }) {
  * change what the school asks is to publish a new set, which stands the
  * current one down.
  */
+/** The school-wide set, in the class picker. */
+const DEFAULT_SET = '__default__';
+
 export default function QuestionSetsPage() {
     const can = useCan();
     // Deciding what the school asks is a registrar's call, not an officer's,
@@ -260,8 +264,19 @@ export default function QuestionSetsPage() {
     /** Which set's candidates are open. One at a time; this is a sidebar read. */
     const [showing, setShowing] = useState<string | null>(null);
 
-    const active = templates.find((t) => t.active);
+    const { data: levels = [] } = useClassLevels();
+    // One set in force per class level, and one default for every other class
+    // (5.10). The default first, then the classes in ladder order.
+    const inForce = templates
+        .filter((t) => t.active)
+        .sort((a, b) =>
+            !a.classLevelId ? -1 : !b.classLevelId ? 1 : (a.classLevelName ?? '').localeCompare(b.classLevelName ?? '', undefined, { numeric: true }),
+        );
     const retired = templates.filter((t) => !t.active);
+    const [forLevel, setForLevel] = useState<string>(DEFAULT_SET);
+    // The set a new one for this class would stand down.
+    const active = inForce.find((t) => (t.classLevelId ?? DEFAULT_SET) === forLevel);
+    const forWhom = (t: InterviewTemplate) => t.classLevelName ?? 'Every other class';
 
     const asked = drafts.filter((d) => d.prompt.trim());
     const update = (index: number, patch: Partial<Draft>) =>
@@ -273,11 +288,13 @@ export default function QuestionSetsPage() {
         setPublishing(false);
         setName('');
         setDrafts([{ ...BLANK }]);
+        setForLevel(DEFAULT_SET);
     };
 
     const submit = async () => {
         await create.mutateAsync({
             name: name.trim(),
+            classLevelId: forLevel === DEFAULT_SET ? undefined : forLevel,
             questions: asked.map((d) => ({
                 prompt: d.prompt.trim(),
                 kind: d.kind,
@@ -300,7 +317,8 @@ export default function QuestionSetsPage() {
                     </Link>
                     <h1 className="text-2xl font-semibold">Question sets</h1>
                     <p className="text-muted-foreground">
-                        What the panel asks every candidate at interview.
+                        The behavioural questions the panel asks at interview. A class can have
+                        its own set; every other class is asked the default.
                     </p>
                 </div>
                 {canSetQuestions && (
@@ -315,7 +333,7 @@ export default function QuestionSetsPage() {
                 <p className="text-sm text-muted-foreground">Loading…</p>
             )}
 
-            {!isLoading && !active && (
+            {!isLoading && inForce.length === 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">
@@ -332,8 +350,8 @@ export default function QuestionSetsPage() {
                 </Card>
             )}
 
-            {active && (
-                <Card>
+            {inForce.map((active) => (
+                <Card key={active.id}>
                     <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -343,10 +361,12 @@ export default function QuestionSetsPage() {
                                 <Badge className="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300">
                                     in force
                                 </Badge>
+                                <Badge variant="outline">{forWhom(active)}</Badge>
                             </div>
                             <CardDescription>
-                                Every interview booked from now is run against
-                                these.
+                                {active.classLevelId
+                                    ? `Interviews for ${active.classLevelName ?? 'this class'} booked from now are run against these.`
+                                    : 'Interviews for any class without its own set are run against these.'}
                             </CardDescription>
                         </div>
                         {canSetQuestions && (
@@ -372,7 +392,7 @@ export default function QuestionSetsPage() {
                         />
                     </CardContent>
                 </Card>
-            )}
+            ))}
 
             {retired.length > 0 && (
                 <div className="space-y-3">
@@ -387,7 +407,10 @@ export default function QuestionSetsPage() {
                         <Card key={template.id} className="opacity-80">
                             <CardHeader>
                                 <CardTitle className="text-base">
-                                    {template.name}
+                                    {template.name}{' '}
+                                    <span className="text-sm font-normal text-muted-foreground">
+                                        · {forWhom(template)}
+                                    </span>
                                 </CardTitle>
                                 {template.interviewsRun === 0 && (
                                     <CardDescription>
@@ -440,6 +463,23 @@ export default function QuestionSetsPage() {
                     </DialogHeader>
 
                     <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="set-for">For</Label>
+                            <Select value={forLevel} onValueChange={setForLevel}>
+                                <SelectTrigger id="set-for" className="w-full sm:w-72">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={DEFAULT_SET}>Every class without its own set</SelectItem>
+                                    {levels.map((l) => (
+                                        <SelectItem key={l.id} value={l.id}>
+                                            {l.name} only
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="set-name">Name</Label>
                             <Input
