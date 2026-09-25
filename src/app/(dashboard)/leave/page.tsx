@@ -44,6 +44,7 @@ import { StatusBadge } from '@/components/common/status-badge';
 import { EmployeeLink } from '@/components/common/entity-link';
 import { statusOptions } from '@/lib/status/registry';
 import { ListFilters, matches } from '@/components/common/list-filters';
+import { listName } from '@/lib/utils/names';
 
 export default function LeavePage() {
     const { data: allRequests = [], isLoading } = useLeaveRequests();
@@ -365,7 +366,7 @@ function RequestLeaveDialog({
                             <SelectContent>
                                 {employees.map((e) => (
                                     <SelectItem key={e.id} value={e.id}>
-                                        {e.firstName} {e.lastName} ({e.employeeNumber})
+                                        {listName(e)} ({e.employeeNumber})
                                     </SelectItem>
                                 ))}
                             </SelectContent>

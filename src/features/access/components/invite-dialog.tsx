@@ -17,6 +17,7 @@ import { FormDialog } from '@/components/common/form-dialog';
 import type { Employee } from '@/lib/types/api';
 import { useInvite } from '../hooks';
 import { AccessChecklist } from './access-checklist';
+import { listName } from '@/lib/utils/names';
 
 const inviteSchema = z.object({
     employeeId: z.string().min(1, 'Choose who to invite.'),
@@ -92,7 +93,7 @@ export function InviteDialog({
                             <SelectContent>
                                 {staff.map((e) => (
                                     <SelectItem key={e.id} value={e.id}>
-                                        {e.firstName} {e.lastName} · {e.email}
+                                        {listName(e)} · {e.email}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

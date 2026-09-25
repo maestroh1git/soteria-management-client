@@ -8,6 +8,7 @@ import {
     getStudentGuardians,
     getStudentMedical,
     upsertStudentMedical,
+    updateStudentSupport,
     getMedicalAlerts,
     getGuardians,
     findDuplicateGuardians,
@@ -88,6 +89,21 @@ export function useUpsertStudentMedical(studentId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['students', studentId, 'medical'] });
             toast.success('Medical record saved');
+        },
+        onError: (e: Error) => toast.error(e.message || 'Could not save'),
+    });
+}
+
+/** Replace a pupil's support needs (5.15). */
+export function useUpdateStudentSupport(studentId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (dto: { supportNeeds: string[]; supportNotes: string | null }) =>
+            updateStudentSupport(studentId, dto),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['students', studentId] });
+            qc.invalidateQueries({ queryKey: ['students', 'medical-alerts'] });
+            toast.success('Support needs saved');
         },
         onError: (e: Error) => toast.error(e.message || 'Could not save'),
     });

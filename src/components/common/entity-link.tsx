@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { MouseEvent, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { listName } from '@/lib/utils/names';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useSession } from '@/lib/hooks/use-session';
 
@@ -38,8 +39,9 @@ export function EntityLink({ href, children, className }: EntityLinkProps) {
 }
 
 type Named = { firstName?: string | null; lastName?: string | null } | null | undefined;
-const nameOf = (p: Named, fallback = '—') =>
-    p ? `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || fallback : fallback;
+// People are linked from lists, so the embedded record reads as a list does:
+// "Adeyemi, Tobi" (lib/utils/names). Pass `name` to write it otherwise.
+const nameOf = (p: Named, fallback = '—') => listName(p, fallback);
 
 /** A member of staff. `employee` may be the embedded record or just a name. */
 export function EmployeeLink({

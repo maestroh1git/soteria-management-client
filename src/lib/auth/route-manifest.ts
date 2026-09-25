@@ -47,6 +47,8 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   // Its own entry, not inherited from /admissions: deciding what the school
   // asks is a registrar's call, and the API draws the same line.
   '/admissions/question-sets': 'admissions.setQuestions',
+  // Everyone who books or takes a sitting (5.16).
+  '/admissions/diary': 'admissions.assess',
 
   // School day
   // Set up by the registrar; read by every Educator for the classes they

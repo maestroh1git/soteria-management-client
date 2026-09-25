@@ -9,6 +9,8 @@ import {
     expireLapsedOffers,
     remindExpiringOffers,
     getAssessments,
+    getDiary,
+    getAssessors,
     scheduleAssessment,
     rescheduleAssessment,
     completeAssessment,
@@ -313,5 +315,23 @@ export function useCriteriaVerdict(applicationId: string) {
         queryKey: ['admissions', 'applications', applicationId, 'criteria'],
         queryFn: () => getCriteriaVerdict(applicationId),
         enabled: !!applicationId,
+    });
+}
+
+/** The admissions diary between two dates, optionally one assessor's (5.16). */
+export function useDiary(params: { from: string; to: string; assessorId?: string }) {
+    return useQuery({
+        queryKey: ['admissions', 'diary', params],
+        queryFn: () => getDiary(params),
+    });
+}
+
+/** Who can take a sitting. */
+export function useAssessors(enabled = true) {
+    return useQuery({
+        queryKey: ['admissions', 'assessors'],
+        queryFn: getAssessors,
+        enabled,
+        staleTime: 5 * 60 * 1000,
     });
 }

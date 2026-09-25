@@ -36,6 +36,8 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { formatDate } from '@/lib/utils/dates';
 import type { Employee } from '@/lib/types/api';
 import { statusOptions } from '@/lib/status/registry';
+import { nameSearchText } from '@/lib/utils/names';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 export default function EmployeesPage() {
     const router = useRouter();
@@ -88,11 +90,11 @@ export default function EmployeesPage() {
             id: 'name',
             header: 'Name',
             meta: { cardTitle: true },
-            accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+            accessorFn: (row) => nameSearchText(row),
             cell: ({ row }) => (
                 <div>
                     <p className="font-medium">
-                        {row.original.firstName} {row.original.lastName}
+                        <EmployeeLink id={row.original.id} employee={row.original} />
                     </p>
                     <p className="text-xs text-muted-foreground">{row.original.email}</p>
                 </div>

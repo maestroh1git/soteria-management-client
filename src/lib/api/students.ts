@@ -32,6 +32,9 @@ export interface Student {
     status: StudentStatus;
     address: string | null;
     currentClassArmId: string | null;
+    /** What the child needs support with (5.15), and the detail. */
+    supportNeeds?: string[];
+    supportNotes?: string | null;
     currentClassArm?: ClassArmRef | null;
 }
 
@@ -321,4 +324,12 @@ export async function downloadStudentDocument(
     link.download = fileName;
     link.click();
     URL.revokeObjectURL(url);
+}
+
+/** Replace a pupil's support needs (5.15). */
+export async function updateStudentSupport(
+    id: string,
+    dto: { supportNeeds: string[]; supportNotes: string | null },
+): Promise<Student> {
+    return (await api.put(`/students/${id}/support`, dto)) as unknown as Student;
 }

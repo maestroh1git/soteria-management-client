@@ -11,7 +11,7 @@ import { formatDayOfWeek } from '@/lib/utils/dates';
 const STATUS_LABEL: Record<string, string> = {
     PRESENT: 'Present',
     LATE: 'Late',
-    ABSENT: 'Away',
+    ABSENT: 'Absent',
     EXCUSED: 'Excused',
 };
 

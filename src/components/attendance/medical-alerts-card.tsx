@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/card';
 import type { Student, StudentMedical } from '@/lib/api/students';
 import { useCan } from '@/lib/hooks/use-can';
+import { StudentLink } from '@/components/common/entity-link';
+import { SUPPORT_NEED_LABELS } from '@/lib/support-needs';
 
 const SICKLE = ['SS', 'SC'];
 
@@ -27,7 +29,8 @@ const SICKLE = ['SS', 'SC'];
 export function MedicalAlertsCard({
     alerts,
 }: {
-    alerts: Array<{ student: Student; medical: StudentMedical }>;
+    /** `medical` is null for a pupil listed for a support need alone. */
+    alerts: Array<{ student: Student; medical: StudentMedical | null }>;
 }) {
     const canOpenRecord = useCan()('students.read');
     if (alerts.length === 0) return null;
@@ -52,7 +55,7 @@ export function MedicalAlertsCard({
                     >
                         <div className="flex items-center justify-between">
                             <p className="font-medium">
-                                {student.firstName} {student.lastName}
+                                <StudentLink id={student.id} student={student} />
                             </p>
                             {canOpenRecord && (
                                 <Link href={`/students/${student.id}`}>
@@ -63,23 +66,30 @@ export function MedicalAlertsCard({
                             )}
                         </div>
                         <ul className="mt-1 list-inside list-disc text-sm">
-                            {medical.allergies && (
+                            {!!student.supportNeeds?.length && (
+                                <li>
+                                    <span className="font-medium">Support:</span>{' '}
+                                    {student.supportNeeds.map((n) => SUPPORT_NEED_LABELS[n] ?? n).join(', ')}
+                                </li>
+                            )}
+                            {student.supportNotes && <li>{student.supportNotes}</li>}
+                            {medical?.allergies && (
                                 <li>
                                     <span className="font-medium">Allergies:</span>{' '}
                                     {medical.allergies}
                                 </li>
                             )}
-                            {medical.chronicConditions && (
+                            {medical?.chronicConditions && (
                                 <li>{medical.chronicConditions}</li>
                             )}
-                            {medical.genotype &&
+                            {medical?.genotype &&
                                 SICKLE.includes(medical.genotype) && (
                                     <li>
                                         Genotype {medical.genotype} — sickle cell disease.
                                         Care with exertion and heat.
                                     </li>
                                 )}
-                            {medical.emergencyContactPhone && (
+                            {medical?.emergencyContactPhone && (
                                 <li className="text-muted-foreground">
                                     Emergency: {medical.emergencyContactName} ·{' '}
                                     {medical.emergencyContactPhone}

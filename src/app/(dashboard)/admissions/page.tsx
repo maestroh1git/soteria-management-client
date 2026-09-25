@@ -9,9 +9,9 @@ import {
     BellRing,
     Loader2,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/common/copy-button';
 import { Badge } from '@/components/ui/badge';
 import {
     Card,
@@ -34,6 +34,7 @@ import { statusOptions } from '@/lib/status/registry';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable } from '@/components/common/data-table';
 import type { ColumnDef } from '@tanstack/react-table';
+import { bySurname, listName } from '@/lib/utils/names';
 
 
 /**
@@ -84,13 +85,23 @@ export default function AdmissionsPage() {
     const levels = unique(applications.map((a) => a.classLevel));
     const sessions = unique(applications.map((a) => a.session));
 
-    const shown = applications.filter(
+    const byLevelName = (a?: { name: string }, b?: { name: string }) =>
+        (a?.name ?? '').localeCompare(b?.name ?? '', undefined, { numeric: true });
+    // Everything but the class filter: what each class's count is taken from.
+    const inStage = applications.filter(
         (a) =>
             (!status ||
                 (status === 'LAPSED' ? isLapsed(a) : a.status === status)) &&
-            (!levelId || a.classLevel?.id === levelId) &&
             (!session || a.session?.id === session),
     );
+    // Grouped by the class applied for, then surname: an intake is decided
+    // class by class, against that class's seats.
+    const shown = inStage
+        .filter((a) => !levelId || a.classLevel?.id === levelId)
+        .sort((a, b) => byLevelName(a.classLevel, b.classLevel) || bySurname(a, b));
+    const levelCounts = [...levels]
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
+        .map((l) => ({ ...l, n: inStage.filter((a) => a.classLevel?.id === l.value).length }));
     const filtered = !!(status || levelId || session);
 
     const columns: ColumnDef<AdmissionApplication>[] = [
@@ -110,7 +121,7 @@ export default function AdmissionsPage() {
                     href={`/admissions/${row.original.id}`}
                     className="font-medium hover:underline underline-offset-2"
                 >
-                    {row.original.firstName} {row.original.lastName}
+                    {listName(row.original)}
                 </Link>
             ),
         },
@@ -219,16 +230,7 @@ export default function AdmissionsPage() {
                         <code className="flex-1 truncate rounded bg-muted px-3 py-2 text-sm">
                             {publicLink}
                         </code>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                navigator.clipboard.writeText(publicLink);
-                                toast.success('Link copied');
-                            }}
-                        >
-                            Copy
-                        </Button>
+                        <CopyButton text={publicLink} />
                     </CardContent>
                 </Card>
             )}
@@ -254,6 +256,29 @@ export default function AdmissionsPage() {
                     </Card>
                 ))}
             </div>
+
+            {levelCounts.length > 1 && (
+                <nav aria-label="Applications by class" className="flex flex-wrap gap-2">
+                    <Button
+                        size="sm"
+                        variant={levelId ? 'outline' : 'default'}
+                        onClick={() => setLevelId(undefined)}
+                    >
+                        All classes ({inStage.length})
+                    </Button>
+                    {levelCounts.map((l) => (
+                        <Button
+                            key={l.value}
+                            size="sm"
+                            variant={levelId === l.value ? 'default' : 'outline'}
+                            aria-pressed={levelId === l.value}
+                            onClick={() => setLevelId(levelId === l.value ? undefined : l.value)}
+                        >
+                            {l.label} ({l.n})
+                        </Button>
+                    ))}
+                </nav>
+            )}
 
             <DataTable
                 columns={columns}

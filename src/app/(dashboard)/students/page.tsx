@@ -18,6 +18,8 @@ import { statusOptions } from '@/lib/status/registry';
 import { useClassArms } from '@/lib/hooks/use-academics';
 import { PageHeader } from '@/components/layout/page-header';
 import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
+import { nameSearchText } from '@/lib/utils/names';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * The pupil roster.
@@ -71,11 +73,11 @@ export default function StudentsPage() {
             id: 'name',
             header: 'Name',
             meta: { cardTitle: true },
-            accessorFn: (r) => `${r.firstName} ${r.lastName}`,
+            accessorFn: (r) => nameSearchText(r),
             cell: ({ row }) => (
                 <div>
                     <p className="font-medium">
-                        {row.original.firstName} {row.original.lastName}
+                        <StudentLink id={row.original.id} student={row.original} />
                     </p>
                     <p className="text-xs text-muted-foreground">
                         {row.original.gender === 'FEMALE' ? 'Female' : 'Male'} ·{' '}

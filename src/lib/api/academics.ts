@@ -16,6 +16,8 @@ export interface ClassArm {
     formTeacherId: string | null;
     /** The educator's name, sent with the arm so nobody needs the staff list. */
     formTeacherName?: string | null;
+    /** Active pupils on this class (GET /academics/arms). */
+    enrolled?: number;
     level?: ClassLevel;
 }
 

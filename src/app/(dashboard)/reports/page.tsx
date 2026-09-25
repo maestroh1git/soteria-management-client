@@ -33,6 +33,7 @@ import {
 import { useCan } from '@/lib/hooks/use-can';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
 import { useDownloadReport } from '@/lib/hooks/use-reports';
+import { EmployeeLink } from '@/components/common/entity-link';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -239,7 +240,9 @@ export default function ReportsPage() {
                                     <tbody>
                                         {summary.employeeBreakdown.map((emp) => (
                                             <tr key={emp.employeeId} className="border-b transition-colors hover:bg-muted/50">
-                                                <td className="px-4 py-3 font-medium">{emp.employeeName}</td>
+                                                <td className="px-4 py-3 font-medium">
+                                                    <EmployeeLink id={emp.employeeId} name={emp.employeeName} />
+                                                </td>
                                                 <td className="px-4 py-3 text-muted-foreground">{emp.employeeNumber}</td>
                                                 <td className="px-4 py-3 text-right"><CurrencyDisplay amount={emp.grossSalary} /></td>
                                                 <td className="px-4 py-3 text-right text-red-600"><CurrencyDisplay amount={emp.totalDeductions} /></td>

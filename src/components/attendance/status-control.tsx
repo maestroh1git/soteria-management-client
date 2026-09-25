@@ -10,7 +10,7 @@ const OPTIONS: Array<{
 }> = [
     { value: 'PRESENT', letter: 'P', label: 'Present' },
     { value: 'LATE', letter: 'L', label: 'Late' },
-    { value: 'ABSENT', letter: 'A', label: 'Away' },
+    { value: 'ABSENT', letter: 'A', label: 'Absent' },
     { value: 'EXCUSED', letter: 'E', label: 'Excused' },
 ];
 

@@ -497,6 +497,8 @@ export interface ClassWeek {
         lastName: string;
         admissionNumber: string;
         marks: Record<string, AttendanceStatus>;
+        /** Why, by day, for the days away or late. */
+        reasons: Record<string, { reasonCode: AbsenceReason | null; minutesLate: number | null }>;
     }>;
 }
 

@@ -70,6 +70,21 @@ the next, for the same thing, makes people read every button twice.
 | Receipt | Payment (the record) | What the family is handed |
 | Pay run | Payroll (a single one) | "Payroll" is the whole area |
 
+## People
+
+- **In a list of people** (a table, a register, a roster, a picker, a grid):
+  surname first, "Adeyemi, Tobi", and the list sorted by surname
+  (`listName`, `bySurname` in `lib/utils/names.ts`).
+- **In a title or a sentence:** "Tobi Adeyemi" (`fullName`).
+- **Every name is a way in.** A person shown in a list links to their record
+  with `StudentLink` / `EmployeeLink`, which fall back to plain text for
+  someone who may not open it.
+- **Search matches either order** and part of a name: "tobi adeyemi",
+  "adeyemi tobi", "adey". On the API, `whereWordsMatch`; in a DataTable,
+  `nameSearchText`.
+- **Copying something** (a link, a number) uses `CopyButton`, which says
+  "Copied".
+
 ## Numbers and dates
 
 - Money through `<Money>` or `formatMoney`: the tenant's currency, sign

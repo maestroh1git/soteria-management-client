@@ -31,6 +31,7 @@ import { MedicalAlertsCard } from '@/components/attendance/medical-alerts-card';
 import { ClassWeekGrid } from '@/components/attendance/class-week-grid';
 import { useCan } from '@/lib/hooks/use-can';
 import { formatDate } from '@/lib/utils/dates';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * The class register.
@@ -92,9 +93,9 @@ export default function ClassRegisterPage({
                 <div className="flex-1">
                     <h1 className="text-2xl font-semibold">{className}</h1>
                     <p className="text-sm text-muted-foreground">
-                        {students.length} on the register
-                        {occupancy?.capacity != null &&
-                            ` · ${occupancy.capacity} seats`}
+                        {occupancy?.capacity != null
+                            ? `${students.length}/${occupancy.capacity} seats filled`
+                            : `${students.length} on the register`}
                         {occupancy?.free != null &&
                             occupancy.free <= 0 &&
                             ' · full'}
@@ -146,9 +147,7 @@ export default function ClassRegisterPage({
                                                     {s.admissionNumber}
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <span className="font-medium">
-                                                        {s.firstName} {s.lastName}
-                                                    </span>
+                                                    <StudentLink id={s.id} student={s} />
                                                     {flagged && (
                                                         <Badge
                                                             variant="outline"

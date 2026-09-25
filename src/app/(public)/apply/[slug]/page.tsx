@@ -1,7 +1,9 @@
 'use client';
 
 import { use, useEffect, useState, useId } from 'react';
-import { Loader2, CheckCircle2, Copy, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { CopyButton } from '@/components/common/copy-button';
+import { SupportNeedsFields } from '@/components/common/support-needs-fields';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,6 +68,8 @@ export default function ApplyPage({
         guardianRelationship: 'MOTHER',
     });
     const set = (k: string, v: string) => setForm({ ...form, [k]: v });
+    const [supportNeeds, setSupportNeeds] = useState<string[]>([]);
+    const [supportNotes, setSupportNotes] = useState('');
 
     useEffect(() => {
         getPublicSchool(slug)
@@ -92,6 +96,8 @@ export default function ApplyPage({
                     ...form,
                     middleName: form.middleName.trim() || undefined,
                     previousSchool: form.previousSchool.trim() || undefined,
+                    supportNeeds: supportNeeds.length ? supportNeeds : undefined,
+                    supportNotes: supportNotes.trim() || undefined,
                     guardianEmail: form.guardianEmail.trim() || undefined,
                 }),
             );
@@ -147,9 +153,12 @@ export default function ApplyPage({
                         <p className="text-sm text-muted-foreground">
                             Your application number
                         </p>
-                        <p className="text-2xl font-semibold tracking-wide">
-                            {receipt.applicationNumber}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-2xl font-semibold tracking-wide">
+                                {receipt.applicationNumber}
+                            </p>
+                            <CopyButton text={receipt.applicationNumber} label="Copy number" />
+                        </div>
                         <p className="mt-1 text-sm text-muted-foreground">
                             Quote this if you call the school.
                         </p>
@@ -165,13 +174,7 @@ export default function ApplyPage({
                             <code className="flex-1 truncate rounded bg-background px-3 py-2 text-xs">
                                 {link}
                             </code>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigator.clipboard.writeText(link)}
-                            >
-                                <Copy className="h-4 w-4" />
-                            </Button>
+                            <CopyButton text={link} label="Copy link" />
                         </div>
                     </div>
 
@@ -260,6 +263,25 @@ export default function ApplyPage({
                             onChange={(v) => set('previousSchool', v)}
                         />
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Support your child needs</CardTitle>
+                    <CardDescription>
+                        So the school is ready for them from the first day. Optional, and seen
+                        only by the staff who need to know.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <SupportNeedsFields
+                        idPrefix="apply-support"
+                        needs={supportNeeds}
+                        notes={supportNotes}
+                        onNeedsChange={setSupportNeeds}
+                        onNotesChange={setSupportNotes}
+                    />
                 </CardContent>
             </Card>
 

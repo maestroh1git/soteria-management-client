@@ -29,6 +29,7 @@ import {
     useLinkGuardian,
 } from '@/lib/hooks/use-students';
 import type { Guardian, GuardianRelationship } from '@/lib/api/students';
+import { listName } from '@/lib/utils/names';
 
 const RELATIONSHIPS: GuardianRelationship[] = [
     'MOTHER',
@@ -194,9 +195,7 @@ export function AddGuardianDialog({
                                 className="flex w-full items-center justify-between rounded-lg border p-3 text-left hover:bg-muted/50"
                             >
                                 <div>
-                                    <p className="font-medium">
-                                        {g.firstName} {g.lastName}
-                                    </p>
+                                    <p className="font-medium">{listName(g)}</p>
                                     <p className="text-sm text-muted-foreground">{g.phone}</p>
                                 </div>
                                 <Badge variant="secondary" className="gap-1">

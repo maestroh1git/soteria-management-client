@@ -36,6 +36,7 @@ import {
 } from '@/lib/api/attendance';
 import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/utils/dates';
+import { StudentLink } from '@/components/common/entity-link';
 
 const REASONS = Object.keys(DEPARTURE_REASON_LABELS) as DepartureReason[];
 
@@ -269,7 +270,7 @@ export default function GatePage() {
                             >
                                 <div className="min-w-0">
                                     <p className="flex items-center gap-2 truncate text-sm font-medium">
-                                        {d.pupilName}
+                                        <StudentLink id={d.studentId} name={d.pupilName} />
                                         {d.wasOverride && (
                                             <span className="inline-flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-950/50 dark:text-red-300">
                                                 <ShieldAlert

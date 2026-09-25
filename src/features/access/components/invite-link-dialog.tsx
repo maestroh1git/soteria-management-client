@@ -1,7 +1,7 @@
 'use client';
 
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/common/copy-button';
 import { Input } from '@/components/ui/input';
 import {
     Dialog,
@@ -33,18 +33,7 @@ export function InviteLinkDialog({
                 </DialogHeader>
                 <div className="flex items-center gap-2">
                     <Input readOnly value={link?.url ?? ''} className="font-mono text-xs" aria-label="Invite link" />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                            if (link) {
-                                navigator.clipboard?.writeText(link.url);
-                                toast.success('Invite link copied');
-                            }
-                        }}
-                    >
-                        Copy
-                    </Button>
+                    <CopyButton text={link?.url ?? ''} size="default" />
                 </div>
                 <DialogFooter>
                     <Button onClick={onClose}>Done</Button>
