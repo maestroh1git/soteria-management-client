@@ -4,6 +4,7 @@ import { getApiErrorMessage } from '@/lib/utils/api-error';
 import {
     downloadChildAttendance,
     getChildAttendance,
+    getChildInvoices,
     getChildStatement,
     getMyChildren,
 } from '../api/portal';
@@ -36,5 +37,14 @@ export function useDownloadChildAttendance() {
         mutationFn: downloadChildAttendance,
         onError: (err) =>
             toast.error(getApiErrorMessage(err, 'The attendance could not be downloaded.')),
+    });
+}
+
+/** One child's issued bills, newest first (5.12). */
+export function useChildInvoices(studentId?: string) {
+    return useQuery({
+        queryKey: ['portal', 'children', studentId, 'invoices'],
+        queryFn: () => getChildInvoices(studentId!),
+        enabled: !!studentId,
     });
 }

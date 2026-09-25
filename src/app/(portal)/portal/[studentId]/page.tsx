@@ -6,6 +6,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChildAttendance } from '@/components/portal/child-attendance';
+import { ChildInvoices } from '@/features/portal/child-invoices';
 import { EmptyState } from '@/components/common/empty-state';
 import { DataTable } from '@/components/common/data-table';
 import { Breadcrumbs, PageHeader } from '@/components/layout/page-header';
@@ -194,6 +195,8 @@ export default function ChildStatementPage({
                     </Card>
                 )}
             </div>
+
+            <ChildInvoices studentId={data.student.id} />
 
             <Card>
                 <CardHeader>

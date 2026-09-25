@@ -113,6 +113,23 @@ test.describe('Parent', () => {
         expect(file.suggestedFilename()).toMatch(/_attendance\.csv$/);
         expect(problems, problems.join('\n')).toEqual([]);
     });
+
+    test('reads a child’s bills and opens one, with its PDF (5.12)', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/portal');
+        await settle(page);
+        await page.locator('main a[href^="/portal/"]').first().click();
+        await settle(page);
+        await expect(page.getByText('Bills', { exact: true })).toBeVisible();
+        const bill = page.locator('main a[href^="/invoice/"]').first();
+        test.skip((await bill.count()) === 0, 'this child has no bills in the seed');
+        const pdf = await page.locator('main a[href$="/pdf"]').first().getAttribute('href');
+        expect(pdf).toMatch(/\/invoice\/[0-9a-f-]{36}\/pdf$/);
+        await bill.click();
+        await page.waitForURL(/\/invoice\/[0-9a-f-]{36}$/);
+        await expect(page.getByText(/^(Still to pay|Paid in full)$/).first()).toBeVisible();
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
 });
 
 test.describe('Sign-in form', () => {
