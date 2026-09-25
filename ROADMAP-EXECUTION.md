@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **In progress**: C4.1–C4.9 done; C4.10, C4.11 left | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.4, 5.6, 5.7 (reports and attendance CSV; the parent attendance export is left), 5.9 done | same |
+| 5 Finish | **In progress**: 5.1–5.4, 5.6, 5.7 (not yet the parent attendance export), 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -164,6 +164,27 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   the whole school or one class, from the Register page.
 - **Checks:** persona tests 40/40; API unit 811/811, e2e 537 passed (2
   skipped); audit 0; lint ratchet 41.
+### Feedback round 1
+
+| Feedback | Where it falls | Done |
+|---|---|---|
+| Absent vs excused, and their reasons | 5.4 | The register explains both (unauthorised vs authorised); "Away" is "Absent" everywhere; summaries count both; the class week lists each absence and late with its reason |
+| Name order, search and lists | C3.7 copy guide | Lists read "Surname, First" and sort by surname; titles "First Surname" (`lib/utils/names`, docs/COPY.md); search matches a full name in either order, client and API (`whereWordsMatch`); fee lists too |
+| Attendance history on the pupil page | C4.5 / 5.4 | The Class & attendance tab (for those who read attendance) |
+| Click anyone to open their profile | C3.4 | Registers, rosters, alerts, awards, fees lists, reports, staff and pupil tables link each name |
+| Classes show filled/total seats | C4.2 | "24/30 seats", and a full class says so (`enrolled` on `GET /academics/arms`) |
+| Admissions grouped by class level | 5.10 | A row of classes with counts; the list sorts by class, then surname |
+| Special needs on the application | 5.15 (new) | Done, above |
+| Copy with feedback after applying | 5.11 | `CopyButton` says "Copied" (number and link; also the admissions and invite links) |
+| Question sets per class | 5.10 | A set per class level or the default; booking uses the candidate's class's set |
+| Assessment schedules for the admissions officer | 5.16 (new) | Done, above; `GET /admissions/assessors` lets the office pick an assessor without the staff list |
+
+- **Also found:** support notes carried from admissions at enrolment were
+  never shown anywhere; the pupil's Medical tab and the class alerts show
+  them now.
+- **Checks:** persona tests 43/43; API unit 814/814, e2e 547 passed (2
+  skipped); audit 0; three migrations (SupportNeeds, QuestionSetsPerClass,
+  AssessmentDuration).
 - **Next in Wave 4:** C4.10 persona homes, C4.11 portal and console.
 
 ### Left for later waves
@@ -487,6 +508,8 @@ Every item already has an API route, most already have a hook.
 | **5.11** | S+C | Public offer accept/decline and document upload on the status page | `/application/[token]` |
 | **5.12** | C | Parent portal: invoices with PDFs; later Paystack checkout (D8) | Portal |
 | **5.13** | C | Platform: create a tenant for a customer | `/admin/tenants` |
+| **5.15** | S+C | Support needs on the application (sight/glasses, hearing, mobility, learning, speech, social, medical, other, notes), carried to the pupil and the class's alerts | Apply form, application, Student → Medical |
+| **5.16** | S+C | Assessment diary: slots with a duration, no double booking of an assessor or a child, the candidate's details and question set beside each sitting | Admissions → Assessment diary |
 | **5.14** | C | Delete dead code: `useGrade`, `useTaxRulesList`, `usePayPeriodsList`, `useBirthdaysThisMonth` (if the feed covers it), unused API functions (`getDepartment`, `getRole`, `getSalaryComponent`, `getSettingByKey`, `getTaxRule`, `getPayslipDownloadUrl`) | — |
 
 ---
