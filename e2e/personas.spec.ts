@@ -678,3 +678,70 @@ test.describe('Homes (C4.10)', () => {
         });
     });
 });
+
+test.describe('Contact log (5.5)', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+    const note = `Persona test ${Date.now()}: spoke to mother, back Monday`;
+    let pupil = '';
+
+    test.describe.configure({ mode: 'serial' });
+
+    test.describe('the attendance office', () => {
+        test.skip(!has('attendance'), 'no attendance persona');
+        test.use({ storageState: storageFor('attendance') });
+
+        test('writes down a call from the follow-up list', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/attendance/at-risk');
+            await settle(page);
+            const row = page.locator('main tbody tr').filter({ hasText: 'None yet' }).first();
+            pupil = ((await row.locator('td').first().innerText()).split('\n')[0] ?? '').trim();
+            await row.getByRole('button', { name: 'Log contact' }).click();
+            const dialog = page.getByRole('dialog');
+            await dialog.getByLabel('What came of it').fill(note);
+            await dialog.getByRole('button', { name: 'Save contact' }).click();
+            await expect(dialog).toBeHidden();
+            await expect(
+                page.locator('main tbody tr').filter({ hasText: pupil }).first(),
+            ).toContainText('Spoke to them');
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+
+    test.describe('an admin', () => {
+        test.skip(!has('admin') || !has('attendance'), 'no admin or attendance persona');
+        test.use({ storageState: storageFor('admin') });
+
+        test('reads what was said on the pupil’s record', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/attendance/at-risk');
+            await settle(page);
+            await page
+                .locator('main tbody tr')
+                .filter({ hasText: pupil })
+                .first()
+                .locator('a[href^="/students/"]')
+                .first()
+                .click();
+            await settle(page);
+            await page.getByRole('tab', { name: 'Attendance' }).click();
+            await expect(page.getByText(note)).toBeVisible();
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+
+    test.describe('a viewer', () => {
+        test.skip(!has('viewer'), 'no viewer persona');
+        test.use({ storageState: storageFor('viewer') });
+
+        test('reads the follow-up list, and does not log a contact', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/attendance/at-risk');
+            await settle(page);
+            await expect(page.getByRole('heading', { name: 'Pupils to follow up' })).toBeVisible();
+            await expect(page.locator('main tbody tr').first()).toBeVisible();
+            await expect(page.getByRole('button', { name: 'Log contact' })).toHaveCount(0);
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});
