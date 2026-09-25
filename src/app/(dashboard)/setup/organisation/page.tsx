@@ -59,6 +59,7 @@ import { StatusBadge } from '@/components/common/status-badge';
 import { LearnerTermSetting } from '@/components/settings/learner-term-setting';
 import { PageHeader } from '@/components/layout/page-header';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { useHydrated } from '@/lib/hooks/use-hydrated';
 
 // ── Schemas ─────────────────────────────────────────────────
 
@@ -133,7 +134,12 @@ export default function OrganisationPage() {
         isLoading: settingsLoading,
         isError: settingsFailed,
     } = useSettings();
-    const { data: myTenant, isLoading: tenantLoading } = useMyTenant();
+    // The layout loads the tenant, so it can be cached before this page
+    // hydrates; show what the server rendered until then.
+    const hydrated = useHydrated();
+    const tenantQuery = useMyTenant();
+    const myTenant = hydrated ? tenantQuery.data : undefined;
+    const tenantLoading = hydrated && tenantQuery.isLoading;
     const updateTenantMutation = useUpdateTenant();
 
     const createCountryMutation = useCreateCountry();

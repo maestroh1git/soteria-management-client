@@ -59,6 +59,9 @@ export function SessionSync() {
  * refuses them, and screens hide the buttons to match.
  */
 export function useMyEmployeeId(): string | null {
+    // SessionSync loads the session from the layout, so it can already be
+    // cached while a page's boundary hydrates; answer as the server did first.
+    const hydrated = useHydrated();
     const { data } = useSession();
-    return data?.identity.employeeId ?? null;
+    return hydrated ? (data?.identity.employeeId ?? null) : null;
 }

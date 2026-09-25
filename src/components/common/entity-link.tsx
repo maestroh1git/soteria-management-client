@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { listName } from '@/lib/utils/names';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useSession } from '@/lib/hooks/use-session';
+import { useHydrated } from '@/lib/hooks/use-hydrated';
 
 interface EntityLinkProps {
     href: string;
@@ -112,7 +113,11 @@ export function ClassLink({
     className?: string;
 }) {
     const { mayReach } = useAuth();
-    const { data: session } = useSession();
+    // The session is loaded by the layout, so it can be cached before this
+    // link hydrates; point where the server did until then.
+    const hydrated = useHydrated();
+    const { data } = useSession();
+    const session = hydrated ? data : undefined;
     const office = `/classes/${armId}`;
     const own = session?.identity.formTeacherOf.includes(armId)
         ? `/me/classes/${armId}`
