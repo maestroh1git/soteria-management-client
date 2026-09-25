@@ -156,13 +156,17 @@ export function useBudgets() {
     return useQuery({ queryKey: ['budgets'], queryFn: getBudgets });
 }
 
-export function useBudgetVariance(filters?: {
-    on?: string;
-    departmentId?: string;
-}) {
+export function useBudgetVariance(
+    filters?: {
+        on?: string;
+        departmentId?: string;
+    },
+    enabled = true,
+) {
     return useQuery({
         queryKey: ['budgets', 'variance', filters],
         queryFn: () => getBudgetVariance(filters),
+        enabled,
     });
 }
 

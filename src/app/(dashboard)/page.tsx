@@ -28,6 +28,8 @@ import { SchoolWidget } from '@/components/dashboard/school-widget';
 import { StaffRecordsWidget } from '@/components/dashboard/staff-records-widget';
 import { AttendanceTile } from '@/components/dashboard/attendance-tile';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
+import { BudgetWidget } from '@/components/dashboard/budget-widget';
+import { NeedsYou } from '@/features/home/needs-you';
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils/currency';
 import {
@@ -78,6 +80,10 @@ export default function DashboardPage() {
     const canYearEnd = can('reports.yearEnd');
     const canDetail = can('reports.detail');
     const canSalaries = can('payroll.readSalaries');
+    // Whose home this is (C4.10): the bursar's leads with money, the
+    // registrar's with the school; everyone's with what is waiting on them.
+    const moneyFirst = can('ledger.read') && !can('payroll.process');
+    const schoolFirst = !seesPayroll && can('admissions.read');
 
     // A plain member of staff — the EMPLOYEE role and nothing that runs the
     // school or the payroll. The admin dashboard below is not theirs to read;
@@ -227,6 +233,7 @@ export default function DashboardPage() {
                     </h1>
                     <p className="text-muted-foreground mt-1">{subtitle}</p>
                 </div>
+                <NeedsYou />
                 <GettingStartedCard />
                 {/* Also here, not only on the populated dashboard below: a
                     tenant still setting up is exactly who is adding staff, and
@@ -234,6 +241,14 @@ export default function DashboardPage() {
                     cannot be paid until the first payroll run fails. It renders
                     nothing when there is nothing to act on. */}
                 <StaffRecordsWidget />
+                {/* No payroll yet is no reason to hide the rest of the school:
+                    the bursar's money and the registrar's roll still show. */}
+                <AttendanceTile />
+                <SchoolWidget />
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <FeesWidget />
+                    <BudgetWidget />
+                </div>
                 <EmptyState
                     icon={BarChart3}
                     title="No approved payroll yet"
@@ -264,8 +279,22 @@ export default function DashboardPage() {
                 )}
             </div>
 
+            {/* What is waiting on this person, before anything else (C4.10). */}
+            <NeedsYou />
+
             {/* Onboarding checklist (self-hides once complete/dismissed) */}
             <GettingStartedCard />
+
+            {/* The bursar's home leads with money; the registrar's with the
+                school. Each widget still gates itself on what the person may
+                read, and renders nothing when there is nothing to show. */}
+            {moneyFirst && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <FeesWidget />
+                    <BudgetWidget />
+                </div>
+            )}
+            {schoolFirst && <SchoolWidget />}
 
             {/* Payroll and loans — only for the roles the reports allow.
 
@@ -329,11 +358,12 @@ export default function DashboardPage() {
 
             {/* The school, for the people who run it. Self-gates on org type
                 and role, and stays hidden until there is a roll. */}
-            <SchoolWidget />
+            {!schoolFirst && <SchoolWidget />}
 
             {/* Fees in against costs out — both sides from the ledger. Hides
                 itself for a tenant that has never billed anything. */}
-            <FeesWidget />
+            {!moneyFirst && <FeesWidget />}
+            {!moneyFirst && <BudgetWidget />}
 
             {/* Upcoming events. This was a three-column grid holding a single
                 one-column card — the birthdays widget that used to sit beside it

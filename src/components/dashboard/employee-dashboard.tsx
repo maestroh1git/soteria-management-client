@@ -1,5 +1,6 @@
 'use client';
 
+import { NeedsYou } from '@/features/home/needs-you';
 import Link from 'next/link';
 import { Wallet, CalendarDays, UserCircle, ArrowRight, Download, Loader2 } from 'lucide-react';
 
@@ -42,6 +43,8 @@ export function EmployeeDashboard() {
                         : 'Your pay, payslips and leave'}
                 </p>
             </div>
+
+            <NeedsYou />
 
             {/* Year to date — the figure they came for */}
             {ytd && ytd.periodsIncluded > 0 ? (

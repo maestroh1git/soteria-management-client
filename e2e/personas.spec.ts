@@ -629,3 +629,35 @@ test.describe('Feedback round (5.10, 5.15, 5.16)', () => {
         });
     });
 });
+
+test.describe('Homes (C4.10)', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('an Approver', () => {
+        test.skip(!has('approver'), 'no approver persona');
+        test.use({ storageState: storageFor('approver') });
+
+        test('is shown what waits on them first, one step from it', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/');
+            await settle(page);
+            const waiting = page.getByRole('region', { name: 'Waiting on you' });
+            await expect(waiting).toBeVisible();
+            await expect(waiting.getByRole('link', { name: /decisions? waiting on you/i })).toHaveAttribute('href', '/approvals');
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+
+    test.describe('the bursar', () => {
+        test.skip(!has('finance'), 'no finance persona');
+        test.use({ storageState: storageFor('finance') });
+
+        test('sees money first: fees and spend against budget', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/');
+            await settle(page);
+            await expect(page.getByText('Spend against budget')).toBeVisible();
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});
