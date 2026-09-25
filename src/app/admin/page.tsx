@@ -15,11 +15,11 @@ import { StatCard } from '@/components/common/stat-card';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { KybBadge } from '@/components/admin/kyb-badge';
+import { PageHeader } from '@/components/layout/page-header';
+import { DataTable } from '@/components/common/data-table';
+import { tenantColumns, tenantHref } from '@/features/admin/tenant-columns';
 import { useTenants } from '@/lib/hooks/use-admin-tenants';
 import { usePlatformMetrics } from '@/lib/hooks/use-platform-metrics';
-import { formatDate } from '@/lib/utils/dates';
 import { formatCompactCurrency } from '@/lib/utils/currency';
 
 export default function AdminOverviewPage() {
@@ -39,16 +39,14 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
-        <p className="text-muted-foreground">
-          Tenants, verification, and activity across the platform
-        </p>
-      </div>
+      <PageHeader
+        title="Platform overview"
+        description="Tenants, verification and activity across the platform."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="Total Tenants"
+          title="Tenants"
           value={t.total}
           subtitle={`${t.newLast30Days} new in last 30 days`}
           icon={Building2}
@@ -56,7 +54,7 @@ export default function AdminOverviewPage() {
         <StatCard title="Active" value={t.active} icon={CheckCircle2} />
         <StatCard title="Suspended" value={t.suspended} icon={Ban} />
         <StatCard
-          title="Awaiting KYB Review"
+          title="Awaiting KYB review"
           value={t.awaitingKybReview}
           icon={ClipboardCheck}
         />
@@ -67,7 +65,7 @@ export default function AdminOverviewPage() {
           icon={Users}
         />
         <StatCard
-          title="Payroll Paid"
+          title="Payroll paid"
           value={formatCompactCurrency(payroll.totalPaidAmount)}
           subtitle={`${payroll.paidSalaries.toLocaleString()} paid salaries`}
           icon={Banknote}
@@ -96,61 +94,17 @@ export default function AdminOverviewPage() {
 
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Recent Tenants</h2>
+          <h2 className="text-lg font-semibold">Recent tenants</h2>
           <Button asChild variant="ghost" size="sm">
             <Link href="/admin/tenants">View all</Link>
           </Button>
         </div>
-        <div className="rounded-md border bg-white dark:bg-slate-950">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Name</th>
-                <th className="px-4 py-3 text-left font-medium">KYB</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-left font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((tenant) => (
-                <tr
-                  key={tenant.id}
-                  className="border-b last:border-0 hover:bg-muted/30"
-                >
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/tenants/${tenant.id}`}
-                      className="font-medium text-violet-700 hover:underline dark:text-violet-400"
-                    >
-                      {tenant.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <KybBadge status={tenant.kybStatus} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={tenant.isActive ? 'default' : 'secondary'}>
-                      {tenant.isActive ? 'Active' : 'Suspended'}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatDate(tenant.createdAt)}
-                  </td>
-                </tr>
-              ))}
-              {recent.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="py-12 text-center text-muted-foreground"
-                  >
-                    No tenants yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={tenantColumns()}
+          data={recent}
+          rowHref={tenantHref}
+          emptyTitle="No tenants yet"
+        />
       </div>
     </div>
   );

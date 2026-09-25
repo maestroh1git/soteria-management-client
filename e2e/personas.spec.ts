@@ -96,6 +96,23 @@ test.describe('Parent', () => {
         }
         expect(problems, problems.join('\n')).toEqual([]);
     });
+
+    test('finds the way back and downloads a child’s attendance', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/portal');
+        await settle(page);
+        await page.locator('main a[href^="/portal/"]').first().click();
+        await settle(page);
+        await expect(
+            page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Your children' }),
+        ).toBeVisible();
+        const [file] = await Promise.all([
+            page.waitForEvent('download'),
+            page.getByRole('button', { name: 'Download attendance' }).click(),
+        ]);
+        expect(file.suggestedFilename()).toMatch(/_attendance\.csv$/);
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
 });
 
 test.describe('Sign-in form', () => {

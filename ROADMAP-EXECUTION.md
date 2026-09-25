@@ -24,8 +24,8 @@ run in parallel unless a dependency is named.
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
-| 4 Reorganise | **In progress**: C4.1–C4.10 done; C4.11 left | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.4, 5.6, 5.7 (not yet the parent attendance export), 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
+| 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
+| 5 Finish | **In progress**: 5.1–5.4, 5.6, 5.7, 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -204,7 +204,40 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   school (attendance, the roll, fees, budgets).
 - **Checks:** persona tests 45/45; API unit 814/814, e2e 551 passed (2
   skipped); audit 0; lint ratchet clean.
-- **Next in Wave 4:** C4.11 portal, public pages and console.
+
+### C4.11 Portal, public pages and console
+
+- **Parent portal:** `PageHeader` on both pages; a child's page has the
+  trail back to "Your children" (outside the app's sections the page's own
+  crumbs are the whole trail). The account history is a `DataTable` with
+  formatted dates (it printed raw ISO dates); "Nothing owed" and the days to
+  know about are `StatusBadge`s (new `balance` kind).
+- **5.7, parent attendance export:** "Download attendance" on a child's
+  page saves that child's term as CSV from the existing
+  `GET /portal/children/:id/attendance/export`.
+- **Public pages:** the invoice's dates go through `utils/dates` (the due
+  date and payments were raw ISO); payments received are a `DataTable`; the
+  bill's own lines stay a document table, as they add up to a total. The
+  apply, status and invoice pages now load through hooks
+  (`lib/hooks/use-public.ts`), which clears three of the lint baseline's
+  held errors. The status page keeps its plain-language sentences rather
+  than a badge: it is written for a parent, not an office.
+- **Console:** all five pages on `PageHeader`; tenants, the overview's
+  recent tenants, the KYB queue and the audit log on `DataTable` (shared
+  tenant columns in `features/admin`); tenant active/suspended and audit
+  actions and categories join the status registry (new `tenant`,
+  `auditAction`, `auditCategory` kinds). The school's own audit log uses
+  the same audit kinds, so its two private colour maps are gone, and
+  `KybBadge` is replaced by `StatusBadge`. The console's audit log pages
+  and filters on the server as before.
+- **Checks:** persona tests 46/46 (new: a parent finds the way back and
+  downloads a child's attendance); console and public pages walked in
+  Chromium as a super-admin and anonymously, with no page errors or failed
+  requests; audit 0; lint ratchet clean (baseline 37 pairs).
+
+**Wave 4 is done.** Left: the rest of Wave 5 (5.5 contact log, 5.8 bank
+reconciliation, the rest of 5.10, 5.11 applicant offer and upload, 5.12
+portal invoices and Paystack, 5.13 create a tenant, 5.14 dead code).
 
 ### Left for later waves
 

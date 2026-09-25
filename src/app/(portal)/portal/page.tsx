@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/common/status-badge';
+import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/common/empty-state';
 import { useMyChildren } from '@/lib/hooks/use-portal';
 import { Money } from '@/components/common/money';
@@ -32,12 +33,10 @@ export default function PortalHomePage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold">Your children</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Fees, payments and what is still owed.
-                </p>
-            </div>
+            <PageHeader
+                title="Your children"
+                description="Attendance, fees, payments and what is still owed."
+            />
 
             {children.length === 0 ? (
                 <EmptyState
@@ -88,12 +87,7 @@ export default function PortalHomePage() {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 {settled ? (
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200"
-                                                    >
-                                                        Nothing owed
-                                                    </Badge>
+                                                    <StatusBadge kind="balance" status="SETTLED" />
                                                 ) : (
                                                     <span className="font-semibold tabular-nums">
                                                         <Money value={child.outstanding} />

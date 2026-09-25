@@ -140,6 +140,38 @@ export const STATUSES = {
     ABSENT: e('Absent', 'problem'),
     EXCUSED: e('Excused', 'neutral'),
   },
+  /** What an audit entry records someone doing. */
+  auditAction: {
+    CREATE: e('Created', 'active'),
+    UPDATE: e('Updated', 'active'),
+    DELETE: e('Deleted', 'problem'),
+    APPROVE: e('Approved', 'done'),
+    REJECT: e('Rejected', 'problem'),
+    DISBURSE: e('Disbursed', 'done'),
+    PROCESS: e('Processed', 'active'),
+    MARK_PAID: e('Marked paid', 'done'),
+    BULK_PAYMENT: e('Bulk payment', 'done'),
+    LOGIN: e('Signed in', 'neutral'),
+    LOGIN_FAILED: e('Sign-in failed', 'problem'),
+    REGISTER: e('Registered', 'active'),
+  },
+  /** Which part of the product an audit entry is about. A label, not a verdict. */
+  auditCategory: {
+    FINANCIAL: e('Financial', 'neutral'),
+    EMPLOYEE: e('Employee', 'neutral'),
+    CONFIGURATION: e('Configuration', 'neutral'),
+    SECURITY: e('Security', 'neutral'),
+  },
+  /** What a family owes, as a parent sees it on the portal. */
+  balance: {
+    SETTLED: e('Nothing owed', 'done'),
+    OWED: e('Owed', 'waiting'),
+  },
+  /** A school on the platform, as the console sees it. */
+  tenant: {
+    ACTIVE: e('Active', 'done'),
+    SUSPENDED: e('Suspended', 'problem'),
+  },
   student: {
     ACTIVE: e('Active', 'done'),
     GRADUATED: e('Graduated', 'neutral'),

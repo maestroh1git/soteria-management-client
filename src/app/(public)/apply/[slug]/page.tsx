@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState, useId } from 'react';
+import { use, useState, useId } from 'react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CopyButton } from '@/components/common/copy-button';
 import { SupportNeedsFields } from '@/components/common/support-needs-fields';
@@ -22,11 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    getPublicSchool,
-    submitApplication,
-    type PublicSchool,
-} from '@/lib/api/public-admissions';
+import { usePublicSchool, useSubmitApplication } from '@/lib/hooks/use-public';
 
 const RELATIONSHIPS = ['MOTHER', 'FATHER', 'GUARDIAN', 'SPONSOR', 'OTHER'];
 
@@ -44,14 +40,12 @@ export default function ApplyPage({
 }) {
     const { slug } = use(params);
 
-    const [school, setSchool] = useState<PublicSchool | null>(null);
-    const [loadError, setLoadError] = useState<string | null>(null);
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [receipt, setReceipt] = useState<{
-        applicationNumber: string;
-        accessToken: string;
-    } | null>(null);
+    const { data: school, error: schoolError } = usePublicSchool(slug);
+    const loadError = schoolError?.message ?? null;
+    const apply = useSubmitApplication(slug);
+    const submitting = apply.isPending;
+    const error = apply.error?.message ?? null;
+    const receipt = apply.data ?? null;
 
     const [form, setForm] = useState({
         classLevelId: '',
@@ -71,12 +65,6 @@ export default function ApplyPage({
     const [supportNeeds, setSupportNeeds] = useState<string[]>([]);
     const [supportNotes, setSupportNotes] = useState('');
 
-    useEffect(() => {
-        getPublicSchool(slug)
-            .then(setSchool)
-            .catch((e) => setLoadError(e.message));
-    }, [slug]);
-
     const complete =
         form.classLevelId &&
         form.firstName.trim() &&
@@ -87,26 +75,15 @@ export default function ApplyPage({
         form.guardianLastName.trim() &&
         form.guardianPhone.trim().length >= 7;
 
-    const submit = async () => {
-        setSubmitting(true);
-        setError(null);
-        try {
-            setReceipt(
-                await submitApplication(slug, {
-                    ...form,
-                    middleName: form.middleName.trim() || undefined,
-                    previousSchool: form.previousSchool.trim() || undefined,
-                    supportNeeds: supportNeeds.length ? supportNeeds : undefined,
-                    supportNotes: supportNotes.trim() || undefined,
-                    guardianEmail: form.guardianEmail.trim() || undefined,
-                }),
-            );
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'Something went wrong');
-        } finally {
-            setSubmitting(false);
-        }
-    };
+    const submit = () =>
+        apply.mutate({
+            ...form,
+            middleName: form.middleName.trim() || undefined,
+            previousSchool: form.previousSchool.trim() || undefined,
+            supportNeeds: supportNeeds.length ? supportNeeds : undefined,
+            supportNotes: supportNotes.trim() || undefined,
+            guardianEmail: form.guardianEmail.trim() || undefined,
+        });
 
     if (loadError) {
         return (

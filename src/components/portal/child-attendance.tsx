@@ -3,17 +3,11 @@
 import { Award, Loader2, Phone, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/empty-state';
+import { StatusBadge } from '@/components/common/status-badge';
 import { TermStrip } from '@/components/attendance/term-strip';
 import { useChildAttendance } from '@/lib/hooks/use-portal';
 import { ABSENCE_REASON_LABELS, type AbsenceReason } from '@/lib/api/attendance';
 import { formatDayOfWeek } from '@/lib/utils/dates';
-
-const STATUS_LABEL: Record<string, string> = {
-    PRESENT: 'Present',
-    LATE: 'Late',
-    ABSENT: 'Absent',
-    EXCUSED: 'Excused',
-};
 
 /**
  * A child's attendance, for their own parent.
@@ -153,9 +147,9 @@ export function ChildAttendance({
                                                 : 'No reason recorded'}
                                         </p>
                                     </div>
-                                    <span className="flex-none rounded-md bg-muted px-2 py-1 text-xs font-semibold">
-                                        {STATUS_LABEL[d.status ?? ''] ?? ''}
-                                        {d.minutesLate ? ` · ${d.minutesLate} min` : ''}
+                                    <span className="flex flex-none items-center gap-2 text-xs text-muted-foreground">
+                                        {d.minutesLate ? `${d.minutesLate} min` : ''}
+                                        <StatusBadge kind="attendance" status={d.status ?? ''} />
                                     </span>
                                 </li>
                             ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use } from 'react';
 import { AlertCircle, CheckCircle2, Download, Loader2 } from 'lucide-react';
 
 import {
@@ -10,12 +10,36 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    getPublicInvoice,
-    publicInvoicePdfUrl,
-    type PublicInvoice,
-} from '@/lib/api/public-invoice';
+import type { PublicInvoice } from '@/lib/api/public-invoice';
+import { publicInvoicePdfUrl, usePublicInvoice } from '@/lib/hooks/use-public';
 import { Money } from '@/components/common/money';
+import { DataTable } from '@/components/common/data-table';
+import { formatDate } from '@/lib/utils/dates';
+import type { ColumnDef } from '@tanstack/react-table';
+
+type Payment = PublicInvoice['payments'][number];
+
+const paymentColumns: ColumnDef<Payment>[] = [
+    {
+        id: 'receipt',
+        header: 'Receipt',
+        meta: { cardTitle: true },
+        cell: ({ row }) => row.original.receiptNumber,
+    },
+    {
+        id: 'paidOn',
+        header: 'Paid on',
+        cell: ({ row }) => (
+            <span className="text-muted-foreground">{formatDate(row.original.paidOn)}</span>
+        ),
+    },
+    {
+        id: 'amount',
+        header: 'Amount',
+        meta: { align: 'right' },
+        cell: ({ row }) => <Money value={row.original.amount} />,
+    },
+];
 
 /**
  * A parent's bill, opened from a link. No account, no password.
@@ -34,22 +58,12 @@ export default function PublicInvoicePage({
     params: Promise<{ token: string }>;
 }) {
     const { token } = use(params);
-    const [invoice, setInvoice] = useState<PublicInvoice | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        getPublicInvoice(token)
-            .then(setInvoice)
-            .catch(() =>
-                // One message for a bad link and for a bill that was withdrawn:
-                // guessing tokens should learn nothing from the difference.
-                setError(
-                    'We could not find a bill for that link. Please check with the school.',
-                ),
-            )
-            .finally(() => setLoading(false));
-    }, [token]);
+    const { data: invoice, isLoading: loading, isError } = usePublicInvoice(token);
+    // One message for a bad link and for a bill that was withdrawn: guessing
+    // tokens should learn nothing from the difference.
+    const error = isError
+        ? 'We could not find a bill for that link. Please check with the school.'
+        : null;
 
     if (loading) {
         return (
@@ -105,7 +119,7 @@ export default function PublicInvoicePage({
                             </p>
                             {invoice.dueDate && (
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Due {invoice.dueDate}
+                                    Due {formatDate(invoice.dueDate)}
                                 </p>
                             )}
                         </>
@@ -121,6 +135,8 @@ export default function PublicInvoicePage({
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
+                    {/* A bill, not a list: its lines add up to the total in the
+                        footer, which a DataTable has no place for. */}
                     <table className="w-full text-sm">
                         <tbody className="divide-y">
                             {charges.map((line, i) => (
@@ -165,24 +181,8 @@ export default function PublicInvoicePage({
                     <CardHeader className="pb-3">
                         <CardTitle className="text-base">Payments received</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <table className="w-full text-sm">
-                            <tbody className="divide-y">
-                                {invoice.payments.map((p) => (
-                                    <tr key={p.receiptNumber}>
-                                        <td className="px-6 py-3">
-                                            <div>{p.receiptNumber}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {p.paidOn}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-3 text-right tabular-nums">
-                                            <Money value={p.amount} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <CardContent>
+                        <DataTable columns={paymentColumns} data={invoice.payments} />
                     </CardContent>
                 </Card>
             )}

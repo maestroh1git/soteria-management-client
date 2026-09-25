@@ -1,5 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils/api-error';
 import {
+    downloadChildAttendance,
     getChildAttendance,
     getChildStatement,
     getMyChildren,
@@ -24,5 +27,14 @@ export function useChildAttendance(studentId?: string, termId?: string) {
         queryKey: ['portal', 'children', studentId, 'attendance', termId],
         queryFn: () => getChildAttendance(studentId!, termId),
         enabled: !!studentId,
+    });
+}
+
+/** Save one child's attendance as a spreadsheet. */
+export function useDownloadChildAttendance() {
+    return useMutation({
+        mutationFn: downloadChildAttendance,
+        onError: (err) =>
+            toast.error(getApiErrorMessage(err, 'The attendance could not be downloaded.')),
     });
 }

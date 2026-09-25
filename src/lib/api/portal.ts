@@ -1,4 +1,5 @@
 import api from './client';
+import { saveBlob } from '@/lib/utils/download';
 
 export interface PortalChild {
     id: string;
@@ -89,4 +90,22 @@ export async function getChildAttendance(
     return (await api.get(`/portal/children/${studentId}/attendance`, {
         params: termId ? { termId } : undefined,
     })) as unknown as ParentAttendance | null;
+}
+
+/**
+ * One child's attendance as CSV, for their own parent (ROADMAP-EXECUTION.md,
+ * 5.7). The same days the screen shows, and nothing it does not.
+ */
+export async function downloadChildAttendance(params: {
+    studentId: string;
+    /** For the file name: the child's name. */
+    name: string;
+    termId?: string;
+}): Promise<void> {
+    const data = await api.get(`/portal/children/${params.studentId}/attendance/export`, {
+        params: params.termId ? { termId: params.termId } : undefined,
+        responseType: 'blob',
+    });
+    const stem = params.name.replace(/[^\w-]+/g, '-').toLowerCase();
+    saveBlob(data as unknown as BlobPart, `${stem}_attendance.csv`, 'text/csv');
 }
