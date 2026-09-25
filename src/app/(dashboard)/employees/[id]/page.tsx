@@ -51,6 +51,7 @@ export default function EmployeeDetailPage({
     const canReadLoans = can('loans.read');
     const canReadLeave = can('leave.read');
     const canManageAccess = can('users.manage');
+    const canReadHistory = can('audit.entityHistory');
     const { data: employee, isLoading, isError } = useEmployee(id);
     // The staff record hub (C4.4): one person, every part of their employment.
     // In the URL, so the completeness panel (and any link) can send the user to
@@ -66,12 +67,12 @@ export default function EmployeeDetailPage({
                     ['loans', canReadLoans],
                     ['leave', canReadLeave],
                     ['access', canManageAccess],
-                    ['history', true],
+                    ['history', canReadHistory],
                 ] as const
             )
                 .filter(([, shown]) => shown)
                 .map(([t]) => t),
-        [canViewSensitive, canReadPayslips, canReadLoans, canReadLeave, canManageAccess],
+        [canViewSensitive, canReadPayslips, canReadLoans, canReadLeave, canManageAccess, canReadHistory],
     );
     const [tab, setTab] = useTabParam<(typeof tabs)[number]>(tabs);
     const {

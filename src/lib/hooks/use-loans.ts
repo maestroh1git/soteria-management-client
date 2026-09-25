@@ -4,6 +4,7 @@ import type { LoanFilters } from '@/lib/types/api';
 import {
   getLoans,
   getLoan,
+  getLoanLimits,
   applyForLoan,
   applyForAdvance,
   approveLoan,
@@ -30,6 +31,15 @@ export function useLoan(id: string) {
     queryKey: ['loans', id],
     queryFn: () => getLoan(id),
     enabled: !!id,
+  });
+}
+
+/** What the school's policy lets this employee borrow. */
+export function useLoanLimits(employeeId: string) {
+  return useQuery({
+    queryKey: ['loans', 'limits', employeeId],
+    queryFn: () => getLoanLimits(employeeId),
+    enabled: !!employeeId,
   });
 }
 

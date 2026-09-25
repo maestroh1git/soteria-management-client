@@ -539,6 +539,23 @@ test.describe('My Pay (5.6)', () => {
         await dialog.getByRole('button', { name: /cancel/i }).click();
         expect(problems, problems.join('\n')).toEqual([]);
     });
+
+    test('is told the limit before asking, and stopped over it', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/me');
+        await settle(page);
+        await page.getByRole('button', { name: /ask for a loan or advance/i }).click();
+        const dialog = page.getByRole('dialog');
+        // An advance: at most the school's share of a month's gross pay.
+        await expect(dialog.getByText(/^Up to ₦[\d,]+(\.\d\d)? \(\d+% of your monthly gross pay\)\.$/)).toBeVisible();
+        await dialog.getByLabel('Amount').fill('5000000');
+        await dialog.getByLabel('What it is for').fill('Persona test, never sent');
+        await dialog.getByRole('button', { name: 'Send request' }).click();
+        await expect(dialog.getByText('That is more than you can ask for: see the limit below.')).toBeVisible();
+        await expect(dialog).toBeVisible();
+        await dialog.getByRole('button', { name: /cancel/i }).click();
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
 });
 
 test.describe('Today (C4.8) and the class week (5.4)', () => {
@@ -1050,5 +1067,90 @@ test.describe('Access from a position (5.17)', () => {
         await expect(person).toContainText(`Viewer, from ${position}`);
         await expect(person).not.toContainText('Approver');
         expect(problems, problems.join('\n')).toEqual([]);
+    });
+});
+
+test.describe('Loan deduction limit', () => {
+    test.describe.configure({ mode: 'serial' });
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('an approver', () => {
+        test.skip(!has('approver') || !has('employee'), 'no approver or employee persona');
+        test.use({ storageState: storageFor('approver') });
+
+        test('is warned before approving a loan the limit cannot take in a month', async ({
+            page,
+            browser,
+        }) => {
+            // Kemi asks for 600,000 over three months: 200,000 a month, well over
+            // a third of her pay.
+            const staff = await browser.newContext({ storageState: storageFor('employee') });
+            const staffPage = await staff.newPage();
+            await staffPage.goto('/me');
+            const staffToken = await staffPage.evaluate(() => localStorage.getItem('auth-token'));
+            const asked = await staffPage.request.post(`${API_URL}/me/loans`, {
+                headers: { Authorization: `Bearer ${staffToken}` },
+                data: { kind: 'LOAN', amount: 600000, termMonths: 3, reason: 'Rent, persona test' },
+            });
+            expect(asked.ok(), await asked.text()).toBe(true);
+            const loanId = (await asked.json()).id;
+            await staff.close();
+
+            const problems = watch(page);
+            await page.goto(`/loans/${loanId}`);
+            await settle(page);
+            const warning = page.getByRole('note').filter({ hasText: /limit allows/ });
+            await expect(warning).toContainText(/more than your \d+% limit allows/);
+            await expect(warning).toContainText('carry the rest');
+
+            await page.getByRole('button', { name: 'Approve' }).click();
+            await expect(page.getByRole('dialog').getByRole('note')).toContainText('limit allows');
+            await page.keyboard.press('Escape');
+            expect(problems, problems.join('\n')).toEqual([]);
+
+            // Leave the approvals inbox as it was.
+            const token = await page.evaluate(() => localStorage.getItem('auth-token'));
+            await page.request.patch(`${API_URL}/loans/${loanId}/reject`, {
+                headers: { Authorization: `Bearer ${token}` },
+                data: { notes: 'Persona test' },
+            });
+        });
+    });
+
+    test.describe('an admin', () => {
+        test.skip(!has('admin'), 'no admin persona');
+        test.use({ storageState: storageFor('admin') });
+
+        test('sets the limit in Setup, a third of pay unless changed', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/setup/organisation?tab=profile');
+            await settle(page);
+            const field = page.getByLabel('Loan repayments may take at most');
+            await expect(field).toHaveValue('33');
+
+            const save = page
+                .locator('form')
+                .filter({ has: page.getByLabel('Loan repayments may take at most') })
+                .getByRole('button', { name: 'Save' });
+            await field.fill('40');
+            await expect(page.getByText(/would repay at most ₦48,000(\.00)? a month/)).toBeVisible();
+            await save.click();
+            await expect(page.getByText('Organization profile saved')).toBeVisible();
+            await page.reload();
+            await settle(page);
+            await expect(page.getByLabel('Loan repayments may take at most')).toHaveValue('40');
+            // The other limits are there, at their defaults.
+            await expect(page.getByLabel('A loan can be repaid over at most')).toHaveValue('12');
+            await expect(page.getByLabel('A loan can be at most')).toHaveValue('3');
+
+            // Put it back for everyone else.
+            await page.getByLabel('Loan repayments may take at most').fill('33');
+            // Unset, the advance limit follows the monthly one; after a save
+            // it is stored, so put it back to 33 too.
+            await page.getByLabel('A salary advance can be at most').fill('33');
+            await save.click();
+            await expect(page.getByText('Organization profile saved').first()).toBeVisible();
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
     });
 });

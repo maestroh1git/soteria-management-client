@@ -57,6 +57,7 @@ import type { PayrollSetting } from '@/lib/api/settings';
 import type { UpdateTenantProfileDto } from '@/lib/api/tenants';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LearnerTermSetting } from '@/components/settings/learner-term-setting';
+import { LoanLimitSetting } from '@/components/settings/loan-limit-setting';
 import { PageHeader } from '@/components/layout/page-header';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
 import { useHydrated } from '@/lib/hooks/use-hydrated';
@@ -497,6 +498,7 @@ export default function OrganisationPage() {
                         {tenantOrgType === 'SCHOOL' && (
                             <LearnerTermSetting canEdit={can('organisation.manage')} />
                         )}
+                        <LoanLimitSetting canEdit={can('organisation.manage')} />
                         {tenantLoading ? (
                             <LoadingSkeleton rows={6} />
                         ) : (

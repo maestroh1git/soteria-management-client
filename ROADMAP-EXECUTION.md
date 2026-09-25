@@ -443,6 +443,36 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   locked Approver, and a change confirmed for "1 person" and followed in
   Team & access).
 
+### Payslip and loans (after Wave 5)
+
+- **The payslip is one A4 page, always.** Earnings and deductions side by
+  side, year to date as one strip, the footer at the foot of the page; when
+  a month will not fit, explanations give way before any figure does. The
+  naira sign prints (Liberation Sans, shipped with the API, so invoices and
+  receipts gain it too); loans read "Staff loan, 3 of 12"; notes read "8% of
+  gross salary (₦513,000)"; lines keep one order for everyone
+  (`salary_details.sort_order`); a net that is not gross minus deductions
+  says why.
+- **Loans are never forgiven by a short month.** The balance falls by what
+  was taken; the rest is arrears (`loans.arrears`), added to next month's
+  deduction. Each repayment records what was due beside what was taken, and
+  is PAID, PARTIAL or MISSED; a discarded run restores both.
+- **A monthly limit on loan deductions, on by default:** at most a third of
+  gross pay (the school can change it in Setup → Organisation). Payroll
+  holds each month to it and carries the rest; the payslip names it; an
+  approver is warned before approving a loan over it.
+- Found on the way: an Approver opening a loan was refused its History (the
+  audit log); History is now asked for, and shown, only for those who may
+  read it (`audit.entityHistory`, on loans and staff records).
+- **What may be borrowed, checked when it is asked for** (by the employee
+  or the payroll office), each a school setting with a default: a loan over
+  at most 12 months; an advance of at most the monthly limit's share of
+  gross pay (so it comes back on the next payday); a loan of at most 3
+  months' gross pay. Over them, the request is refused with the reason and
+  the figure allowed; the forms show each person's limits before they ask
+  (`GET /me/loan-limits`, `GET /loans/limits/:employeeId`). All four limits
+  sit together in Setup → Organisation → Loans and advances.
+
 Left in Wave 5: Paystack checkout, now planned in full as 5.12b (§9).
 
 ### Left for later waves

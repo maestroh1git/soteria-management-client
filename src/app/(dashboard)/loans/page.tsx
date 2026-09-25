@@ -36,7 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useCan } from '@/lib/hooks/use-can';
-import { useLoans, useApplyForLoan, useApplyForAdvance } from '@/lib/hooks/use-loans';
+import { useLoans, useApplyForLoan, useApplyForAdvance, useLoanLimits } from '@/lib/hooks/use-loans';
 import {
     createLoanSchema,
     createAdvanceSchema,
@@ -84,6 +84,13 @@ export default function LoansPage() {
         resolver: zodResolver(createAdvanceSchema),
         defaultValues: { employeeId: preset, amount: 0, reason: '' },
     });
+
+    // The school's limits for whoever is chosen, shown under the fields; the
+    // API refuses anything over them with the same figures.
+    const { data: loanLimits } = useLoanLimits(showLoanForm ? loanForm.watch('employeeId') : '');
+    const { data: advanceLimits } = useLoanLimits(
+        showAdvanceForm ? advanceForm.watch('employeeId') : '',
+    );
 
     const onSubmitLoan = (values: CreateLoanValues) => {
         applyLoanMutation.mutate(values, {
@@ -308,6 +315,13 @@ export default function LoansPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="loan-amount">Amount</Label>
                                 <Input id="loan-amount" type="number" step="0.01" {...loanForm.register('amount', { valueAsNumber: true })} />
+                                {loanLimits && (
+                                    <p className="text-xs text-muted-foreground">
+                                        {loanLimits.maxLoan === null
+                                            ? `Up to ${loanLimits.maxLoanMonthsOfPay} months of their gross pay.`
+                                            : `Up to ${formatMoney(loanLimits.maxLoan)} (${loanLimits.maxLoanMonthsOfPay} months of their gross pay).`}
+                                    </p>
+                                )}
                                 {loanForm.formState.errors.amount && (
                                     <p className="text-xs text-destructive">{loanForm.formState.errors.amount.message}</p>
                                 )}
@@ -323,6 +337,9 @@ export default function LoansPage() {
                         <div className="space-y-2">
                             <Label htmlFor="loan-termMonths">Term (months)</Label>
                             <Input id="loan-termMonths" type="number" {...loanForm.register('termMonths', { valueAsNumber: true })} />
+                            {loanLimits && (
+                                <p className="text-xs text-muted-foreground">Up to {loanLimits.maxTermMonths} months.</p>
+                            )}
                             {loanForm.formState.errors.termMonths && (
                                 <p className="text-xs text-destructive">{loanForm.formState.errors.termMonths.message}</p>
                             )}
@@ -375,6 +392,13 @@ export default function LoansPage() {
                         <div className="space-y-2">
                             <Label htmlFor="adv-amount">Amount</Label>
                             <Input id="adv-amount" type="number" step="0.01" {...advanceForm.register('amount', { valueAsNumber: true })} />
+                            {advanceLimits && (
+                                <p className="text-xs text-muted-foreground">
+                                    {advanceLimits.maxAdvance === null
+                                        ? `Up to ${advanceLimits.maxAdvancePercent}% of their monthly gross pay.`
+                                        : `Up to ${formatMoney(advanceLimits.maxAdvance)} (${advanceLimits.maxAdvancePercent}% of their monthly gross pay), repaid on the next payday.`}
+                                </p>
+                            )}
                             {advanceForm.formState.errors.amount && (
                                 <p className="text-xs text-destructive">{advanceForm.formState.errors.amount.message}</p>
                             )}
