@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.10, 5.15, 5.16 done | same |
+| 5 Finish | **In progress**: 5.1–5.11, 5.15, 5.16 done | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -317,8 +317,38 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   was withdrawn as one in the browser; audit 0; typecheck and lint
   ratchet clean.
 
-Left in Wave 5: 5.11 applicant offer and upload, 5.12 portal invoices and
-Paystack, 5.13 create a tenant, 5.14 dead code.
+### 5.11 The family's link: answer an offer, send papers
+
+- **Offer:** a family holding their application link can **Accept the
+  place** or **Decline** it (declining asks first) while the offer is live.
+  `POST /public/applications/:token/offer` makes the office's own move
+  through the same rulebook, under the tenant the token proves; an offer
+  past its deadline is refused even before the nightly sweep marks it
+  expired. The office's decision notes are left as they were.
+- **Papers:** the same page takes a birth certificate, immunisation record,
+  last school's report, photograph, parent's ID or something else
+  (`POST /public/applications/:token/documents`): bytes sniffed, 5 MB, ten
+  per application, and only while the application is open. The page lists
+  what was sent by name; the link can send papers, never fetch them back.
+- **The office sees them:** the application page gained a **Documents**
+  section (it had none: papers attached to an application were invisible
+  until enrolment moved them to the pupil). The pupil record's documents
+  panel is now one shared `DocumentsPanel`, keyed by owner, and the
+  pupil-only document hooks and API functions are gone.
+- **Guard rails the change met:** the public-route registry (every
+  `@Public()` route must say how it reaches data under RLS) and the
+  allow-list of fields the public status response may carry both failed
+  until the new routes and fields were written into them, as intended.
+- **Checks:** API unit 815/815; e2e 565 passed (2 skipped), nine new in
+  the public admissions suite (accept once, decline closes the link, a
+  lapsed offer, a bad answer, a birth certificate reaching the office, the
+  office's kinds and a disguised file refused, the limit of ten, an unreal
+  link); drift clean; audit 0. Persona tests 53/53 (new: a family sends a
+  birth certificate and accepts the place from their link, and the
+  registrar finds the file on the application).
+
+Left in Wave 5: 5.12 portal invoices and Paystack, 5.13 create a tenant,
+5.14 dead code.
 
 ### Left for later waves
 

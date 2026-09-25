@@ -1,9 +1,12 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     getApplicationStatus,
     getPublicSchool,
+    respondToOffer,
+    sendApplicationDocument,
     submitApplication,
     type ApplyPayload,
+    type FamilyDocumentKind,
 } from '../api/public-admissions';
 import { getPublicInvoice, publicInvoicePdfUrl } from '../api/public-invoice';
 
@@ -45,5 +48,24 @@ export function usePublicInvoice(token: string) {
         queryKey: ['public', 'invoice', token],
         queryFn: () => getPublicInvoice(token),
         retry: false,
+    });
+}
+
+/** Accept or decline the offer on this application (5.11). */
+export function useRespondToOffer(token: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (decision: 'ACCEPT' | 'DECLINE') => respondToOffer(token, decision),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['public', 'application', token] }),
+    });
+}
+
+/** Send the school a document for this application (5.11). */
+export function useSendApplicationDocument(token: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ file, kind }: { file: File; kind: FamilyDocumentKind }) =>
+            sendApplicationDocument(token, file, kind),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['public', 'application', token] }),
     });
 }

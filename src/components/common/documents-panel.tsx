@@ -14,15 +14,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/common/empty-state';
-import {
-    useAttachStudentDocument,
-    useRemoveStudentDocument,
-    useStudentDocuments,
-} from '@/lib/hooks/use-students';
-import {
-    downloadStudentDocument,
-    type DocumentKind,
-} from '@/lib/api/students';
+import { useAttachDocument, useDocuments, useRemoveDocument } from '@/lib/hooks/use-documents';
+import { downloadDocument, type DocumentKind } from '@/lib/api/documents';
+import { formatDate } from '@/lib/utils/dates';
 
 const KINDS: Array<{ value: DocumentKind; label: string }> = [
     { value: 'BIRTH_CERTIFICATE', label: 'Birth certificate' },
@@ -36,24 +30,29 @@ const KINDS: Array<{ value: DocumentKind; label: string }> = [
 const LABEL = Object.fromEntries(KINDS.map((k) => [k.value, k.label]));
 
 /**
- * A child's documents.
+ * A child's documents, on the pupil or on their application
+ * (`owner` is `/students/:id` or `/admissions/applications/:id`).
  *
  * Read by anyone who can see the child — including a form teacher, which is the
  * same decision Soteria made about medical data: a teacher who may know a child
  * has asthma may see the letter that says so. Only the registrar side can
  * attach or remove, and the server enforces that regardless of what this
- * renders.
+ * renders. On an application this is also where the office finds the papers a
+ * family sent through their link (5.11).
  */
-export function StudentDocuments({
-    studentId,
+export function DocumentsPanel({
+    owner,
     canEdit,
+    subject = 'these documents',
 }: {
-    studentId: string;
+    owner: string;
     canEdit: boolean;
+    /** For the error message: "this pupil’s documents". */
+    subject?: string;
 }) {
-    const { data: documents, isLoading, isError } = useStudentDocuments(studentId);
-    const attach = useAttachStudentDocument(studentId);
-    const remove = useRemoveStudentDocument(studentId);
+    const { data: documents, isLoading, isError } = useDocuments(owner);
+    const attach = useAttachDocument(owner);
+    const remove = useRemoveDocument(owner);
     const fileInput = useRef<HTMLInputElement>(null);
     const [kind, setKind] = useState<DocumentKind>('BIRTH_CERTIFICATE');
 
@@ -124,7 +123,7 @@ export function StudentDocuments({
             {!documents?.length ? (
                 <EmptyState
                     isError={isError}
-                    subject="this pupil’s documents"
+                    subject={subject}
                     title="No documents"
                     description="Birth certificate, immunisation record, previous school report."
                 />
@@ -141,12 +140,7 @@ export function StudentDocuments({
                                     type="button"
                                     className="truncate text-sm font-medium hover:underline"
                                     onClick={() =>
-                                        downloadStudentDocument(
-                                            studentId,
-                                            document.id,
-                                            document.fileName,
-                                            document.mimeType,
-                                        )
+                                        downloadDocument(owner, document)
                                     }
                                 >
                                     {document.fileName}
@@ -164,7 +158,7 @@ export function StudentDocuments({
                                         // application. Said out loud rather than
                                         // left to be discovered when they vanish.
                                         <span className="text-amber-600">
-                                            · deletable after {document.retainUntil}
+                                            · deletable after {formatDate(document.retainUntil)}
                                         </span>
                                     )}
                                 </div>
@@ -173,14 +167,8 @@ export function StudentDocuments({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() =>
-                                    downloadStudentDocument(
-                                        studentId,
-                                        document.id,
-                                        document.fileName,
-                                        document.mimeType,
-                                    )
-                                }
+                                aria-label={`Download ${document.fileName}`}
+                                onClick={() => downloadDocument(owner, document)}
                             >
                                 <Download className="h-4 w-4" />
                             </Button>
@@ -190,6 +178,7 @@ export function StudentDocuments({
                                     variant="ghost"
                                     size="sm"
                                     disabled={remove.isPending}
+                                    aria-label={`Remove ${document.fileName}`}
                                     onClick={() => remove.mutate(document.id)}
                                 >
                                     <X className="h-4 w-4" />

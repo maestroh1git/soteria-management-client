@@ -828,3 +828,79 @@ test.describe('Admissions housekeeping (5.10)', () => {
         expect(problems, problems.join('\n')).toEqual([]);
     });
 });
+
+test.describe('A family answers from their link (5.11)', () => {
+    test.skip(!personas.some((p) => p.key === 'registrar'), 'no registrar persona');
+
+    test('sends a birth certificate and accepts the place, and the office sees both', async ({ page, request, browser }) => {
+        const problems = watch(page);
+        const registrar = personas.find((p) => p.key === 'registrar')!;
+        const login = await request.post(`${API_URL}/auth/login`, {
+            data: { email: registrar.email, password: registrar.password },
+        });
+        const auth = { Authorization: `Bearer ${(await login.json()).token}` };
+        const { slug } = await (await request.get(`${API_URL}/tenants/me`, { headers: auth })).json();
+        const school = await (await request.get(`${API_URL}/public/schools/${slug}`)).json();
+
+        // A fresh application each run, so the test can be run again.
+        const applied = await request.post(`${API_URL}/public/schools/${slug}/applications`, {
+            data: {
+                classLevelId: school.levels[0].id,
+                firstName: 'Persona',
+                lastName: `Family${Date.now()}`,
+                dateOfBirth: '2018-02-02',
+                gender: 'FEMALE',
+                guardianFirstName: 'Test',
+                guardianLastName: 'Guardian',
+                guardianPhone: '08030000001',
+                guardianRelationship: 'MOTHER',
+            },
+        });
+        // The public form is rate-limited per address; a refusal here says so
+        // rather than surfacing as a missing row further down.
+        expect(applied.ok(), `apply: ${applied.status()} ${await applied.text()}`).toBe(true);
+        const { accessToken } = await applied.json();
+        const list = await (await request.get(`${API_URL}/admissions/applications`, { headers: auth })).json();
+        const application = list.find((a: { accessToken: string }) => a.accessToken === accessToken);
+        const offered = await request.patch(`${API_URL}/admissions/applications/${application.id}/status`, {
+            headers: auth,
+            data: { status: 'OFFERED', offerExpiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString() },
+        });
+        expect(offered.ok()).toBe(true);
+
+        await page.goto(`/application/${accessToken}`);
+        await expect(page.getByText('A place has been offered')).toBeVisible();
+
+        await page.getByLabel('File').setInputFiles({
+            name: 'birth-certificate.pdf',
+            mimeType: 'application/pdf',
+            buffer: Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n'),
+        });
+        await page.getByRole('button', { name: 'Send' }).click();
+        await expect(page.getByText('birth-certificate.pdf')).toBeVisible();
+
+        await page.getByRole('button', { name: 'Accept the place' }).click();
+        await expect(page.getByText('Place accepted')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Accept the place' })).toHaveCount(0);
+
+        const office = await (
+            await request.get(`${API_URL}/admissions/applications/${application.id}`, { headers: auth })
+        ).json();
+        expect(office.status).toBe('ACCEPTED');
+        const docs = await (
+            await request.get(`${API_URL}/admissions/applications/${application.id}/documents`, { headers: auth })
+        ).json();
+        expect(docs.map((d: { kind: string }) => d.kind)).toEqual(['BIRTH_CERTIFICATE']);
+        expect(problems, problems.join('\n')).toEqual([]);
+
+        // And the registrar finds it on the application, in the app.
+        const officeContext = await browser.newContext({ storageState: storageFor('registrar') });
+        const officePage = await officeContext.newPage();
+        const officeProblems = watch(officePage);
+        await officePage.goto(`/admissions/${application.id}`);
+        await settle(officePage);
+        await expect(officePage.getByRole('button', { name: 'birth-certificate.pdf', exact: true })).toBeVisible();
+        expect(officeProblems, officeProblems.join('\n')).toEqual([]);
+        await officeContext.close();
+    });
+});

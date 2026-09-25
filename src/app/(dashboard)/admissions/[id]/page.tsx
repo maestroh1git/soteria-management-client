@@ -48,6 +48,7 @@ import { useCan } from '@/lib/hooks/use-can';
 import { AssessmentsPanel } from '@/components/admissions/assessments-panel';
 import { VettingPanel } from '@/components/admissions/vetting-panel';
 import { DuplicatesCard } from '@/features/admissions/duplicates-card';
+import { DocumentsPanel } from '@/components/common/documents-panel';
 import { formatDate } from '@/lib/utils/dates';
 import type { ApplicationStatus } from '@/lib/api/admissions';
 import { SUPPORT_NEED_LABELS } from '@/lib/support-needs';
@@ -298,6 +299,23 @@ export default function ApplicationDetailPage({
                             </Link>
                         </div>
                     )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Documents</CardTitle>
+                    <CardDescription>
+                        Papers the office attached, and any the family sent through their application
+                        link. They move to the pupil&apos;s record at enrolment.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <DocumentsPanel
+                        owner={`/admissions/applications/${application.id}`}
+                        canEdit={can('admissions.manage')}
+                        subject="this application’s documents"
+                    />
                 </CardContent>
             </Card>
 

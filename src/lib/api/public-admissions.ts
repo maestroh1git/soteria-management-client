@@ -44,7 +44,24 @@ export interface PublicApplicationStatus {
     schoolName: string;
     /** The soonest sitting still to come, or null when there is none. */
     nextAppointment: PublicAppointment | null;
+    /** True while there is a live offer to accept or decline (5.11). */
+    canRespondToOffer: boolean;
+    /** True while the application is open and can take more papers. */
+    canUpload: boolean;
+    /** What the family has sent, by name only. */
+    documents: Array<{ kind: string; fileName: string; uploadedAt: string }>;
 }
+
+/** The papers a family may send, and what they are called. */
+export const FAMILY_DOCUMENT_KINDS = {
+    BIRTH_CERTIFICATE: 'Birth certificate',
+    IMMUNISATION_RECORD: 'Immunisation record',
+    PREVIOUS_SCHOOL_REPORT: 'Report from the last school',
+    PHOTOGRAPH: 'Passport photograph',
+    IDENTIFICATION: "Parent's ID",
+    OTHER: 'Something else',
+} as const;
+export type FamilyDocumentKind = keyof typeof FAMILY_DOCUMENT_KINDS;
 
 export interface ApplyPayload {
     classLevelId: string;
@@ -101,5 +118,35 @@ export async function getApplicationStatus(
         return res.data;
     } catch (e) {
         throw new Error(message(e, 'We could not find that application'));
+    }
+}
+
+/** The family's answer to an offer. */
+export async function respondToOffer(
+    token: string,
+    decision: 'ACCEPT' | 'DECLINE',
+): Promise<{ status: string }> {
+    try {
+        const res = await publicApi.post(`/public/applications/${token}/offer`, { decision });
+        return res.data;
+    } catch (e) {
+        throw new Error(message(e, 'We could not record your answer. Please try again.'));
+    }
+}
+
+/** Send the school one document for this application. */
+export async function sendApplicationDocument(
+    token: string,
+    file: File,
+    kind: FamilyDocumentKind,
+): Promise<{ kind: string; fileName: string; uploadedAt: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('kind', kind);
+    try {
+        const res = await publicApi.post(`/public/applications/${token}/documents`, form);
+        return res.data;
+    } catch (e) {
+        throw new Error(message(e, 'We could not send that file. Please try again.'));
     }
 }

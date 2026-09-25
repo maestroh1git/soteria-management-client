@@ -35,7 +35,7 @@ import {
     useUpsertStudentMedical,
 } from '@/lib/hooks/use-students';
 import { useCan } from '@/lib/hooks/use-can';
-import { StudentDocuments } from '@/components/students/student-documents';
+import { DocumentsPanel } from '@/components/common/documents-panel';
 import { formatDate } from '@/lib/utils/dates';
 import type { StudentGuardianLink } from '@/lib/api/students';
 import { AddGuardianDialog } from '@/components/students/add-guardian-dialog';
@@ -527,7 +527,7 @@ export default function StudentDetailPage({
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <StudentDocuments studentId={id} canEdit={canEdit} />
+                            <DocumentsPanel owner={`/students/${id}`} canEdit={canEdit} subject="this pupil’s documents" />
                         </CardContent>
                     </Card>
                 </TabsContent>
