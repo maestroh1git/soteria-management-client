@@ -248,7 +248,7 @@ export function RegisterScreen({
         !isToday && data.alreadyMarked && !correctionNote.trim();
 
     return (
-        <div className="space-y-4 pb-28">
+        <div className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h1 className="text-xl font-semibold">{data.className}</h1>
@@ -446,7 +446,13 @@ export function RegisterScreen({
                 })}
             </ul>
 
-            <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 p-3 backdrop-blur md:left-64">
+            {/*
+              * Sticky, not fixed: it rides the bottom of the screen while the
+              * register is in view and settles at its end after, so whatever
+              * the page puts below (the attendance export) is not hidden
+              * under it. Fixed also had to guess the sidebar's width.
+              */}
+            <div className="sticky bottom-0 z-10 -mx-4 border-t bg-background/95 p-3 backdrop-blur md:-mx-6">
                 <div className="mx-auto max-w-4xl">
                     {needsCorrectionNote && (
                         <p className="mb-2 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMyTenant } from './use-tenant';
+import { useHydrated } from './use-hydrated';
 import { DEFAULT_CURRENCY } from '@/lib/utils/money';
 
 /**
@@ -12,7 +13,11 @@ import { DEFAULT_CURRENCY } from '@/lib/utils/money';
  * change is here and nowhere else.
  */
 export function useTenantCurrency(): string {
-  const { data: tenant } = useMyTenant();
+  // The tenant is loaded by the layout and can be cached before a page
+  // hydrates; the server rendered the default, so the first render must too.
+  const hydrated = useHydrated();
+  const { data } = useMyTenant();
+  const tenant = hydrated ? data : undefined;
   const code = tenant?.settings?.currencyCode;
   return typeof code === 'string' && code ? code : DEFAULT_CURRENCY;
 }

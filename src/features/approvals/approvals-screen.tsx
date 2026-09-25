@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { Money } from '@/components/common/money';
 import { relativeTime } from '@/lib/utils/dates';
+import { useHydrated } from '@/lib/hooks/use-hydrated';
 import { useApproveLeaveRequest, useRejectLeaveRequest } from '@/lib/hooks/use-leave';
 import { useApproveAdjustment, useRejectAdjustment } from '@/lib/hooks/use-payroll-adjustments';
 import { useConcessionDecision } from '@/lib/hooks/use-fees';
@@ -46,7 +47,16 @@ const ORDER: ApprovalKind[] = ['payRun', 'adjustment', 'leave', 'loan', 'expense
  * opens, because its salaries are approved on the run itself.
  */
 export function ApprovalsScreen() {
-    const { data, isLoading, isError } = useApprovals();
+    const query = useApprovals();
+    // The sidebar's count reads this same query from the layout, which hydrates
+    // before this page's Suspense boundary. On a slow machine the answer can be
+    // in the cache by the time this screen hydrates, so its first render would
+    // show rows (and "3 minutes ago") where the server's HTML has a skeleton —
+    // React #418. Render what the server did until hydration is over.
+    const hydrated = useHydrated();
+    const data = hydrated ? query.data : undefined;
+    const isLoading = !hydrated || query.isLoading;
+    const isError = hydrated && query.isError;
     const [kind, setKind] = useState<ApprovalKind>();
     const items = (data?.items ?? []).filter((i) => !kind || i.kind === kind);
     const kinds = ORDER.filter((k) => (data?.counts[k] ?? 0) > 0);

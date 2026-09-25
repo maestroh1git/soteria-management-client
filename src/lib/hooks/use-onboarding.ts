@@ -10,6 +10,7 @@ import { getPayPeriods } from '@/lib/api/pay-periods';
 import { updateMyTenant } from '@/lib/api/tenants';
 import { useMyTenant } from './use-tenant';
 import { useAuth } from './use-auth';
+import { useHydrated } from './use-hydrated';
 import { useCan } from './use-can';
 import { useSessions, useClassArms } from './use-academics';
 import { useStudents } from './use-students';
@@ -80,7 +81,10 @@ export function useOnboardingProgress(): OnboardingProgress {
 
   // Only OWNER/ADMIN see the checklist, and they can read every resource below —
   // so gate the queries on canSetup to avoid 403 noise for other roles.
+  // Loaded by the layout; hidden until hydrated, as on the server.
+  const hydrated = useHydrated();
   const tenant = useMyTenant();
+  const tenantData = hydrated ? tenant.data : undefined;
   const departments = useDepartmentsList(canSetup);
   const roles = useRolesList(canSetup);
   const components = useSalaryComponentsList(canSetup);
@@ -109,7 +113,7 @@ export function useOnboardingProgress(): OnboardingProgress {
       label: 'Complete your organization profile',
       description: 'Add your address and tax IDs — they appear on payslips and reports.',
       href: '/setup/organisation',
-      done: isOrgProfileComplete(tenant.data),
+      done: isOrgProfileComplete(tenantData),
     },
     {
       key: 'departments',
@@ -225,7 +229,7 @@ export function useOnboardingProgress(): OnboardingProgress {
     completedRequired,
     totalRequired: required.length,
     allRequiredDone: completedRequired === required.length,
-    dismissed: readDismissed(tenant.data),
+    dismissed: readDismissed(tenantData),
     canSetup,
     isLoading:
       tenant.isLoading ||
