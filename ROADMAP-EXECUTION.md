@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.11, 5.15, 5.16 done | same |
+| 5 Finish | **In progress**: 5.1–5.12 (Paystack still to come), 5.15, 5.16 done | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -347,7 +347,27 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   birth certificate and accepts the place from their link, and the
   registrar finds the file on the application).
 
-Left in Wave 5: 5.12 portal invoices and Paystack, 5.13 create a tenant,
+### 5.12 Parent portal: bills and their PDFs
+
+- **Bills** on each child's portal page: every issued invoice, newest
+  first, with its term, number, due date, total and what is still to pay
+  ("Nothing owed" when settled), and a **PDF** link. A bill opens the same
+  page the school's own message links to (`/invoice/:token`), so there is
+  one way to read a bill and one access rule to get right.
+- New `GET /portal/children/:studentId/invoices`, behind the same
+  guardian-owns-child check as the statement; drafts and cancelled bills are
+  left out; totals use the same arithmetic as the portal's "owed" figure,
+  and a test holds the two to agree.
+- **Not yet: Paystack (D8).** Online payment needs the school's Paystack
+  keys, a webhook the API can receive from outside, and a decision on who
+  pays the card fee; it stays behind its feature flag for a later round.
+- **Checks:** API unit 815/815, e2e 569 passed (2 skipped), four new in the
+  fee payments suite (each bill's sums and link, a cancelled bill left
+  out, agreement with the portal's own total, refusal for another family's
+  child and for staff); drift clean; audit 0. Persona tests 54/54 (new: a
+  parent reads a child's bills, has a PDF link, and opens one).
+
+Left in Wave 5: Paystack checkout (the rest of 5.12), 5.13 create a tenant,
 5.14 dead code.
 
 ### Left for later waves

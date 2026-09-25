@@ -109,3 +109,21 @@ export async function downloadChildAttendance(params: {
     const stem = params.name.replace(/[^\w-]+/g, '-').toLowerCase();
     saveBlob(data as unknown as BlobPart, `${stem}_attendance.csv`, 'text/csv');
 }
+
+/** One of a child's bills (5.12), with what is still owed on it. */
+export interface PortalInvoice {
+    id: string;
+    invoiceNumber: string | null;
+    termName: string | null;
+    issueDate: string | null;
+    dueDate: string | null;
+    total: string;
+    paid: string;
+    outstanding: string;
+    /** The family's own link to this bill and its PDF. */
+    accessToken: string;
+}
+
+export async function getChildInvoices(studentId: string): Promise<PortalInvoice[]> {
+    return (await api.get(`/portal/children/${studentId}/invoices`)) as unknown as PortalInvoice[];
+}
