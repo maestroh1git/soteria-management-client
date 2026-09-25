@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-    getUser,
     inviteGuardian,
     updateUser,
     changePassword,
@@ -9,14 +8,6 @@ import {
 import type { UpdateUserDto, ChangePasswordDto } from '@/lib/api/users';
 import { SESSION_KEY } from './use-session';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
-
-export function useUser(id: string) {
-  return useQuery({
-    queryKey: ['users', id],
-    queryFn: () => getUser(id),
-    enabled: !!id,
-  });
-}
 
 /** A parent-portal login for a pupil's guardian (D4); Registrars may send it. */
 export function useInviteGuardian() {

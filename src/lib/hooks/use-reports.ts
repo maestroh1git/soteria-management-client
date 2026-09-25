@@ -2,13 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
 import {
-  generatePayslip,
-  generateBulkPayslips,
-  sendPayslipEmail,
-  sendBulkEmails,
-  getPayslipsByEmployee,
-  getPayslipsByPayPeriod,
-  getPayslip,
+    generateBulkPayslips,
+    sendPayslipEmail,
+    sendBulkEmails,
+    getPayslipsByEmployee,
+    getPayslipsByPayPeriod,
 } from '@/lib/api/payslips';
 import {
   getMonthlySummary,
@@ -38,27 +36,7 @@ export function usePayslipsByPayPeriod(payPeriodId: string) {
   });
 }
 
-export function usePayslip(id: string) {
-  return useQuery({
-    queryKey: ['payslips', id],
-    queryFn: () => getPayslip(id),
-    enabled: !!id,
-  });
-}
-
 // ── Payslip mutations ───────────────────────────────────────
-
-export function useGeneratePayslip() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (salaryId: string) => generatePayslip(salaryId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['payslips'] });
-      toast.success('Payslip generated');
-    },
-    onError: () => toast.error('Failed to generate payslip'),
-  });
-}
 
 export function useGenerateBulkPayslips() {
   const qc = useQueryClient();

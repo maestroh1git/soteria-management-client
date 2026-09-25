@@ -10,7 +10,6 @@ import {
     upsertStudentMedical,
     updateStudentSupport,
     getMedicalAlerts,
-    getGuardians,
     findDuplicateGuardians,
     createGuardian,
     linkGuardian,
@@ -111,13 +110,6 @@ export function useMedicalAlerts(armId: string | undefined) {
         queryKey: ['students', 'medical-alerts', armId],
         queryFn: () => getMedicalAlerts(armId!),
         enabled: !!armId,
-    });
-}
-
-export function useGuardians(search?: string) {
-    return useQuery({
-        queryKey: ['guardians', search],
-        queryFn: () => getGuardians(search),
     });
 }
 

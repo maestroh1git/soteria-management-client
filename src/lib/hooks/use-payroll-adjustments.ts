@@ -1,14 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  getAdjustments,
-  createAdjustment,
-  updateAdjustment,
-  approveAdjustment,
-  rejectAdjustment,
-  deleteAdjustment,
-  type CreatePayrollAdjustmentDto,
-  type UpdatePayrollAdjustmentDto,
+    getAdjustments,
+    createAdjustment,
+    approveAdjustment,
+    rejectAdjustment,
+    deleteAdjustment,
+    type CreatePayrollAdjustmentDto,
 } from '@/lib/api/payroll-adjustments';
 
 const key = (payPeriodId: string, employeeId?: string) =>
@@ -47,14 +45,6 @@ export function useCreateAdjustment() {
   return useAdjustmentMutation(
     (dto: CreatePayrollAdjustmentDto) => createAdjustment(dto),
     'Adjustment raised — pending approval',
-  );
-}
-
-export function useUpdateAdjustment() {
-  return useAdjustmentMutation(
-    ({ id, dto }: { id: string; dto: UpdatePayrollAdjustmentDto }) =>
-      updateAdjustment(id, dto),
-    'Adjustment updated',
   );
 }
 

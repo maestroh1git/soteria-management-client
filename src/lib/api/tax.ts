@@ -27,10 +27,6 @@ export async function getTaxRules(): Promise<TaxRule[]> {
   return await api.get('/tax/rules') as unknown as TaxRule[];
 }
 
-export async function getTaxRule(id: string): Promise<TaxRule> {
-  return await api.get(`/tax/rules/${id}`) as unknown as TaxRule;
-}
-
 export async function createTaxRule(dto: CreateTaxRuleDto): Promise<TaxRule> {
   return await api.post('/tax/rules', dto) as unknown as TaxRule;
 }

@@ -342,16 +342,6 @@ export async function generateCalendar(
     })) as unknown as { created: number; skipped: number; teaching: number };
 }
 
-export async function updateSchoolDay(
-    id: string,
-    dto: { dayType: DayType; note?: string },
-): Promise<SchoolDay> {
-    return (await api.patch(
-        `/attendance/calendar/${id}`,
-        dto,
-    )) as unknown as SchoolDay;
-}
-
 export async function setCalendarRange(dto: {
     termId: string;
     from: string;

@@ -193,6 +193,3 @@ export interface BirthdayEmployee {
   isToday: boolean;
 }
 
-export async function getBirthdaysThisMonth(): Promise<BirthdayEmployee[]> {
-  return await api.get('/employees/birthdays/this-month') as unknown as BirthdayEmployee[];
-}

@@ -18,10 +18,6 @@ export async function getRoles(): Promise<Role[]> {
   return await api.get('/roles') as unknown as Role[];
 }
 
-export async function getRole(id: string): Promise<Role> {
-  return await api.get(`/roles/${id}`) as unknown as Role;
-}
-
 export async function createRole(dto: CreateRoleDto): Promise<Role> {
   return await api.post('/roles', dto) as unknown as Role;
 }

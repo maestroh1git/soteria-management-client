@@ -1,26 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getEmployees,
-  getEmployee,
-  createEmployee,
-  updateEmployee,
-  deleteEmployee,
-  getBankDetails,
-  addBankDetails,
-  updateBankDetails,
-  deleteBankDetails,
-  getEmployeeSalaryComponents,
-  addEmployeeSalaryComponent,
-  updateEmployeeSalaryComponent,
-  deactivateEmployeeSalaryComponent,
-  getBirthdaysThisMonth,
-  getEmployeeCompleteness,
-  getCompletenessSummary,
-  getTaxStates,
-  type CreateEmployeeDto,
-  type UpdateEmployeeDto,
-  type CreateBankDetailsDto,
-  type EmployeeSalaryComponentDto,
+    getEmployees,
+    getEmployee,
+    createEmployee,
+    updateEmployee,
+    deleteEmployee,
+    getBankDetails,
+    addBankDetails,
+    updateBankDetails,
+    deleteBankDetails,
+    getEmployeeSalaryComponents,
+    addEmployeeSalaryComponent,
+    updateEmployeeSalaryComponent,
+    deactivateEmployeeSalaryComponent,
+    getEmployeeCompleteness,
+    getCompletenessSummary,
+    getTaxStates,
+    type CreateEmployeeDto,
+    type UpdateEmployeeDto,
+    type CreateBankDetailsDto,
+    type EmployeeSalaryComponentDto,
 } from '@/lib/api/employees';
 import { toast } from 'sonner';
 
@@ -277,11 +276,3 @@ export function useDeactivateEmployeeSalaryComponent() {
   });
 }
 
-// ── Birthday queries ────────────────────────────────────────
-export function useBirthdaysThisMonth() {
-  return useQuery({
-    queryKey: ['employees', 'birthdays', 'this-month'],
-    queryFn: getBirthdaysThisMonth,
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-}

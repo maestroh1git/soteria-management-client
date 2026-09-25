@@ -27,10 +27,6 @@ export async function getSalaryComponents(params?: {
   return await api.get('/salary-components', { params }) as unknown as SalaryComponent[];
 }
 
-export async function getSalaryComponent(id: string): Promise<SalaryComponent> {
-  return await api.get(`/salary-components/${id}`) as unknown as SalaryComponent;
-}
-
 export async function createSalaryComponent(dto: CreateSalaryComponentDto): Promise<SalaryComponent> {
   return await api.post('/salary-components', dto) as unknown as SalaryComponent;
 }

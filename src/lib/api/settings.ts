@@ -23,10 +23,6 @@ export async function getSettings(): Promise<PayrollSetting[]> {
   return await api.get('/settings') as unknown as PayrollSetting[];
 }
 
-export async function getSettingByKey(key: string): Promise<PayrollSetting> {
-  return await api.get(`/settings/${key}`) as unknown as PayrollSetting;
-}
-
 export async function upsertSetting(data: UpsertSettingDto): Promise<PayrollSetting> {
   return await api.post('/settings', data) as unknown as PayrollSetting;
 }

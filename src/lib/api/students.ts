@@ -156,11 +156,6 @@ export async function getMedicalAlerts(
     )) as unknown as Array<{ student: Student; medical: StudentMedical }>;
 }
 
-export async function getGuardians(search?: string): Promise<Guardian[]> {
-    const qs = search ? `?search=${encodeURIComponent(search)}` : '';
-    return (await api.get(`/students/guardians${qs}`)) as unknown as Guardian[];
-}
-
 /**
  * Guardians already on file with this number.
  *
