@@ -469,3 +469,64 @@ export async function getAssessors(): Promise<Array<{ id: string; name: string; 
         role: string | null;
     }>;
 }
+
+// ── Criteria, duplicates and retention (5.10) ────────────────────────────────
+
+/** What the school asks of one class level in one session. Advisory only. */
+export interface AdmissionCriteria {
+    id: string;
+    sessionId: string;
+    classLevelId: string;
+    minAgeMonths: number | null;
+    maxAgeMonths: number | null;
+    /** A string, like every decimal from the API. */
+    minExamScore: string | null;
+    requiresInterview: boolean;
+    notes: string | null;
+}
+
+export interface SetCriteriaInput {
+    sessionId: string;
+    classLevelId: string;
+    minAgeMonths?: number;
+    maxAgeMonths?: number;
+    minExamScore?: number;
+    requiresInterview?: boolean;
+    notes?: string;
+}
+
+export async function getCriteria(sessionId?: string): Promise<AdmissionCriteria[]> {
+    return (await api.get('/admissions/criteria', {
+        params: sessionId ? { sessionId } : undefined,
+    })) as unknown as AdmissionCriteria[];
+}
+
+export async function setCriteria(input: SetCriteriaInput): Promise<AdmissionCriteria> {
+    return (await api.post('/admissions/criteria', input)) as unknown as AdmissionCriteria;
+}
+
+export async function removeCriteria(id: string): Promise<void> {
+    await api.delete(`/admissions/criteria/${id}`);
+}
+
+/** Applications with the same name and date of birth, this one included. */
+export async function getPossibleDuplicates(params: {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+}): Promise<AdmissionApplication[]> {
+    return (await api.get('/admissions/applications/duplicates', {
+        params,
+    })) as unknown as AdmissionApplication[];
+}
+
+/** Unsuccessful applications past their retention date: what a purge would delete. */
+export async function getRetentionDue(): Promise<AdmissionApplication[]> {
+    return (await api.get('/admissions/applications/retention/due')) as unknown as AdmissionApplication[];
+}
+
+export async function purgeRetention(): Promise<{ purged: number }> {
+    return (await api.post('/admissions/applications/retention/purge')) as unknown as {
+        purged: number;
+    };
+}

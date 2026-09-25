@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.8, 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
+| 5 Finish | **In progress**: 5.1–5.10, 5.15, 5.16 done | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -287,8 +287,38 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   lets "Match the obvious ones" put it back, and is asked what a line was
   before it is posted); typecheck and lint ratchet clean.
 
-Left in Wave 5: the rest of 5.10, 5.11 applicant offer and upload, 5.12
-portal invoices and Paystack, 5.13 create a tenant, 5.14 dead code.
+### 5.10 Admissions: criteria, duplicates, retention
+
+- **Criteria** (`/admissions/criteria`, in the Admissions menu): each class
+  level's standard for a session: an age range (in years, as of the
+  session's start), a lowest exam score, whether an interview is needed,
+  and notes. Set and removed by the registrar (`admissions.setQuestions`),
+  read by everyone who assesses. Advisory, as the API already was: an
+  application shows how the candidate measures up and nothing is refused.
+- **Duplicates:** an application with the same name and date of birth as
+  another shows "May be the same child" at the top, with the other
+  application's number, stage, date and phone. The office can keep the
+  other one and withdraw this one, noted "Duplicate of 0001"; nothing is
+  copied across (the API has no merge, and moving assessments and
+  documents between applications is a larger change). An application that
+  has itself ended is never offered as the one to keep.
+- **Retention** (`/admissions/retention`, `admissions.decide`): the
+  unsuccessful applications past the date the school keeps them to, and
+  one confirmed "Delete for good". The admissions list says when any are
+  due. Nothing is deleted on a timer.
+- **Found on the way:** the API's actors audit checks the client's `main`,
+  and 5.8 started calling `useUnmatch`, which the audit still listed as
+  never called; the next API pull request would have failed. Taken off the
+  list in this round's API change.
+- **Checks:** persona tests 52/52 (new: the registrar sets a class's
+  criteria, is told when the oldest is younger than the youngest, and
+  removes them again; the retention list before anything is deleted); a
+  duplicate filed through the public form showed on the application and
+  was withdrawn as one in the browser; audit 0; typecheck and lint
+  ratchet clean.
+
+Left in Wave 5: 5.11 applicant offer and upload, 5.12 portal invoices and
+Paystack, 5.13 create a tenant, 5.14 dead code.
 
 ### Left for later waves
 

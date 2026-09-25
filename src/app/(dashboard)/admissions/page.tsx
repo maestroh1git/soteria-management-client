@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
+    Archive,
     Clock,
     Link2,
     TimerOff,
@@ -24,6 +25,7 @@ import {
     useApplications,
     useExpireOffers,
     useRemindOffers,
+    useRetentionDue,
 } from '@/lib/hooks/use-admissions';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useCan } from '@/lib/hooks/use-can';
@@ -59,6 +61,7 @@ export default function AdmissionsPage() {
         isLoading,
         isError,
     } = useApplications({ status: 'all' });
+    const { data: retentionDue = [] } = useRetentionDue(canDecide);
     const expire = useExpireOffers();
     const remind = useRemindOffers();
 
@@ -231,6 +234,22 @@ export default function AdmissionsPage() {
                             {publicLink}
                         </code>
                         <CopyButton text={publicLink} />
+                    </CardContent>
+                </Card>
+            )}
+
+            {canDecide && retentionDue.length > 0 && (
+                <Card className="border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+                        <p className="flex items-center gap-2 text-sm">
+                            <Archive className="h-4 w-4 flex-none text-amber-700 dark:text-amber-400" aria-hidden />
+                            {retentionDue.length} unsuccessful{' '}
+                            {retentionDue.length === 1 ? 'application is' : 'applications are'} past the date
+                            the school keeps them to.
+                        </p>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href="/admissions/retention">Review and delete</Link>
+                        </Button>
                     </CardContent>
                 </Card>
             )}

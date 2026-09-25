@@ -49,6 +49,11 @@ export const ROUTE_MANIFEST: Record<string, RouteNeed> = {
   '/admissions/question-sets': 'admissions.setQuestions',
   // Everyone who books or takes a sitting (5.16).
   '/admissions/diary': 'admissions.assess',
+  // Read by whoever assesses (each application shows its verdict); set by
+  // the registrar, like the question sets (5.10).
+  '/admissions/criteria': 'admissions.assess',
+  // Deleting children's records is a decision, so it sits with deciding.
+  '/admissions/retention': 'admissions.decide',
 
   // School day
   // Set up by the registrar; read by every Educator for the classes they

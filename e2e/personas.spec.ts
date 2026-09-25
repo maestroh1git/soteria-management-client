@@ -781,3 +781,50 @@ test.describe('Bank reconciliation (5.8)', () => {
         expect(problems, problems.join('\n')).toEqual([]);
     });
 });
+
+test.describe('Admissions housekeeping (5.10)', () => {
+    test.skip(!personas.some((p) => p.key === 'registrar'), 'no registrar persona');
+    test.use({ storageState: storageFor('registrar') });
+
+    test('sets what a class asks for, then takes it away again', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/admissions/criteria');
+        await settle(page);
+        const row = page.locator('main tbody tr').filter({ hasText: 'None set' }).first();
+        test.skip((await row.count()) === 0, 'every class already has criteria');
+        const level = (await row.locator('td').first().innerText()).trim();
+
+        await row.getByRole('button', { name: 'Set criteria' }).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.getByLabel('Youngest (years)').fill('5');
+        await dialog.getByLabel('Oldest (years)').fill('4');
+        await dialog.getByRole('button', { name: 'Save criteria' }).click();
+        await expect(dialog.getByText('The oldest cannot be younger than the youngest.')).toBeVisible();
+        await dialog.getByLabel('Oldest (years)').fill('6.5');
+        await dialog.getByLabel('Lowest exam score (%)').fill('55');
+        await dialog.getByRole('button', { name: 'Save criteria' }).click();
+        await expect(dialog).toBeHidden();
+
+        const saved = page.locator('main tbody tr').filter({ hasText: level }).first();
+        await expect(saved).toContainText('5 to 6½ years');
+        await expect(saved).toContainText('55%');
+
+        await saved.getByRole('button', { name: `Remove the criteria for ${level}` }).click();
+        await page.getByRole('button', { name: 'Remove criteria' }).click();
+        await expect(page.locator('main tbody tr').filter({ hasText: level }).first()).toContainText('None set');
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+
+    test('sees what is past its retention date before anything is deleted', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/admissions/retention');
+        await settle(page);
+        await expect(page.getByRole('heading', { name: 'Applications to delete' })).toBeVisible();
+        const rows = await page.locator('main tbody tr a[href^="/admissions/"]').count();
+        if (rows === 0) {
+            await expect(page.getByText('Nothing is due for deletion').first()).toBeVisible();
+            await expect(page.getByRole('button', { name: /^Delete/ })).toBeDisabled();
+        }
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+});
