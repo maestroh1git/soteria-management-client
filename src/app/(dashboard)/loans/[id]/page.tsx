@@ -10,6 +10,7 @@ import {
     Calendar,
     DollarSign,
     Hash,
+    AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ import { useEntityHistory } from '@/lib/hooks/use-audit';
 import { ActionBadge } from '@/app/(dashboard)/audit-logs/page';
 import { useCan } from '@/lib/hooks/use-can';
 import { LoanStatus, LoanType } from '@/lib/types/enums';
+import type { Loan } from '@/lib/types/api';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
 import { formatMoney } from '@/lib/utils/money';
 import { StatusBadge } from '@/components/common/status-badge';
@@ -155,11 +157,13 @@ export default function LoanDetailPage() {
                 </Button>
             )}
 
+            {loan.status === LoanStatus.PENDING && <OverLimitWarning loan={loan} />}
+
             <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="repayments">Repayments</TabsTrigger>
-                    <TabsTrigger value="history">History</TabsTrigger>
+                    {can('audit.entityHistory') && <TabsTrigger value="history">History</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="details" className="space-y-4">
@@ -391,6 +395,7 @@ export default function LoanDetailPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3">
+                        <OverLimitWarning loan={loan} />
                         <div className="space-y-2">
                             <Label htmlFor="id-page-notes-optional">Notes (optional)</Label>
                             <Textarea id="id-page-notes-optional"
@@ -436,6 +441,32 @@ export default function LoanDetailPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+        </div>
+    );
+}
+
+/**
+ * Said before approval, not enforced by it: a loan over the school's monthly
+ * limit can still be approved, and payroll takes the limit each month and
+ * carries the rest, so it simply runs longer than its term.
+ */
+function OverLimitWarning({ loan }: { loan: Loan }) {
+    const limit = loan.deductionLimit;
+    if (!limit?.exceeds || limit.monthlyLimit === null) return null;
+    const months = Math.ceil(Number(loan.outstandingBalance ?? loan.amount) / limit.monthlyLimit);
+    return (
+        <div
+            role="note"
+            className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <p>
+                {formatMoney(limit.monthlyDeduction)} a month is more than your{' '}
+                {limit.percent}% limit allows: at most {formatMoney(limit.monthlyLimit)} of their{' '}
+                {formatMoney(Number(limit.grossPay))} gross pay. Payroll will take{' '}
+                {formatMoney(limit.monthlyLimit)} a month and carry the rest, so it will take about{' '}
+                {months} {months === 1 ? 'month' : 'months'} to repay.
+            </p>
         </div>
     );
 }

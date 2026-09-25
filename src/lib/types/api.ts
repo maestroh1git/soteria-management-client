@@ -556,6 +556,17 @@ export interface Loan {
   reason: string | null;
   notes: string | null;
   repayments?: LoanRepayment[];
+  /**
+   * The school's monthly loan limit against this loan's deduction, from the
+   * employee's latest pay run (GET /loans/:id only).
+   */
+  deductionLimit?: {
+    percent: number;
+    grossPay: number | null;
+    monthlyLimit: number | null;
+    monthlyDeduction: number;
+    exceeds: boolean;
+  };
   createdAt: string;
   updatedAt: string;
 }

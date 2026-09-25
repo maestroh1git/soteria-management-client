@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCan } from './use-can';
 import {
   getAuditLogs,
   getAuditSummary,
@@ -22,11 +23,17 @@ export function useAuditSummary() {
   });
 }
 
+/**
+ * A record's audit history. Asked for only by someone who may read it
+ * (`audit.entityHistory`): a loan's approver may not, and used to get a
+ * refused request every time they opened one.
+ */
 export function useEntityHistory(entityType: string, entityId: string) {
+  const can = useCan();
   return useQuery({
     queryKey: ['audit-logs', 'entity', entityType, entityId],
     queryFn: () => getEntityHistory(entityType, entityId),
-    enabled: !!entityId,
+    enabled: !!entityId && can('audit.entityHistory'),
     staleTime: 1000 * 60 * 2,
   });
 }
