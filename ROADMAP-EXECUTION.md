@@ -24,7 +24,7 @@ run in parallel unless a dependency is named.
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
-| 4 Reorganise | **In progress**: C4.1–C4.9 done; C4.10, C4.11 left | branch `claude/zealous-keller-5aeha8` |
+| 4 Reorganise | **In progress**: C4.1–C4.10 done; C4.11 left | branch `claude/zealous-keller-5aeha8` |
 | 5 Finish | **In progress**: 5.1–5.4, 5.6, 5.7 (not yet the parent attendance export), 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
@@ -185,7 +185,26 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 - **Checks:** persona tests 43/43; API unit 814/814, e2e 547 passed (2
   skipped); audit 0; three migrations (SupportNeeds, QuestionSetsPerClass,
   AssessmentDuration).
-- **Next in Wave 4:** C4.10 persona homes, C4.11 portal and console.
+- **Decision (Sep 25):** Registrars do not see a pupil's attendance history
+  for now (`attendance.report` stays as it is); revisit if feedback asks.
+
+### C4.10 Persona homes
+
+- **Waiting on you**, at the top of every home, from `GET /home`: decisions
+  (the approvals inbox), my classes' registers not yet taken, registers
+  across the school, applications to consider, sittings today, pay runs due
+  within a fortnight, bank lines to reconcile, overdue invoices (count and
+  amount), and my own requests still pending. Each counted only for whom
+  it is theirs; only counts above zero, so no row of zeros.
+- **Whose home leads with what:** the bursar's with money (fees, and the
+  new spend-against-budget widget), the registrar's with the school; the
+  payroll office keeps the payroll figures first; an employee keeps My Pay.
+  Every widget still gates itself on what the person may read.
+- Without approved payroll, the home no longer hides the rest of the
+  school (attendance, the roll, fees, budgets).
+- **Checks:** persona tests 45/45; API unit 814/814, e2e 551 passed (2
+  skipped); audit 0; lint ratchet clean.
+- **Next in Wave 4:** C4.11 portal, public pages and console.
 
 ### Left for later waves
 
