@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import type { AttendanceStatus } from '@/lib/api/attendance';
 
-const LOOK: Record<
+export const ATTENDANCE_LOOK: Record<
     AttendanceStatus | 'UNMARKED',
     { letter: string; label: string; className: string }
 > = {
@@ -59,7 +59,7 @@ export function TermStrip({ days }: Props) {
                 }}
             >
                 {days.map((d) => {
-                    const look = LOOK[d.status ?? 'UNMARKED'];
+                    const look = ATTENDANCE_LOOK[d.status ?? 'UNMARKED'];
                     return (
                         <li key={d.date}>
                             <span
@@ -85,12 +85,12 @@ export function TermStrip({ days }: Props) {
                             aria-hidden="true"
                             className={cn(
                                 'grid h-4 w-4 place-items-center rounded text-[9px] font-bold',
-                                LOOK[s].className,
+                                ATTENDANCE_LOOK[s].className,
                             )}
                         >
-                            {LOOK[s].letter}
+                            {ATTENDANCE_LOOK[s].letter}
                         </span>
-                        {LOOK[s].label}
+                        {ATTENDANCE_LOOK[s].label}
                     </li>
                 ))}
             </ul>

@@ -22,7 +22,7 @@ import {
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
-import { landingFor } from '@/lib/auth/landing';
+import { landingAfterSignIn } from '@/lib/auth/landing';
 
 const loginSchema = z.object({
     email: z.string().email('Enter a valid email address'),
@@ -62,7 +62,7 @@ function LoginForm() {
 
             // Platform operators land in the admin console (they have no
             // tenant), guardians in the portal, staff where they were headed.
-            router.push(landingFor(user, searchParams.get('from')));
+            router.push(await landingAfterSignIn(user, searchParams.get('from')));
         } catch (err: unknown) {
             setServerError(getApiErrorMessage(err, 'Invalid credentials. Please try again.'));
         }

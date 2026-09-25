@@ -30,7 +30,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
 import { passwordSchema, PASSWORD_POLICY_HINT } from '@/lib/utils/validation';
 import { clearSession } from '@/lib/utils/session';
-import { landingFor } from '@/lib/auth/landing';
+import { landingAfterSignIn } from '@/lib/auth/landing';
 
 const schema = z
     .object({
@@ -78,7 +78,7 @@ function ResetPasswordForm() {
 
             // A parent has no dashboard. Send them where they belong rather
             // than letting the middleware bounce them off a forbidden page.
-            router.push(landingFor(res.user));
+            router.push(await landingAfterSignIn(res.user));
         } catch (err) {
             setServerError(
                 getApiErrorMessage(err, 'This reset link is invalid or has expired.'),

@@ -15,6 +15,8 @@ import { EmptyState } from '@/components/common/empty-state';
 import { useClassArms } from '@/lib/hooks/use-academics';
 import { useMyClasses } from '@/lib/hooks/use-attendance';
 import { RegisterScreen } from './register-screen';
+import { AttendanceExport } from '@/components/attendance/attendance-export';
+import { useCan } from '@/lib/hooks/use-can';
 import { todayIso } from '@/lib/utils/dates';
 
 
@@ -38,6 +40,7 @@ export default function AttendancePage() {
         isError: armsFailed,
     } = useClassArms();
     const [date, setDate] = useState(todayIso());
+    const canExport = useCan()('attendance.export');
     const [chosen, setChosen] = useState<string | null>(null);
 
     if (loadingMine || loadingArms) {
@@ -104,6 +107,12 @@ export default function AttendancePage() {
             )}
 
             <RegisterScreen classArmId={armId} date={date} onDateChange={setDate} />
+
+            {canExport && (
+                <AttendanceExport
+                    classes={arms.map((a) => ({ id: a.id, name: `${a.level?.name ?? ''} ${a.name}`.trim() }))}
+                />
+            )}
         </div>
     );
 }

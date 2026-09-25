@@ -28,6 +28,7 @@ import {
 } from '@/lib/hooks/use-academics';
 import { AwardDialog } from '@/components/attendance/award-dialog';
 import { MedicalAlertsCard } from '@/components/attendance/medical-alerts-card';
+import { ClassWeekGrid } from '@/components/attendance/class-week-grid';
 import { useCan } from '@/lib/hooks/use-can';
 import { formatDate } from '@/lib/utils/dates';
 
@@ -60,7 +61,11 @@ export default function ClassRegisterPage({
     } = useStudents({ classArmId: armId, limit: 200 });
     const students = armPage?.items ?? [];
     const { data: alerts = [] } = useMedicalAlerts(armId);
-    const canGrant = useCan()('awards.grant');
+    const can = useCan();
+    const canGrant = can('awards.grant');
+    // The week grid reads the class as the register does: the office and
+    // Educators (the same people who read the day's departures).
+    const canReadWeek = can('attendance.departures.read');
     const { data: occupancy } = useArmOccupancy(armId);
     const { data: session } = useCurrentSession();
     const { data: terms = [] } = useTerms(session?.id);
@@ -100,6 +105,10 @@ export default function ClassRegisterPage({
             {/* Above the register, deliberately. A record nobody sees in time is
                 the same as no record. */}
             <MedicalAlertsCard alerts={alerts} />
+
+            {canReadWeek && (
+                <ClassWeekGrid armId={armId} className={className} canExport={can('attendance.export')} />
+            )}
 
             <Card>
                 <CardHeader>
