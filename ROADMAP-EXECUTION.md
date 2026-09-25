@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.12 (Paystack still to come), 5.15, 5.16 done | same |
+| 5 Finish | **In progress**: 5.1–5.13 (Paystack still to come), 5.15, 5.16 done | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -367,8 +367,33 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   child and for staff); drift clean; audit 0. Persona tests 54/54 (new: a
   parent reads a child's bills, has a PDF link, and opens one).
 
-Left in Wave 5: Paystack checkout (the rest of 5.12), 5.13 create a tenant,
-5.14 dead code.
+### 5.13 Platform: set up an organisation for a customer
+
+- **Set up an organisation** on the console's Tenants page: name, kind
+  (school, company, hospital…), an optional web address, and the owner's
+  name and email. It creates the organisation with its starter
+  departments, positions, pay components and chart of accounts, and
+  invites the owner, who chooses their own password; the operator never
+  knows it. When email is not set up, the console shows the one-use link
+  with Copy.
+- New `POST /platform/tenants` (`tenants.manage`, super-admin only), the
+  same order as self-registration: an owner email with a login already is
+  refused before anything is made; if the invite fails anyway, the new
+  organisation is removed so the operator can try again; defaults are
+  provisioned in the new organisation's own scope; the creation is
+  audited. The old `POST /tenants` still makes only the bare row and is not
+  what the console uses: an organisation nobody can sign into is the dead
+  end registration was rewritten to prevent.
+- **Checks:** API unit 815/815, e2e 573 passed (2 skipped), four new in the
+  platform console suite (a school set up with its chart of accounts and
+  an owner who accepts the invite and signs in; a taken owner email
+  refused with nothing left behind; a taken web address refused; a school
+  owner refused); drift clean; audit 0. Persona tests 55/55 (new: the
+  operator sets up an organisation from the console; it runs when
+  `PLATFORM_EMAIL` and `PLATFORM_PASSWORD` name an operator, as there is
+  no platform persona).
+
+Left in Wave 5: Paystack checkout (the rest of 5.12) and 5.14 dead code.
 
 ### Left for later waves
 

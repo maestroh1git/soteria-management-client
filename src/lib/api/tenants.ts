@@ -63,3 +63,27 @@ export async function setTenantActive(
 ): Promise<Tenant> {
   return await api.patch(`/tenants/${id}`, { isActive }) as unknown as Tenant;
 }
+
+/** A customer's organisation and the person who will own it (5.13). */
+export interface OnboardTenantInput {
+    name: string;
+    organizationType: string;
+    industry?: string;
+    slug?: string;
+    ownerFirstName: string;
+    ownerLastName: string;
+    ownerEmail: string;
+}
+
+export interface OnboardedTenant {
+    tenant: Tenant;
+    owner: { id: string; email: string; firstName: string; lastName: string };
+    /** False when mail is not configured; then `inviteUrl` is the way in. */
+    emailed: boolean;
+    inviteUrl?: string;
+}
+
+/** Create the organisation, its defaults, and an invite for its owner. */
+export async function onboardTenant(input: OnboardTenantInput): Promise<OnboardedTenant> {
+    return (await api.post('/platform/tenants', input)) as unknown as OnboardedTenant;
+}

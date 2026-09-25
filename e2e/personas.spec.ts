@@ -921,3 +921,38 @@ test.describe('A family answers from their link (5.11)', () => {
         await officeContext.close();
     });
 });
+
+test.describe('Platform console: setting up an organisation (5.13)', () => {
+    // There is no platform persona: the operator is made by the API's
+    // create:super-admin CLI. Set PLATFORM_EMAIL / PLATFORM_PASSWORD to run this.
+    const email = process.env.PLATFORM_EMAIL;
+    const password = process.env.PLATFORM_PASSWORD;
+    test.skip(!email || !password, 'no platform operator configured');
+
+    test('creates an organisation, invites its owner, and lists it', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/login');
+        await page.locator('input[name="email"]').fill(email!);
+        await page.locator('input[name="password"]').fill(password!);
+        await page.locator('button[type="submit"]').click();
+        await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 60_000 });
+
+        const name = `Persona College ${Date.now()}`;
+        await page.goto('/admin/tenants');
+        await settle(page);
+        await page.getByRole('button', { name: 'Set up an organisation' }).click();
+        const form = page.getByRole('dialog');
+        await form.getByRole('button', { name: 'Create and invite' }).click();
+        await expect(form.getByText('Give the organisation its name.')).toBeVisible();
+        await form.getByLabel('Name', { exact: true }).fill(name);
+        await form.getByLabel('Owner’s first name').fill('Test');
+        await form.getByLabel('Owner’s surname').fill('Owner');
+        await form.getByLabel('Owner’s email').fill(`owner.${Date.now()}@persona.test`);
+        await form.getByRole('button', { name: 'Create and invite' }).click();
+
+        await expect(page.getByText(`${name} is set up`)).toBeVisible();
+        await page.getByRole('button', { name: 'Done' }).click();
+        await expect(page.locator('main tbody tr').filter({ hasText: name })).toHaveCount(1);
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+});
