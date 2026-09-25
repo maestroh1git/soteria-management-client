@@ -745,3 +745,39 @@ test.describe('Contact log (5.5)', () => {
         });
     });
 });
+
+test.describe('Bank reconciliation (5.8)', () => {
+    test.skip(!personas.some((p) => p.key === 'finance'), 'no finance persona');
+    test.use({ storageState: storageFor('finance') });
+
+    test('undoes a wrong match and lets the obvious ones match again', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/banking');
+        await settle(page);
+        const open = page.locator('main tbody tr').filter({ hasText: 'Reconciling' }).first();
+        test.skip((await open.count()) === 0, 'no open statement in the seed');
+        await open.locator('a[href^="/banking/"]').first().click();
+        await settle(page);
+
+        const notInBooks = page.getByText(/^Not in the books \((\d+)\)$/);
+        const count = async () => Number((await notInBooks.innerText()).match(/\d+/)![0]);
+        const before = await count();
+
+        const matched = page.getByText(/^Matched \((\d+)\)$/);
+        await expect(matched).toBeVisible();
+        await page.getByRole('button', { name: 'Undo match' }).first().click();
+        await expect.poll(count).toBeGreaterThan(before);
+
+        await page.getByRole('button', { name: 'Match the obvious ones' }).click();
+        await expect.poll(count).toBe(before);
+
+        // Posting a line asks what it was before anything is written.
+        await page.getByRole('button', { name: 'Post' }).first().click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog.getByText('Put this in the books')).toBeVisible();
+        await dialog.getByRole('button', { name: 'Post and match' }).click();
+        await expect(dialog.getByText('Choose what it was.')).toBeVisible();
+        await dialog.getByRole('button', { name: 'Cancel' }).click();
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+});

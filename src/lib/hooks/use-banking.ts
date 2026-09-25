@@ -63,7 +63,10 @@ export function useUnmatch(statementId: string) {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (groupId: string) => unmatchGroup(statementId, groupId),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['banking'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['banking'] });
+            toast.success('Match undone');
+        },
     });
 }
 
