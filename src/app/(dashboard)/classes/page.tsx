@@ -299,11 +299,20 @@ function ClassesPageInner() {
                                                         >
                                                             <Users className="h-4 w-4" />
                                                             {l.name} {a.name}
-                                                            {a.capacity !== null && (
-                                                                <span className="text-muted-foreground">
-                                                                    · {a.capacity} seats
-                                                                </span>
-                                                            )}
+                                                            {/* How full: pupils against seats, and
+                                                                a full class says so. */}
+                                                            <span
+                                                                className={
+                                                                    a.capacity !== null && (a.enrolled ?? 0) >= a.capacity
+                                                                        ? 'font-medium text-amber-700 dark:text-amber-400'
+                                                                        : 'text-muted-foreground'
+                                                                }
+                                                            >
+                                                                ·{' '}
+                                                                {a.capacity !== null
+                                                                    ? `${a.enrolled ?? 0}/${a.capacity} seats${(a.enrolled ?? 0) >= a.capacity ? ', full' : ''}`
+                                                                    : `${a.enrolled ?? 0} pupils`}
+                                                            </span>
                                                             {/* A class with nobody on it is a register
                                                                 nobody can take, so say so here rather
                                                                 than leaving it to be discovered. */}

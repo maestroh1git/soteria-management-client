@@ -55,6 +55,7 @@ import { DataTable } from '@/components/common/data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
+import { listName } from '@/lib/utils/names';
 
 export default function LoansPage() {
     const [filters, setFilters] = useState<LoanFilters>({});
@@ -294,7 +295,7 @@ export default function LoansPage() {
                                 <SelectContent>
                                     {employees.map((e) => (
                                         <SelectItem key={e.id} value={e.id}>
-                                            {e.firstName} {e.lastName} ({e.employeeNumber})
+                                            {listName(e)} ({e.employeeNumber})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -362,7 +363,7 @@ export default function LoansPage() {
                                 <SelectContent>
                                     {employees.map((e) => (
                                         <SelectItem key={e.id} value={e.id}>
-                                            {e.firstName} {e.lastName} ({e.employeeNumber})
+                                            {listName(e)} ({e.employeeNumber})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

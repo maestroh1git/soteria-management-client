@@ -21,6 +21,7 @@ import { ClassWeekGrid } from '@/components/attendance/class-week-grid';
 import { useMyClass, useMyClasses } from '@/lib/hooks/use-attendance';
 import { useCan } from '@/lib/hooks/use-can';
 import { formatTime } from '@/lib/utils/dates';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * One class, from the form teacher's side: today's register, who needs a word,
@@ -102,7 +103,7 @@ export default function MyClassPage({
                         <CheckCircle2 className="h-4 w-4 flex-none" />
                         <span className="tabular-nums">
                             Register taken — {summary.present} present, {summary.late} late,{' '}
-                            {summary.absent} away
+                            {summary.absent} absent, {summary.excused} excused
                         </span>
                     </p>
                     <Button asChild variant="outline" size="sm">
@@ -140,7 +141,7 @@ export default function MyClassPage({
                                 >
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-medium">
-                                            {p.lastName}, {p.firstName}
+                                            <StudentLink id={p.studentId} name={`${p.lastName}, ${p.firstName}`} />
                                         </p>
                                         <p className="truncate text-xs text-muted-foreground tabular-nums">
                                             In school {p.inSchool} of {p.teachingDays} days
@@ -174,7 +175,7 @@ export default function MyClassPage({
                                     key={d.id}
                                     className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm"
                                 >
-                                    <span className="font-medium">{d.pupilName}</span>
+                                    <StudentLink id={d.studentId} name={d.pupilName} />
                                     <span className="text-muted-foreground tabular-nums">
                                         {formatTime(d.departedAt)}
                                         {d.collectedBy ? ` · ${d.collectedBy}` : ''}
@@ -212,7 +213,7 @@ export default function MyClassPage({
                             >
                                 <div className="min-w-0">
                                     <p className="truncate text-sm font-medium">
-                                        {s.lastName}, {s.firstName}
+                                        <StudentLink id={s.id} name={`${s.lastName}, ${s.firstName}`} />
                                     </p>
                                     <p className="text-xs text-muted-foreground tabular-nums">
                                         {s.admissionNumber}

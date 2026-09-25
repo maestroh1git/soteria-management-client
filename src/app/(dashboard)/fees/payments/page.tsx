@@ -40,6 +40,7 @@ import { statusOptions } from '@/lib/status/registry';
 import { ListFilters, matches } from '@/components/common/list-filters';
 import { ApplyCreditDialog } from '@/features/fees/receipts/apply-credit-dialog';
 import type { Receipt } from '@/lib/api/fees';
+import { StudentLink } from '@/components/common/entity-link';
 
 /** Kobo, so the running total of an allocation never drifts. */
 const METHODS = [
@@ -166,7 +167,9 @@ export default function PaymentsPage() {
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div>{p.studentName}</div>
+                                            <div>
+                                                <StudentLink id={p.studentId} name={p.studentName} />
+                                            </div>
                                             <div className="text-xs text-muted-foreground">
                                                 {p.admissionNumber}
                                             </div>

@@ -179,6 +179,7 @@ export interface InvoiceSummary {
     issueDate: string | null;
     dueDate: string | null;
     admissionNumber: string;
+    studentId: string;
     studentName: string;
     classLevel: string;
     termName: string;

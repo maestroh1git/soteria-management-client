@@ -21,7 +21,7 @@ export const ATTENDANCE_LOOK: Record<
     },
     ABSENT: {
         letter: 'A',
-        label: 'Away',
+        label: 'Absent',
         className: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300',
     },
     EXCUSED: {

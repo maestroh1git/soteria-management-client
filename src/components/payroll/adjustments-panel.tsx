@@ -38,6 +38,7 @@ import type {
 } from '@/lib/types/api';
 import { StatusBadge } from '@/components/common/status-badge';
 import { EmployeeLink } from '@/components/common/entity-link';
+import { listName } from '@/lib/utils/names';
 
 const TYPE_LABEL: Record<AdjustmentType, string> = {
     EARNING: 'One-off earning',
@@ -312,7 +313,7 @@ function AdjustmentFormDialog({
                             <SelectContent>
                                 {employees.map((e) => (
                                     <SelectItem key={e.id} value={e.id}>
-                                        {e.firstName} {e.lastName} ({e.employeeNumber})
+                                        {listName(e)} ({e.employeeNumber})
                                     </SelectItem>
                                 ))}
                             </SelectContent>

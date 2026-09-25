@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import type { Student, StudentMedical } from '@/lib/api/students';
 import { useCan } from '@/lib/hooks/use-can';
+import { StudentLink } from '@/components/common/entity-link';
 
 const SICKLE = ['SS', 'SC'];
 
@@ -52,7 +53,7 @@ export function MedicalAlertsCard({
                     >
                         <div className="flex items-center justify-between">
                             <p className="font-medium">
-                                {student.firstName} {student.lastName}
+                                <StudentLink id={student.id} student={student} />
                             </p>
                             {canOpenRecord && (
                                 <Link href={`/students/${student.id}`}>

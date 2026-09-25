@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useStudents } from '@/lib/hooks/use-students';
 import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
+import { listName } from '@/lib/utils/names';
 
 export interface PickedStudent {
     id: string;
@@ -86,9 +87,7 @@ export function StudentPicker({
                                         })
                                     }
                                 >
-                                    <span>
-                                        {s.firstName} {s.lastName}
-                                    </span>
+                                    <span>{listName(s)}</span>
                                     <span className="text-muted-foreground">{s.admissionNumber}</span>
                                 </button>
                             </li>

@@ -17,6 +17,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
 import { useMyClasses } from '@/lib/hooks/use-attendance';
 import { formatDayOfWeek } from '@/lib/utils/dates';
+import { StudentLink } from '@/components/common/entity-link';
 
 /**
  * Where a form teacher lives.
@@ -98,7 +99,7 @@ export default function MyClassesPage() {
                                     <CheckCircle2 className="h-4 w-4 flex-none" />
                                     <span className="tabular-nums">
                                         Register taken — {c.present} present, {c.late} late,{' '}
-                                        {c.absent} away
+                                        {c.absent} absent, {c.excused} excused
                                     </span>
                                 </p>
                                 <Button asChild variant="outline" size="sm">
@@ -155,7 +156,7 @@ export default function MyClassesPage() {
                                         >
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-medium">
-                                                    {p.lastName}, {p.firstName}
+                                                    <StudentLink id={p.studentId} name={`${p.lastName}, ${p.firstName}`} />
                                                 </p>
                                                 <p className="truncate text-xs text-muted-foreground tabular-nums">
                                                     In school {p.inSchool} of {p.teachingDays} days

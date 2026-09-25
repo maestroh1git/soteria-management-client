@@ -43,6 +43,7 @@ import { Money } from '@/components/common/money';
 import { statusOf, TONE_CLASS } from '@/lib/status/registry';
 import { InvoiceLink } from '@/components/common/entity-link';
 import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
+import { StudentLink } from '@/components/common/entity-link';
 
 const PAID_STYLE = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
 const PART_STYLE = 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200';
@@ -274,7 +275,9 @@ export default function InvoicesPage() {
                                             />
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div>{invoice.studentName}</div>
+                                            <div>
+                                                <StudentLink id={invoice.studentId} name={invoice.studentName} />
+                                            </div>
                                             <div className="text-xs text-muted-foreground">
                                                 {invoice.admissionNumber}
                                             </div>

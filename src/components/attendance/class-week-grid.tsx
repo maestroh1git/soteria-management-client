@@ -10,7 +10,12 @@ import { StudentLink } from '@/components/common/entity-link';
 import { cn } from '@/lib/utils';
 import { useClassWeek, useDownloadAttendance } from '@/lib/hooks/use-attendance';
 import { formatDate, formatDayOfWeek, shiftDate, todayIso } from '@/lib/utils/dates';
-import { DAY_TYPE_LABELS, type DayType } from '@/lib/api/attendance';
+import {
+    ABSENCE_REASON_LABELS,
+    DAY_TYPE_LABELS,
+    type ClassWeek,
+    type DayType,
+} from '@/lib/api/attendance';
 import { ATTENDANCE_LOOK } from './term-strip';
 
 /**
@@ -127,11 +132,22 @@ export function ClassWeekGrid({
                                             const status = p.marks[d.date];
                                             const future = d.date > todayIso();
                                             const look = ATTENDANCE_LOOK[status ?? 'UNMARKED'];
+                                            const why = p.reasons?.[d.date];
+                                            const detail = why
+                                                ? [
+                                                      why.reasonCode ? ABSENCE_REASON_LABELS[why.reasonCode] : null,
+                                                      why.minutesLate ? `${why.minutesLate} min late` : null,
+                                                  ]
+                                                      .filter(Boolean)
+                                                      .join(', ')
+                                                : '';
                                             const label = closed
                                                 ? (DAY_TYPE_LABELS[d.dayType as DayType] ?? 'No school')
                                                 : future
                                                   ? 'Not yet'
-                                                  : look.label;
+                                                  : detail
+                                                    ? `${look.label} (${detail})`
+                                                    : look.label;
                                             return (
                                                 <td key={d.date} className="px-1 py-1.5 text-center">
                                                     <span
@@ -153,9 +169,49 @@ export function ClassWeekGrid({
                                 ))}
                             </tbody>
                         </table>
+                        <WeekExceptions week={data} />
                     </div>
                 )}
             </CardContent>
         </Card>
+    );
+}
+
+/**
+ * Everyone away or late this week, with why: the difference between an
+ * unexplained absence and an excused one is the reason, so it is written out
+ * rather than left in a tooltip.
+ */
+function WeekExceptions({ week }: { week: ClassWeek }) {
+    const rows = week.pupils.flatMap((p) =>
+        week.days
+            .filter((d) => p.marks[d.date] && p.marks[d.date] !== 'PRESENT')
+            .map((d) => ({ pupil: p, date: d.date, status: p.marks[d.date], why: p.reasons?.[d.date] })),
+    );
+    if (rows.length === 0) return null;
+    return (
+        <div className="mt-4">
+            <h3 className="mb-2 text-sm font-medium">Absent, excused or late this week</h3>
+            <ul className="divide-y rounded-lg border text-sm">
+                {rows.map((r) => (
+                    <li key={`${r.pupil.studentId}-${r.date}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+                        <StudentLink id={r.pupil.studentId} name={`${r.pupil.lastName}, ${r.pupil.firstName}`} />
+                        <span className="text-muted-foreground">{formatDayOfWeek(r.date)}</span>
+                        <span className={cn('rounded px-1.5 py-0.5 text-xs font-semibold', ATTENDANCE_LOOK[r.status].className)}>
+                            {ATTENDANCE_LOOK[r.status].label}
+                        </span>
+                        <span className="text-muted-foreground">
+                            {r.why?.reasonCode
+                                ? ABSENCE_REASON_LABELS[r.why.reasonCode]
+                                : r.status === 'LATE'
+                                  ? r.why?.minutesLate
+                                      ? `${r.why.minutesLate} min`
+                                      : ''
+                                  : 'No reason given'}
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import { use, useEffect, useState, useId } from 'react';
-import { Loader2, CheckCircle2, Copy, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { CopyButton } from '@/components/common/copy-button';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -147,9 +148,12 @@ export default function ApplyPage({
                         <p className="text-sm text-muted-foreground">
                             Your application number
                         </p>
-                        <p className="text-2xl font-semibold tracking-wide">
-                            {receipt.applicationNumber}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-2xl font-semibold tracking-wide">
+                                {receipt.applicationNumber}
+                            </p>
+                            <CopyButton text={receipt.applicationNumber} label="Copy number" />
+                        </div>
                         <p className="mt-1 text-sm text-muted-foreground">
                             Quote this if you call the school.
                         </p>
@@ -165,13 +169,7 @@ export default function ApplyPage({
                             <code className="flex-1 truncate rounded bg-background px-3 py-2 text-xs">
                                 {link}
                             </code>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigator.clipboard.writeText(link)}
-                            >
-                                <Copy className="h-4 w-4" />
-                            </Button>
+                            <CopyButton text={link} label="Copy link" />
                         </div>
                     </div>
 

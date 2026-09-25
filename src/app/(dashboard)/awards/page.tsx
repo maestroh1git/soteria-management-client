@@ -23,6 +23,7 @@ import {
     type AwardCategory,
 } from '@/lib/api/attendance';
 import { formatDate } from '@/lib/utils/dates';
+import { StudentLink } from '@/components/common/entity-link';
 
 const CATEGORIES = Object.keys(AWARD_CATEGORY_LABELS) as AwardCategory[];
 const ANY = 'any';
@@ -173,9 +174,7 @@ export default function AwardsPage() {
                                 {data.items.map((a) => (
                                     <tr key={a.id} className="border-b last:border-0">
                                         <td className="px-4 py-3">
-                                            <span className="font-medium">
-                                                {a.pupilName}
-                                            </span>
+                                            <StudentLink id={a.studentId} name={a.pupilName} />
                                             <span className="block text-xs tabular-nums text-muted-foreground">
                                                 {a.admissionNumber}
                                             </span>

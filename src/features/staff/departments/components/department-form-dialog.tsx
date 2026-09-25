@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { listName } from '@/lib/utils/names';
 
 const NONE = '__none__';
 
@@ -139,7 +140,7 @@ export function DepartmentFormDialog({
                                 <SelectItem value={NONE}>Nobody yet</SelectItem>
                                 {staff.map((e) => (
                                     <SelectItem key={e.id} value={e.id}>
-                                        {e.firstName} {e.lastName} ({e.employeeNumber})
+                                        {listName(e)} ({e.employeeNumber})
                                     </SelectItem>
                                 ))}
                             </SelectContent>

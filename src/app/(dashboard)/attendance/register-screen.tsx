@@ -17,6 +17,7 @@ import {
 } from '@/lib/api/attendance';
 import { cn } from '@/lib/utils';
 import { formatDayOfWeek } from '@/lib/utils/dates';
+import { StudentLink } from '@/components/common/entity-link';
 
 interface Draft {
     status: AttendanceStatus;
@@ -268,9 +269,39 @@ export function RegisterScreen({
             >
                 <span>{tally.PRESENT} present</span>
                 <span>{tally.LATE} late</span>
-                <span>{tally.ABSENT} away</span>
+                <span>{tally.ABSENT} absent</span>
                 <span>{tally.EXCUSED} excused</span>
             </div>
+
+            {/* The two ways of not being here, said once where they are chosen. */}
+            <details className="rounded-lg border px-4 py-2.5 text-sm">
+                <summary className="cursor-pointer font-medium">Absent or excused?</summary>
+                <dl className="mt-2 space-y-2 text-muted-foreground">
+                    <div>
+                        <dt className="font-medium text-foreground">Absent</dt>
+                        <dd>
+                            Not in school, and the school has not accepted a reason. It counts
+                            against the pupil as an unauthorised absence. Pick the reason if you
+                            know it (or &ldquo;Not known&rdquo;).
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="font-medium text-foreground">Excused</dt>
+                        <dd>
+                            Not in school for a reason the school accepts: illness with a note,
+                            an appointment, a bereavement. Still an absence, but an authorised
+                            one.
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="font-medium text-foreground">Where to see them</dt>
+                        <dd>
+                            Each pupil&rsquo;s Class &amp; attendance tab lists every absence and
+                            late with its reason; the class&rsquo;s week shows them day by day.
+                        </dd>
+                    </div>
+                </dl>
+            </details>
 
             {data.alreadyMarked && !submitted && (
                 <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
@@ -320,7 +351,7 @@ export function RegisterScreen({
                                     </span>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-medium">
-                                            {p.lastName}, {p.firstName}
+                                            <StudentLink id={p.studentId} name={`${p.lastName}, ${p.firstName}`} />
                                         </p>
                                         <p className="truncate text-xs tabular-nums text-muted-foreground">
                                             {p.admissionNumber}
@@ -447,7 +478,7 @@ export function RegisterScreen({
                             {submitted ? 'Register saved' : 'Submit register'}
                             <span className="ml-2 text-xs font-normal opacity-80 tabular-nums">
                                 {tally.PRESENT} present · {tally.LATE} late ·{' '}
-                                {tally.ABSENT} away
+                                {tally.ABSENT} absent
                             </span>
                         </span>
                     </Button>
