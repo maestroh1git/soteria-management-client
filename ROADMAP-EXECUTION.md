@@ -464,10 +464,14 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 - Found on the way: an Approver opening a loan was refused its History (the
   audit log); History is now asked for, and shown, only for those who may
   read it (`audit.entityHistory`, on loans and staff records).
-- **Proposed, not built:** a longest loan term (default 12 months; staff
-  requests are capped at 36 today, office-raised loans not at all) and a
-  largest salary advance (default the monthly limit, so an advance comes
-  back on the next payday).
+- **What may be borrowed, checked when it is asked for** (by the employee
+  or the payroll office), each a school setting with a default: a loan over
+  at most 12 months; an advance of at most the monthly limit's share of
+  gross pay (so it comes back on the next payday); a loan of at most 3
+  months' gross pay. Over them, the request is refused with the reason and
+  the figure allowed; the forms show each person's limits before they ask
+  (`GET /me/loan-limits`, `GET /loans/limits/:employeeId`). All four limits
+  sit together in Setup → Organisation → Loans and advances.
 
 Left in Wave 5: Paystack checkout, now planned in full as 5.12b (§9).
 

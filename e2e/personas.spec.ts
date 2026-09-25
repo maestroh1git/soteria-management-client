@@ -539,6 +539,23 @@ test.describe('My Pay (5.6)', () => {
         await dialog.getByRole('button', { name: /cancel/i }).click();
         expect(problems, problems.join('\n')).toEqual([]);
     });
+
+    test('is told the limit before asking, and stopped over it', async ({ page }) => {
+        const problems = watch(page);
+        await page.goto('/me');
+        await settle(page);
+        await page.getByRole('button', { name: /ask for a loan or advance/i }).click();
+        const dialog = page.getByRole('dialog');
+        // An advance: at most the school's share of a month's gross pay.
+        await expect(dialog.getByText(/^Up to ₦[\d,]+(\.\d\d)? \(\d+% of your monthly gross pay\)\.$/)).toBeVisible();
+        await dialog.getByLabel('Amount').fill('5000000');
+        await dialog.getByLabel('What it is for').fill('Persona test, never sent');
+        await dialog.getByRole('button', { name: 'Send request' }).click();
+        await expect(dialog.getByText('That is more than you can ask for: see the limit below.')).toBeVisible();
+        await expect(dialog).toBeVisible();
+        await dialog.getByRole('button', { name: /cancel/i }).click();
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
 });
 
 test.describe('Today (C4.8) and the class week (5.4)', () => {
@@ -1108,12 +1125,12 @@ test.describe('Loan deduction limit', () => {
             const problems = watch(page);
             await page.goto('/setup/organisation?tab=profile');
             await settle(page);
-            const field = page.getByLabel('At most');
+            const field = page.getByLabel('Loan repayments may take at most');
             await expect(field).toHaveValue('33');
 
             const save = page
                 .locator('form')
-                .filter({ has: page.getByLabel('At most') })
+                .filter({ has: page.getByLabel('Loan repayments may take at most') })
                 .getByRole('button', { name: 'Save' });
             await field.fill('40');
             await expect(page.getByText(/would repay at most ₦48,000(\.00)? a month/)).toBeVisible();
@@ -1121,10 +1138,16 @@ test.describe('Loan deduction limit', () => {
             await expect(page.getByText('Organization profile saved')).toBeVisible();
             await page.reload();
             await settle(page);
-            await expect(page.getByLabel('At most')).toHaveValue('40');
+            await expect(page.getByLabel('Loan repayments may take at most')).toHaveValue('40');
+            // The other limits are there, at their defaults.
+            await expect(page.getByLabel('A loan can be repaid over at most')).toHaveValue('12');
+            await expect(page.getByLabel('A loan can be at most')).toHaveValue('3');
 
             // Put it back for everyone else.
-            await page.getByLabel('At most').fill('33');
+            await page.getByLabel('Loan repayments may take at most').fill('33');
+            // Unset, the advance limit follows the monthly one; after a save
+            // it is stored, so put it back to 33 too.
+            await page.getByLabel('A salary advance can be at most').fill('33');
             await save.click();
             await expect(page.getByText('Organization profile saved').first()).toBeVisible();
             expect(problems, problems.join('\n')).toEqual([]);

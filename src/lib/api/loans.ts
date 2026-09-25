@@ -1,5 +1,5 @@
 import api from './client';
-import type { Loan, LoanRepayment, LoanFilters } from '@/lib/types/api';
+import type { Loan, LoanLimits, LoanRepayment, LoanFilters } from '@/lib/types/api';
 
 // ── DTOs ────────────────────────────────────────────────────
 export interface CreateLoanDto {
@@ -55,4 +55,9 @@ export async function getLoanRepayments(id: string): Promise<LoanRepayment[]> {
 
 export async function getEmployeeLoans(employeeId: string, status?: string): Promise<Loan[]> {
   return await api.get(`/loans/employee/${employeeId}`, { params: { status } }) as unknown as Loan[];
+}
+
+/** What the school's policy lets this employee borrow (loans.create). */
+export async function getLoanLimits(employeeId: string): Promise<LoanLimits> {
+  return await api.get(`/loans/limits/${employeeId}`) as unknown as LoanLimits;
 }

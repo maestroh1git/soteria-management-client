@@ -14,6 +14,7 @@ import {
   requestOwnLeave,
   cancelOwnLeave,
   getMyLoans,
+  getMyLoanLimits,
   requestMyLoan,
   type RequestMyLoanDto,
   type RequestOwnLeaveDto,
@@ -105,6 +106,16 @@ export function useMyLoans() {
   return useQuery({
     queryKey: ['me', 'loans'],
     queryFn: getMyLoans,
+    retry: false,
+  });
+}
+
+/** The loan and advance limits that apply to me. */
+export function useMyLoanLimits(enabled = true) {
+  return useQuery({
+    queryKey: ['me', 'loan-limits'],
+    queryFn: getMyLoanLimits,
+    enabled,
     retry: false,
   });
 }

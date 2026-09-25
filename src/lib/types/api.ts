@@ -536,6 +536,20 @@ export interface TaxBracket {
 // Loans module
 // ============================================================
 
+/**
+ * What the school's loan policy lets one employee ask for. Naira figures are
+ * null until they have a pay run to measure by.
+ */
+export interface LoanLimits {
+  deductionPercent: number;
+  maxTermMonths: number;
+  maxAdvancePercent: number;
+  maxAdvance: number | null;
+  maxLoanMonthsOfPay: number;
+  maxLoan: number | null;
+  grossPay: number | null;
+}
+
 export interface Loan {
   id: string;
   employeeId: string;

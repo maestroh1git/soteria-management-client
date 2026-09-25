@@ -1,5 +1,6 @@
 import api from './client';
 import type {
+  LoanLimits,
   EmployeeCompleteness,
   LeaveBalance,
   LeaveRequest,
@@ -180,4 +181,9 @@ export interface RequestMyLoanDto {
 /** Ask for a loan or advance for myself; the borrower is the token. */
 export async function requestMyLoan(dto: RequestMyLoanDto): Promise<Loan> {
   return (await api.post('/me/loans', dto)) as unknown as Loan;
+}
+
+/** What the school's loan policy lets me ask for. */
+export async function getMyLoanLimits(): Promise<LoanLimits> {
+  return (await api.get('/me/loan-limits')) as unknown as LoanLimits;
 }
