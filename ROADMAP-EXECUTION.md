@@ -27,6 +27,7 @@ run in parallel unless a dependency is named.
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
 | 5 Finish | **Done** 25 Sep, except 5.12b Paystack checkout: **planned**, §9 | same |
 | 6 Other organisation types | **Planned**, §9b: modules enforced on the server, then core-only readiness, then shared additions, then packs per signed customer | — |
+| 7 Academic records | **Planned**, §9c: subjects and who teaches them, then the gradebook, then report cards in the portal, then a hand-built timetable. Recommended before Wave 6.2–6.3 while schools are the customers | — |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -600,6 +601,9 @@ Sep.** D1, D2 and D5 are done in Wave 1; the rest land with the wave named.
 | D10 | **Who pays the card fee** | **The parent**, shown as its own line ("Bill ₦250,000 + processing ₦2,000"). The school receives the bill in full. Soteria's cut is 0% for now; the split allows one later. |
 | D11 | **What stops a hospital calling `/students`?** | Today, nothing: school pages are only hidden in the menu. Each tenant gets **modules**, from its type and switchable by the operator, and the API refuses a module the tenant lacks (6.0). |
 | D12 | **When to build a type's own features** | Only with a signed pilot customer of that type, as the school side was shaped by a real school. Until then they get the shared core. |
+| D13 | **Build a timetable solver?** | **No.** A hand-built weekly grid with clash checks gives registers per period and each teacher's week. Generating a timetable automatically is a constraint solver, and it is where established school systems win (`ERP-ROADMAP.md` in the API). Integrate one if a customer needs it. |
+| D14 | **Store report cards or regenerate them?** | **Store the bytes when a report is released**, by the API README's test (*would it say the same thing a year from now?*): a score corrected after release would silently change a document the parent already has, as a payslip's year-to-date would. A correction is a re-release, and the portal shows the latest. |
+| D15 | **Grading scale** | **Each school's own**, set in Setup, starting from the WAEC-style A1–F9 bands. Whether to print a position in class is a school setting, off by default. |
 
 ---
 
@@ -939,6 +943,42 @@ the full e2e suite pass, as for Waves 1–5.
 
 ---
 
+## 9c. Wave 7 — Academic records: subjects, gradebook, report cards, timetable
+
+**Why next.** Report cards are what parents value most, and the school side
+has no academic record at all: classes exist, pupils are enrolled and
+registers are taken, but nothing says what is taught, by whom, or how a pupil
+is doing. Three things already waiting on this:
+
+- **Educators read every pupil in the school.** `SystemRole` says so, and why:
+  narrowing it to "the classes I actually teach" needs a record of who teaches
+  what. 7.1 is that record.
+- **Registers are per day.** `PHASE5-ATTENDANCE.md` leaves per-period and
+  per-subject attendance out because there is no timetable (7.4).
+- **The parent portal** shows bills and attendance, and would carry reports.
+
+Everything here is `school`-module work: if Wave 6.0 has landed, each
+controller carries `@RequiresModule('school')` from the start; if not, 6.0
+covers these too.
+
+| PR | Repo | What | Effort |
+|---|---|---|---|
+| **7.1** | S+C | **Subjects and who teaches them.** `subjects` per tenant (name, short code, the levels that take it, core or elective). `teaching_assignments`: subject × class arm × educator × session, with electives listing their pupils. Setup → School year → Subjects; each class shows its subjects and teachers, and a teacher's own list appears in My Classes. New actions: `academics.subjects.manage` (Owner, Admin, Registrar). **Educators then read only pupils in the arms they teach or form-teach**, and the persona sweep gains a subject teacher who is not a form teacher. | 1 week |
+| **7.2** | S+C | **Assessments and the gradebook.** Per level and term, the parts of a mark and their weights (e.g. two tests at 20, an exam at 60), with a maximum each. The subject teacher enters scores for their own arms only, in a grid built for a whole class at once (keyboard entry, saved as they go, absent ≠ zero). Submitted scores lock; the registrar can reopen them. Grading scale per school (D15). The form teacher's comment and the head's remark per pupil. New actions: `results.enter` (by assignment, like awards: identity, not only role) and `results.moderate`; not `grades.*`, which is pay grades. | 1.5–2 weeks |
+| **7.3** | S+C | **Report cards.** One PDF per pupil per term: scores by subject with grade and teacher's initials, the term's attendance from the registers, comments, and when the next term begins. The head (or registrar) previews a class's reports and **releases** them; released reports are stored (D14), emailed to guardians as a link, and listed in the parent portal. Reports are not held back for unpaid fees unless the school turns that on, and then the portal says why. Class broadsheet (every pupil × every subject) for staff. | 1–1.5 weeks |
+| **7.4** | S+C | **Timetable, built by hand** (D13). A bell schedule (periods per day, breaks). A grid per class arm: each period a teaching assignment and an optional room. The grid refuses a teacher or room in two places at once, and shows each teacher's periods against a weekly load. My Classes shows a teacher's week; the portal shows a child's. Optional per-period registers (a school setting), feeding the same attendance records and the at-risk list. | 1.5 weeks |
+| **7.5** | — | **Timetable generation: not planned.** Only if a customer needs it, and then integrate an existing solver rather than build one. | — |
+
+**Order:** 7.1 → 7.2 → 7.3 is the whole of the value parents see, and can ship
+at the end of a term. 7.4 after, independent of 7.2–7.3 once 7.1 exists.
+
+**Checks, as for every wave:** persona sweep (subject teacher, form teacher,
+registrar, parent); e2e: a teacher cannot enter or read scores for an arm they
+do not teach; a parent sees only their own children's released reports; a
+report's numbers equal the gradebook's at release; drift and the audit clean.
+
+---
+
 ## 10. Sequence and effort
 
 ```
@@ -947,6 +987,8 @@ Wave 0 ──► Wave 1 ──► Wave 2 ──► Wave 4 (reorganise)
                            └──► Wave 5 (features, per hub as it lands)
                                       └──► 5.12b Paystack
 Wave 6: 6.0 modules ──► 6.1 core-only ──► 6.2 shared additions ──► 6.3 packs (per customer)
+Wave 7: 7.1 subjects ──► 7.2 gradebook ──► 7.3 report cards
+                    └──► 7.4 timetable grid
 ```
 
 | Wave | Effort (one developer) | Calendar with API + client in parallel |
@@ -961,6 +1003,8 @@ Wave 6: 6.0 modules ──► 6.1 core-only ──► 6.2 shared additions ─�
 | 6.0–6.1 Modules, core-only | 10 days | alongside 5.12b |
 | 6.2 Shared additions | 10–15 days | after 6.1 |
 | 6.3 Each pack | 10–15 days | when a customer signs |
+| 7.1–7.3 Subjects, gradebook, report cards | 18–23 days | before 6.2 while schools are the customers; ship by a term's end |
+| 7.4 Timetable grid | 7–8 days | after 7.1 |
 
 About nine weeks for two developers, or twelve for one. Wave 1 alone removes
 every hard block in the map and is worth shipping before anything else.
@@ -984,6 +1028,8 @@ every hard block in the map and is worth shipping before anything else.
 | School routes a non-school tenant can call | all of them | 0 | 6.0 e2e + audit |
 | Online payments without a receipt after 15 minutes | — | 0 | 5.12b clean-up job |
 | Paystack clearing balance after settlement | — | ₦0 | ledger, daily |
+| Pupils an Educator can read outside the classes they teach | all of them | 0 | 7.1 e2e + persona sweep |
+| Reports whose figures differ from the gradebook at release | — | 0 | 7.3 e2e |
 
 ---
 
