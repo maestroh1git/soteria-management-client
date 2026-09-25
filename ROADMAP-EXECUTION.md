@@ -478,8 +478,8 @@ Left in Wave 5: Paystack checkout, now planned in full as 5.12b (§9).
 
 ### Left for later waves
 
-- 35 screens still render hand-written tables (the working lists among them
-  with `ListFilters` above); Wave 4 moves each to DataTable with its domain.
+- 31 files still render hand-written tables (35 before Wave 4); each moves
+  to DataTable when its screen is next worked on.
 - Payroll and school types still live in `types/api.ts` and the API files
   (C3.8's type moves happen per domain in Wave 4).
 - `UserLink` was not built: a login is shown on its staff record's Access
@@ -518,13 +518,15 @@ All of it was fixed in the same pull requests:
 
 ### Found, not fixed (outside Waves 0–1)
 
-- **Loan approval takes `approverId` from the request body**, so the recorded
-  approver is whatever the client sends. The server should use the caller.
-- **Report exports open a bare URL** (`window.open(getExportCsvUrl(…))`), which
-  carries no token, so they cannot authenticate. Belongs with the Wave 5
-  exports work.
-- 26 pre-existing lint errors (React Compiler rules), held flat by the
-  ratchet; down from 37.
+- Both bugs first listed here are fixed: loan approval records the caller as
+  approver, never a field the browser sends, and report exports download
+  with the login attached (fixed after Wave 3).
+- Pre-existing lint errors (React Compiler rules), held flat by the ratchet
+  so none are added.
+- The demo seeders (`seed-soteria`, `seed-pay-period`, API) write employee
+  numbers directly without advancing `number_sequences`, so adding an
+  employee on a seeded database collides with a seeded number. Demo data
+  only; real tenants number through the sequence.
 
 ---
 
