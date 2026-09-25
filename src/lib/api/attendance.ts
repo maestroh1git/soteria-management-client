@@ -165,6 +165,8 @@ export interface AtRiskPupil {
     attendanceRate: number;
     guardianName: string | null;
     guardianPhone: string | null;
+    /** When the family was last contacted, and by whom (5.5); what was said is on the record. */
+    lastContact: { at: string; reached: boolean; by: string | null } | null;
 }
 
 export interface MyClass {

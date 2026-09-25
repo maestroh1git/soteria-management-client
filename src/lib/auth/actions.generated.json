@@ -113,6 +113,18 @@
     "FINANCE_ADMIN",
     "APPROVER"
   ],
+  "contacts.log": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.attendance_officer",
+    "academic.teacher"
+  ],
+  "contacts.read": [
+    "tenant_owner",
+    "ADMIN",
+    "academic.attendance_officer",
+    "academic.teacher"
+  ],
   "countries.manage": [
     "super_admin"
   ],

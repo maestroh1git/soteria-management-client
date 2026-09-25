@@ -162,6 +162,11 @@ export const STATUSES = {
     CONFIGURATION: e('Configuration', 'neutral'),
     SECURITY: e('Security', 'neutral'),
   },
+  /** Whether a contact with a family got through (5.5). */
+  contactOutcome: {
+    REACHED: e('Spoke to them', 'done'),
+    NOT_REACHED: e('No answer', 'waiting'),
+  },
   /** What a family owes, as a parent sees it on the portal. */
   balance: {
     SETTLED: e('Nothing owed', 'done'),

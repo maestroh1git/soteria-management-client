@@ -43,6 +43,7 @@ import { useTabParam } from '@/lib/hooks/use-tab-param';
 import { PageHeader } from '@/components/layout/page-header';
 import { InviteParentButton } from '@/features/students/record/invite-parent-button';
 import { AttendanceTab } from '@/features/students/record/attendance-tab';
+import { ContactsCard } from '@/features/students/record/contacts-card';
 import { FeesTab } from '@/features/students/record/fees-tab';
 import { AdmissionTab } from '@/features/students/record/admission-tab';
 import { SupportCard } from '@/features/students/record/support-card';
@@ -100,6 +101,8 @@ export default function StudentDetailPage({
     const { data: guardians = [], isError: guardiansFailed } =
         useStudentGuardians(id);
     const { data: medical } = useStudentMedical(id);
+    const primary = guardians.find((g) => g.isPrimary)?.guardian;
+    const primaryGuardianName = primary ? `${primary.firstName} ${primary.lastName}` : null;
     // So an award lands in a term rather than nowhere. termId is nullable and
     // nothing had ever set it.
     const { data: session } = useCurrentSession();
@@ -309,7 +312,16 @@ export default function StudentDetailPage({
 
                 {tabs.includes('attendance') && (
                     <TabsContent value="attendance">
-                        <AttendanceTab studentId={id} classArm={student.currentClassArm} />
+                        <div className="space-y-6">
+                            <AttendanceTab studentId={id} classArm={student.currentClassArm} />
+                            {can('contacts.read') && (
+                                <ContactsCard
+                                    studentId={id}
+                                    pupilName={`${student.firstName} ${student.lastName}`}
+                                    guardianName={primaryGuardianName}
+                                />
+                            )}
+                        </div>
                     </TabsContent>
                 )}
 
