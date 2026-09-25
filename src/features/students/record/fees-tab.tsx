@@ -95,6 +95,10 @@ export function FeesTab({
                         <p className="text-2xl font-semibold">
                             <Money value={credit} />
                         </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Paid, but not yet set against a bill: an early payment or an
+                            overpayment. It is the family’s money until it is applied.
+                        </p>
                         {credit > 0 && (
                             <Link href="/fees/payments" className="text-xs underline">
                                 Apply it on Receipts
