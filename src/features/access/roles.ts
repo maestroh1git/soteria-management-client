@@ -69,6 +69,18 @@ export function accessOf(user: User): string[] {
   return user.systemRoles;
 }
 
+/** The access a login's position gives it (5.17), and which position. */
+export function inheritedOf(user: User): { from: string; roles: string[] } | null {
+    return user.positionAccess?.roles.length
+        ? { from: user.positionAccess.positionName, roles: user.positionAccess.roles }
+        : null;
+}
+
+/** Everything a login may do: its own access and its position's. */
+export function effectiveAccessOf(user: User): string[] {
+    return [...new Set([...accessOf(user), ...(inheritedOf(user)?.roles ?? [])])];
+}
+
 /** Where a login stands, for the status badge (registry kind "account"). */
 export function accountStatus(user: User): 'ACTIVE' | 'INVITED' | 'INACTIVE' {
   return user.isActive ? 'ACTIVE' : user.invitePending ? 'INVITED' : 'INACTIVE';

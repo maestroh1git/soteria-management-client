@@ -166,15 +166,23 @@ export const createRoleSchema = z.object({
   description: z.string().optional(),
   departmentId: z.string().uuid().optional().or(z.literal('')),
   roleType: z.nativeEnum(RoleType).optional(),
-  baseSalaryRange: z
-    .object({
-      min: z.coerce.number().min(0),
-      max: z.coerce.number().min(0),
-    })
-    .optional(),
+  // The form always holds the band as an object; left empty, it means no band.
+  baseSalaryRange: z.preprocess(
+    (v) => {
+      const blank = (x: unknown) => x === undefined || x === null || x === '';
+      const band = v as { min?: unknown; max?: unknown } | undefined;
+      return !band || (blank(band.min) && blank(band.max)) ? undefined : band;
+    },
+    z
+      .object({
+        min: z.coerce.number().min(0),
+        max: z.coerce.number().min(0),
+      })
+      .optional(),
+  ),
   reportingTo: z.string().uuid().optional().or(z.literal('')),
   isDottedLine: z.boolean().optional(),
-  permissionIds: z.array(z.string().uuid()).min(0),
+  accessRoles: z.array(z.string()).optional(),
 });
 
 export type CreateRoleValues = z.infer<typeof createRoleSchema>;

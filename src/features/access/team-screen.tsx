@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
-import {
-    Activity,
-    KeyRound,
-    MoreHorizontal,
-    Power,
-    Send,
-    UserPlus,
-} from 'lucide-react';
+import { Activity, KeyRound, MoreHorizontal, Power, Send, UserPlus, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,7 +24,7 @@ import { useEmployees } from '@/lib/hooks/use-employees';
 import { statusOptions } from '@/lib/status/registry';
 import type { User } from '@/lib/types/api';
 import { useDeactivate, useReactivate, useResendInvite, useTeam } from './hooks';
-import { ACCESS_LABELS, accessOf, accountStatus, grantableAccess } from './roles';
+import { ACCESS_LABELS, accessOf, accountStatus, effectiveAccessOf, grantableAccess, inheritedOf } from './roles';
 import { InviteDialog } from './components/invite-dialog';
 import { InviteLinkDialog } from './components/invite-link-dialog';
 import { AccessDialog } from './components/access-dialog';
@@ -70,12 +63,13 @@ export function TeamScreen() {
 
     const withoutLogin = employees.filter((e) => !users.some((u) => u.employeeId === e.id));
     const shown = users.filter(
-        (u) => (!access || accessOf(u).includes(access)) && (!status || accountStatus(u) === status),
+        (u) => (!access || effectiveAccessOf(u).includes(access)) && (!status || accountStatus(u) === status),
     );
 
     // How many hold each kind of access: the view by access, one click away.
     const counts = new Map<string, number>();
-    for (const u of users) for (const r of accessOf(u)) counts.set(r, (counts.get(r) ?? 0) + 1);
+    // Counted by what people may actually do, their position's access included.
+    for (const u of users) for (const r of effectiveAccessOf(u)) counts.set(r, (counts.get(r) ?? 0) + 1);
     const waiting = users.filter((u) => accountStatus(u) === 'INVITED').length;
 
     const columns: ColumnDef<User>[] = [
@@ -108,15 +102,33 @@ export function TeamScreen() {
         {
             id: 'access',
             header: 'Access',
-            cell: ({ row }) => (
-                <span className="flex flex-wrap gap-1">
-                    {accessOf(row.original).map((r) => (
-                        <Badge key={r} variant="outline" className="text-xs">
-                            {ACCESS_LABELS[r] ?? r}
-                        </Badge>
-                    ))}
-                </span>
-            ),
+            cell: ({ row }) => {
+                const own = accessOf(row.original);
+                const inherited = inheritedOf(row.original);
+                return (
+                    <span className="flex flex-wrap gap-1">
+                        {own.map((r) => (
+                            <Badge key={r} variant="outline" className="text-xs">
+                                {ACCESS_LABELS[r] ?? r}
+                            </Badge>
+                        ))}
+                        {inherited?.roles
+                            .filter((r) => !own.includes(r))
+                            .map((r) => (
+                                <Badge
+                                    key={`p-${r}`}
+                                    variant="outline"
+                                    className="gap-1 border-dashed text-xs text-muted-foreground"
+                                    title={`From their position, ${inherited.from}`}
+                                >
+                                    <Lock className="h-3 w-3" aria-hidden />
+                                    {ACCESS_LABELS[r] ?? r}
+                                    <span className="sr-only">, from {inherited.from}</span>
+                                </Badge>
+                            ))}
+                    </span>
+                );
+            },
         },
         {
             id: 'status',

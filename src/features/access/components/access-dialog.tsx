@@ -8,7 +8,7 @@ import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/for
 import { FormDialog } from '@/components/common/form-dialog';
 import type { User } from '@/lib/types/api';
 import { useChangeAccess } from '../hooks';
-import { accessOf } from '../roles';
+import { accessOf, inheritedOf } from '../roles';
 import { AccessChecklist } from './access-checklist';
 
 const accessSchema = z.object({
@@ -47,7 +47,11 @@ export function AccessDialog({
             onOpenChange={onOpenChange}
             form={form}
             title={user ? `Access for ${user.firstName} ${user.lastName}` : 'Access'}
-            description="What they may do in the software. Their job is their position, set on their staff record."
+            description={
+                user && inheritedOf(user)
+                    ? `What they may do in the software. Locked access comes with their position, ${inheritedOf(user)!.from}, and changes there; what you tick here is theirs on top of it.`
+                    : 'What they may do in the software. Their job is their position, set on their staff record.'
+            }
             submitLabel="Save access"
             onSubmit={(values) =>
                 user ? change.mutateAsync({ id: user.id, systemRoles: values.access }) : Promise.resolve()
@@ -64,6 +68,7 @@ export function AccessDialog({
                             value={field.value}
                             onChange={field.onChange}
                             labelledBy="access-dialog-label"
+                            locked={user ? inheritedOf(user) : null}
                         />
                         <FormMessage />
                     </FormItem>

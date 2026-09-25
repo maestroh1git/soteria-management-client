@@ -956,3 +956,99 @@ test.describe('Platform console: setting up an organisation (5.13)', () => {
         expect(problems, problems.join('\n')).toEqual([]);
     });
 });
+
+test.describe('Access from a position (5.17)', () => {
+    test.skip(!personas.some((p) => p.key === 'admin'), 'no admin persona');
+    test.use({ storageState: storageFor('admin') });
+
+    test('a position gives its access to the people in it, shown locked', async ({ page, request }) => {
+        const problems = watch(page);
+        // The admin's own session, rather than signing in again (sign-in is
+        // rate-limited).
+        const stamp = Date.now();
+        const position = `Deputy Head ${stamp}`;
+
+        // The position is given Approver as its default access.
+        await page.goto('/setup/positions');
+        await settle(page);
+        const token = await page.evaluate(() => localStorage.getItem('auth-token'));
+        const auth = { Authorization: `Bearer ${token}` };
+        await page.getByRole('button', { name: 'Add position' }).click();
+        const form = page.getByRole('dialog');
+        await form.getByLabel('Name *').fill(position);
+        await form
+            .getByRole('group', { name: 'Default access' })
+            .getByRole('checkbox', { name: /^Approver/ })
+            .click();
+        await form.getByRole('button', { name: 'Add position' }).click();
+        const row = page.locator('main tbody tr').filter({ hasText: position });
+        await expect(row).toContainText('Approver');
+
+        // Someone is hired into it, and invited with nothing of their own
+        // beyond Employee.
+        const roles = await (await request.get(`${API_URL}/roles`, { headers: auth })).json();
+        const roleId = roles.find((r: { name: string }) => r.name === position).id;
+        const email = `deputy.${stamp}@persona.test`;
+        const hired = await request.post(`${API_URL}/employees`, {
+            headers: auth,
+            data: {
+                // Numbered here: the seeded staff are not counted in the
+                // number sequence.
+                employeeNumber: `DH${stamp}`,
+                firstName: 'Deputy',
+                lastName: `Head${stamp}`,
+                email,
+                phone: '08031234567',
+                dateOfBirth: '1985-04-01',
+                gender: 'FEMALE',
+                joinDate: '2026-01-06',
+                roleId,
+            },
+        });
+        expect(hired.ok(), await hired.text()).toBe(true);
+        const invited = await request.post(`${API_URL}/users`, {
+            headers: auth,
+            data: {
+                email,
+                firstName: 'Deputy',
+                lastName: `Head${stamp}`,
+                employeeId: (await hired.json()).id,
+                systemRoles: ['EMPLOYEE'],
+            },
+        });
+        expect(invited.ok(), await invited.text()).toBe(true);
+
+        // Team & access shows Approver as theirs, locked to the position.
+        await page.goto('/setup/team');
+        await settle(page);
+        const person = page.locator('main table tbody tr').filter({ hasText: email });
+        await expect(person).toContainText('Employee');
+        await expect(person).toContainText(`Approver, from ${position}`);
+        await person.getByRole('button', { name: /^Actions for/ }).click();
+        await page.getByRole('menuitem', { name: 'Change access' }).click();
+        await expect(
+            page.getByRole('dialog').getByRole('checkbox', { name: `Approver, from ${position}` }),
+        ).toBeDisabled();
+        await page.keyboard.press('Escape');
+
+        // Changing the position says who it touches, then changes them.
+        await page.goto('/setup/positions');
+        await settle(page);
+        await page.getByRole('button', { name: `Edit ${position}` }).click();
+        const access = page.getByRole('dialog').getByRole('group', { name: 'Default access' });
+        await access.getByRole('checkbox', { name: /^Approver/ }).click();
+        await access.getByRole('checkbox', { name: /^Viewer/ }).click();
+        await page.getByRole('dialog').getByRole('button', { name: 'Save changes' }).click();
+        const confirm = page.getByRole('alertdialog');
+        await expect(confirm).toContainText(`1 person in ${position}`);
+        await confirm.getByRole('button', { name: 'Change their access' }).click();
+        await expect(row).toContainText('Viewer');
+        await expect(row).not.toContainText('Approver');
+
+        await page.goto('/setup/team');
+        await settle(page);
+        await expect(person).toContainText(`Viewer, from ${position}`);
+        await expect(person).not.toContainText('Approver');
+        expect(problems, problems.join('\n')).toEqual([]);
+    });
+});

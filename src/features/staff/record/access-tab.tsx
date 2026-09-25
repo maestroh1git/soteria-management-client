@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Activity, KeyRound, Send, UserPlus } from 'lucide-react';
+import { Activity, KeyRound, Lock, Send, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
     accessOf,
     accountStatus,
     grantableAccess,
+    inheritedOf,
 } from '@/features/access/roles';
 import { AccessDialog } from '@/features/access/components/access-dialog';
 import { ActivitySheet } from '@/features/access/components/activity-sheet';
@@ -38,6 +39,7 @@ export function AccessTab({ employee }: { employee: Employee }) {
     const { data: team = [], isLoading, isError } = useTeam();
     const resend = useResendInvite();
     const login = team.find((u) => u.employeeId === employee.id) ?? null;
+    const inherited = login ? inheritedOf(login) : null;
 
     const [inviting, setInviting] = useState(false);
     const [link, setLink] = useState<{ name: string; url: string } | null>(null);
@@ -81,6 +83,20 @@ export function AccessTab({ employee }: { employee: Employee }) {
                                         </span>
                                     </li>
                                 ))}
+                                {inherited?.roles
+                                    .filter((r) => !accessOf(login).includes(r))
+                                    .map((r) => (
+                                        <li key={`p-${r}`} className="flex items-start gap-2">
+                                            <Badge variant="outline" className="gap-1 border-dashed">
+                                                <Lock className="h-3 w-3" aria-hidden />
+                                                {ACCESS_LABELS[r] ?? r}
+                                            </Badge>
+                                            <span className="text-sm text-muted-foreground">
+                                                From their position, {inherited.from}. Change it on the
+                                                position.
+                                            </span>
+                                        </li>
+                                    ))}
                             </ul>
                             <div className="flex flex-wrap gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setEditing(login)}>
