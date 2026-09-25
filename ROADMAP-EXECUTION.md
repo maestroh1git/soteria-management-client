@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.7, 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
+| 5 Finish | **In progress**: 5.1–5.8, 5.9, 5.15, 5.16 done; 5.10 in part (question sets per class, grouping) | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -266,9 +266,29 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   `/approvals` under load, which passed twice on rerun and is raised as its
   own task.
 
-Left in Wave 5: 5.8 bank reconciliation, the rest of 5.10, 5.11 applicant
-offer and upload, 5.12 portal invoices and Paystack, 5.13 create a tenant,
-5.14 dead code.
+### 5.8 Bank reconciliation
+
+- **Unmatch:** the statement screen lists what is already **Matched**,
+  grouped by match, each with **Undo match** while the statement is open.
+  Before, a match (including one made by "Match the obvious ones") could
+  not be seen or undone, although the API allowed it.
+- **Auto-match and post a line** were already on the screen; posting is
+  now a `FormDialog` that says what is missing and takes an optional
+  description for the journal entry, and **Sign off** asks for
+  confirmation, since a signed-off statement cannot be changed.
+- **Screens:** the statements list is a `DataTable` with a status filter
+  and search; both screens use `PageHeader`, `StatusBadge` and formatted
+  dates (they printed ISO dates); amounts no longer wrap their sign onto
+  its own line.
+- Client only: the API already had unmatch, auto-match and posting.
+- **Not fixed here:** the verdict sentence comes from the API with the
+  amount unformatted ("2500000.00 cannot be accounted for…").
+- **Checks:** persona tests 50/50 (new: the finance office undoes a match,
+  lets "Match the obvious ones" put it back, and is asked what a line was
+  before it is posted); typecheck and lint ratchet clean.
+
+Left in Wave 5: the rest of 5.10, 5.11 applicant offer and upload, 5.12
+portal invoices and Paystack, 5.13 create a tenant, 5.14 dead code.
 
 ### Left for later waves
 

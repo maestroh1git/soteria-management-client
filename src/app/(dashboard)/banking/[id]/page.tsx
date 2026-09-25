@@ -1,20 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
-    ArrowLeft,
     CheckCircle2,
     Loader2,
     Sparkles,
     AlertTriangle,
+    Undo2,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import {
     Card,
     CardContent,
@@ -23,14 +25,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     Select,
     SelectContent,
     SelectItem,
@@ -38,6 +32,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/common/empty-state';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { FormDialog } from '@/components/common/form-dialog';
+import { StatusBadge } from '@/components/common/status-badge';
+import { Breadcrumbs, PageHeader } from '@/components/layout/page-header';
+import { formatDate, formatDateRange } from '@/lib/utils/dates';
+import type { StatementLine } from '@/lib/api/banking';
 import { useAccounts } from '@/lib/hooks/use-finance';
 import {
     useAutoMatch,
@@ -45,9 +45,17 @@ import {
     useMatchLines,
     usePostStatementLine,
     useReconciliationReport,
+    useStatement,
+    useUnmatch,
 } from '@/lib/hooks/use-banking';
 import { Money } from '@/components/common/money';
 import { toMinorUnits } from '@/lib/utils/money';
+
+const postSchema = z.object({
+    accountId: z.string().min(1, 'Choose what it was.'),
+    description: z.string().max(200).optional(),
+});
+type PostValues = z.infer<typeof postSchema>;
 
 /**
  * Reconciling one statement.
@@ -69,11 +77,19 @@ export default function ReconcilePage() {
     const auto = useAutoMatch(params.id);
     const complete = useCompleteStatement(params.id);
     const postLine = usePostStatementLine(params.id);
+    const unmatch = useUnmatch(params.id);
+    // The report lists what is still to explain; the statement's own lines say
+    // what has been matched, so a wrong match can be seen and undone.
+    const { data: detail } = useStatement(params.id);
 
     const [selectedBank, setSelectedBank] = useState<string[]>([]);
     const [selectedBook, setSelectedBook] = useState<string[]>([]);
     const [postTarget, setPostTarget] = useState<string | null>(null);
-    const [postAccountId, setPostAccountId] = useState('');
+    const [confirmSignOff, setConfirmSignOff] = useState(false);
+    const postForm = useForm<PostValues>({ resolver: zodResolver(postSchema) });
+    useEffect(() => {
+        if (postTarget) postForm.reset({ accountId: '', description: '' });
+    }, [postTarget, postForm]);
 
     if (isLoading) {
         return (
@@ -89,13 +105,7 @@ export default function ReconcilePage() {
     if (isError || !report) {
         return (
             <div className="space-y-4">
-                <Link
-                    href="/banking"
-                    className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-                >
-                    <ArrowLeft className="mr-1 h-4 w-4" />
-                    Statements
-                </Link>
+                <Breadcrumbs trail={[{ label: 'Bank reconciliation', href: '/banking' }]} />
                 <EmptyState
                     title="We couldn't open that statement"
                     description="It may have been deleted, or the link may be wrong. Pick one from the list instead."
@@ -105,6 +115,14 @@ export default function ReconcilePage() {
     }
 
     const closed = report.statement.status === 'COMPLETED';
+    const period = formatDateRange(report.statement.periodStart, report.statement.periodEnd);
+
+    const groups = new Map<string, StatementLine[]>();
+    for (const line of detail?.lines ?? []) {
+        if (!line.matchGroupId) continue;
+        groups.set(line.matchGroupId, [...(groups.get(line.matchGroupId) ?? []), line]);
+    }
+    const matched = [...groups.entries()];
 
     const bankKobo = report.unrecorded
         .filter((l) => selectedBank.includes(l.id))
@@ -123,29 +141,13 @@ export default function ReconcilePage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-1">
-                    <Link
-                        href="/banking"
-                        className="inline-flex items-center text-sm text-muted-foreground hover:underline"
-                    >
-                        <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-                        Statements
-                    </Link>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        {report.statement.accountName}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {report.statement.periodStart} → {report.statement.periodEnd}
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {closed ? (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200">
-                            Signed off
-                        </Badge>
-                    ) : (
+            <PageHeader
+                crumbs={[{ label: period }]}
+                title={report.statement.accountName}
+                description={period}
+                badge={<StatusBadge kind="statement" status={report.statement.status} />}
+                actions={
+                    !closed && (
                         <>
                             <Button
                                 variant="outline"
@@ -160,18 +162,20 @@ export default function ReconcilePage() {
                                 Match the obvious ones
                             </Button>
                             <Button
-                                onClick={() => complete.mutate()}
+                                onClick={() => setConfirmSignOff(true)}
                                 disabled={!report.reconciled || complete.isPending}
+                                title={
+                                    report.reconciled
+                                        ? undefined
+                                        : 'Every line has to be explained before the period can be signed off'
+                                }
                             >
-                                {complete.isPending && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
                                 Sign off
                             </Button>
                         </>
-                    )}
-                </div>
-            </div>
+                    )
+                }
+            />
 
             {/* The verdict, in words. */}
             <Card
@@ -296,11 +300,11 @@ export default function ReconcilePage() {
                                             <td className="py-3">
                                                 <div>{line.description}</div>
                                                 <div className="text-xs text-muted-foreground">
-                                                    {line.valueDate}
+                                                    {formatDate(line.valueDate)}
                                                     {line.reference ? ` · ${line.reference}` : ''}
                                                 </div>
                                             </td>
-                                            <td className="py-3 text-right tabular-nums">
+                                            <td className="whitespace-nowrap py-3 text-right tabular-nums">
                                                 {Number(line.moneyIn) > 0
                                                     ? <Money value={line.moneyIn} signed />
                                                     : <Money value={line.moneyOut} deduction />}
@@ -361,10 +365,10 @@ export default function ReconcilePage() {
                                             <td className="py-3">
                                                 <div>{line.description}</div>
                                                 <div className="text-xs text-muted-foreground">
-                                                    {line.entryDate} · {line.sourceType.toLowerCase()}
+                                                    {formatDate(line.entryDate)} · {line.sourceType.toLowerCase()}
                                                 </div>
                                             </td>
-                                            <td className="py-3 pr-6 text-right tabular-nums">
+                                            <td className="whitespace-nowrap py-3 pr-6 text-right tabular-nums">
                                                 {Number(line.debit) > 0
                                                     ? <Money value={line.debit} signed />
                                                     : <Money value={line.credit} deduction />}
@@ -378,62 +382,127 @@ export default function ReconcilePage() {
                 </Card>
             </div>
 
-            <Dialog
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Matched ({matched.length})</CardTitle>
+                    <CardDescription>
+                        Statement lines already tied to the books, by you or by &ldquo;Match the
+                        obvious ones&rdquo;. A match is only an assertion: undo one that is wrong and
+                        its lines go back to the lists above.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {!matched.length ? (
+                        <p className="px-6 pb-6 text-sm text-muted-foreground">Nothing matched yet.</p>
+                    ) : (
+                        <ul className="list-none divide-y p-0">
+                            {matched.map(([groupId, lines]) => (
+                                <li key={groupId} className="flex items-start justify-between gap-4 px-6 py-3 text-sm">
+                                    <div className="min-w-0 space-y-1">
+                                        {lines.map((line) => (
+                                            <div key={line.id} className="flex flex-wrap items-baseline gap-x-3">
+                                                <span>{line.description}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {formatDate(line.valueDate)}
+                                                    {line.reference ? ` · ${line.reference}` : ''}
+                                                </span>
+                                                <span className="whitespace-nowrap tabular-nums">
+                                                    {Number(line.moneyIn) > 0 ? (
+                                                        <Money value={line.moneyIn} signed />
+                                                    ) : (
+                                                        <Money value={line.moneyOut} deduction />
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {!closed && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={unmatch.isPending}
+                                            onClick={() => unmatch.mutate(groupId)}
+                                        >
+                                            <Undo2 className="mr-1.5 h-4 w-4" />
+                                            Undo match
+                                        </Button>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </CardContent>
+            </Card>
+
+            <FormDialog
                 open={!!postTarget}
                 onOpenChange={(v) => !v && setPostTarget(null)}
+                form={postForm}
+                title="Put this in the books"
+                description="What was it? The direction comes from the statement: money that left the bank is a cost, money that arrived is income."
+                submitLabel="Post and match"
+                onSubmit={(v) =>
+                    postLine.mutateAsync({
+                        lineId: postTarget!,
+                        accountId: v.accountId,
+                        description: v.description?.trim() || undefined,
+                    })
+                }
             >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Put this in the books</DialogTitle>
-                        <DialogDescription>
-                            What was it? The direction comes from the statement — money that
-                            left the bank is a cost, money that arrived is income.
-                        </DialogDescription>
-                    </DialogHeader>
+                <FormField
+                    control={postForm.control}
+                    name="accountId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Account</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Bank charges, interest, …" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {(accounts ?? [])
+                                        .filter((a) => a.type === 'EXPENSE' || a.type === 'REVENUE')
+                                        .map((a) => (
+                                            <SelectItem key={a.id} value={a.id}>
+                                                {a.name}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={postForm.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Taken from the statement if left empty" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormDescription>What the journal entry will say.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </FormDialog>
 
-                    <div className="space-y-1.5">
-                        <Label htmlFor="id-page-account">Account</Label>
-                        <Select value={postAccountId} onValueChange={setPostAccountId}>
-                            <SelectTrigger id="id-page-account">
-                                <SelectValue placeholder="Bank charges, interest, …" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {(accounts ?? [])
-                                    .filter(
-                                        (a) => a.type === 'EXPENSE' || a.type === 'REVENUE',
-                                    )
-                                    .map((a) => (
-                                        <SelectItem key={a.id} value={a.id}>
-                                            {a.name}
-                                        </SelectItem>
-                                    ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setPostTarget(null)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            disabled={!postAccountId || postLine.isPending}
-                            onClick={async () => {
-                                await postLine.mutateAsync({
-                                    lineId: postTarget!,
-                                    accountId: postAccountId,
-                                });
-                                setPostTarget(null);
-                                setPostAccountId('');
-                            }}
-                        >
-                            {postLine.isPending && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            )}
-                            Post and match
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDialog
+                open={confirmSignOff}
+                onOpenChange={setConfirmSignOff}
+                title="Sign off this period?"
+                description={`You are confirming that the books for ${report.statement.accountName}, ${period}, were checked against the bank. A signed-off statement can no longer be changed.`}
+                confirmLabel="Sign off"
+                loading={complete.isPending}
+                onConfirm={async () => {
+                    await complete.mutateAsync();
+                    setConfirmSignOff(false);
+                }}
+            />
         </div>
     );
 }
