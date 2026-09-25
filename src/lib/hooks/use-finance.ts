@@ -7,12 +7,9 @@ import {
     getJournalEntry,
     getPayrollCheck,
     getExpenses,
-    getExpense,
     createExpense,
     expenseAction,
     payExpense,
-    getSpendByAccount,
-    getBudgets,
     getBudgetVariance,
     createBudget,
     deleteBudget,
@@ -83,14 +80,6 @@ export function useExpenses(status?: string) {
     });
 }
 
-export function useExpense(id: string | undefined) {
-    return useQuery({
-        queryKey: ['expenses', id],
-        queryFn: () => getExpense(id!),
-        enabled: !!id,
-    });
-}
-
 export function useCreateExpense() {
     const qc = useQueryClient();
     return useMutation({
@@ -143,18 +132,7 @@ export function usePayExpense(id: string) {
     });
 }
 
-export function useSpendByAccount(from?: string, to?: string) {
-    return useQuery({
-        queryKey: ['expenses', 'by-account', from, to],
-        queryFn: () => getSpendByAccount(from, to),
-    });
-}
-
 // ── Budgets ─────────────────────────────────────────────────────────────────
-
-export function useBudgets() {
-    return useQuery({ queryKey: ['budgets'], queryFn: getBudgets });
-}
 
 export function useBudgetVariance(
     filters?: {

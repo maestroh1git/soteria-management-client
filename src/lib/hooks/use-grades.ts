@@ -1,27 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  getGrades,
-  getGrade,
-  createGrade,
-  updateGrade,
-  deleteGrade,
-  type CreateGradeDto,
-  type UpdateGradeDto,
+    getGrades,
+    createGrade,
+    updateGrade,
+    deleteGrade,
+    type CreateGradeDto,
+    type UpdateGradeDto,
 } from '@/lib/api/grades';
 
 export function useGrades(includeInactive = false) {
   return useQuery({
     queryKey: ['grades', { includeInactive }],
     queryFn: () => getGrades(includeInactive),
-  });
-}
-
-export function useGrade(id: string) {
-  return useQuery({
-    queryKey: ['grades', id],
-    queryFn: () => getGrade(id),
-    enabled: !!id,
   });
 }
 

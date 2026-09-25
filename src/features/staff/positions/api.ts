@@ -1,5 +1,5 @@
 import api from '@/lib/api/client';
-import type { Role, Permission } from '@/lib/types/api';
+import type { Role } from '@/lib/types/api';
 
 export interface CreateRoleDto {
   name: string;
@@ -9,17 +9,17 @@ export interface CreateRoleDto {
   roleType?: string;
   reportingTo?: string;
   isDottedLine?: boolean;
-  permissionIds: string[];
+  /**
+   * Access everyone in the position has, on top of their own (5.17). Sent only
+   * by someone who manages access; the API refuses it from anyone else.
+   */
+  accessRoles?: string[];
 }
 
 export type UpdateRoleDto = Partial<CreateRoleDto>;
 
 export async function getRoles(): Promise<Role[]> {
   return await api.get('/roles') as unknown as Role[];
-}
-
-export async function getRole(id: string): Promise<Role> {
-  return await api.get(`/roles/${id}`) as unknown as Role;
 }
 
 export async function createRole(dto: CreateRoleDto): Promise<Role> {
@@ -32,9 +32,4 @@ export async function updateRole(id: string, dto: UpdateRoleDto): Promise<Role> 
 
 export async function deleteRole(id: string): Promise<void> {
   await api.delete(`/roles/${id}`);
-}
-
-// ── Permissions ─────────────────────────────────────────────
-export async function getPermissions(): Promise<Permission[]> {
-  return await api.get('/permissions') as unknown as Permission[];
 }

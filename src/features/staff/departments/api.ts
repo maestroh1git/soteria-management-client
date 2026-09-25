@@ -20,10 +20,6 @@ export async function getDepartments(): Promise<Department[]> {
   return await api.get('/departments') as unknown as Department[];
 }
 
-export async function getDepartment(id: string): Promise<Department> {
-  return await api.get(`/departments/${id}`) as unknown as Department;
-}
-
 export async function createDepartment(dto: CreateDepartmentDto): Promise<Department> {
   return await api.post('/departments', dto) as unknown as Department;
 }

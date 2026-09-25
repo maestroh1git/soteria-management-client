@@ -25,7 +25,7 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.13 (Paystack still to come), 5.15, 5.16 done | same |
+| 5 Finish | **In progress**: 5.1–5.17 done; Paystack checkout (the rest of 5.12) still to come | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -40,7 +40,7 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   the roles they had before, and a test fails on any raw `@Roles`. The client
   generates its copy (`npm run sync:actions`); the audit fails when the two
   differ, when the client names an action that does not exist, or when an
-  exported hook has no caller (25 known ones listed for Wave 5).
+  exported hook has no caller (the 25 known ones were removed in 5.14).
 - **Exit test ("change a role once, everything follows"):** route roles are
   derived from the manifest plus the registry — the same 39 routes and roles
   as the hand-written map they replaced; `can()` answers from
@@ -393,7 +393,56 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   `PLATFORM_EMAIL` and `PLATFORM_PASSWORD` name an operator, as there is
   no platform persona).
 
-Left in Wave 5: Paystack checkout (the rest of 5.12) and 5.14 dead code.
+### 5.14 Dead code
+
+- Removed the hooks nothing called (`useUpdateSchoolDay`, `useUser`,
+  `useGrade`, `useUpdateAdjustment`, `useGuardians`,
+  `useBirthdaysThisMonth`, `usePayslip`, `useGeneratePayslip`,
+  `useExpense`, `useSpendByAccount`, `useBudgets`) and the API functions
+  only they used, with `getDepartment`, `getRole`, `getSalaryComponent`,
+  `getSettingByKey`, `getTaxRule` and `getPayslipDownloadUrl`: 21 files,
+  240 lines. `useTaxRulesList` and `usePayPeriodsList` stay: onboarding
+  calls them. The audit's list of known uncalled hooks is now empty, so
+  any new one fails it.
+
+### 5.17 Positions carry default access
+
+- A position's **Default access** replaces its Permissions (which gated
+  nothing since D1): a set of access roles, e.g. Head Teacher → Educator,
+  Approver. Ownership, the platform operator and Parent can never be
+  defaults, and setting them needs `users.manage`, since it gives access
+  to people.
+- Someone's access is the position's roles plus their own. It is worked
+  out on sign-in, on the session, and on every request (the JWT strategy
+  reloads the user), so changing a position changes everyone in it on
+  their next click, with nothing to sign out of. Only a login linked to an
+  **active** employee inherits: someone who has left loses it.
+- A person's own roles are kept apart and never touched by a position.
+  Team & access shows inherited roles as locked (dashed, with the
+  position's name), in the list and in Change access; an own role that the
+  position also gives is marked so it can be unticked. Filters and counts
+  go by what people may actually do. The staff record's Access tab shows
+  both.
+- Changing a position's access with people in it asks first: "The 3
+  people in Head Teacher will have Approver … Access given to them
+  individually is not changed."
+- API: `roles.access_roles` (migration), `PositionAccessService`,
+  `/auth/session` returns `ownRoles` and `positionAccess`, `/users` returns
+  `positionAccess`, `/roles` returns `staffCount`. `permissionIds` is gone
+  from the position DTOs (the audit flagged it as writable with no
+  control).
+- Fixed on the way: an empty salary band stopped a position being saved
+  ("expected number, received NaN").
+- **Checks:** API unit 815/815; e2e 580 passed (2 skipped), 7 new
+  (access arrives on the same token after a change; the session and team
+  list report it, without secrets; own roles survive position changes;
+  Owner, operator, Parent and unknown roles refused; a leaver loses it;
+  a non-manager refused); drift clean; audit 0. Persona tests 55 passed (the console one skipped: no operator)
+  (new: a position given Approver, someone hired into it shown with a
+  locked Approver, and a change confirmed for "1 person" and followed in
+  Team & access).
+
+Left in Wave 5: Paystack checkout (the rest of 5.12).
 
 ### Left for later waves
 
@@ -719,6 +768,7 @@ Every item already has an API route, most already have a hook.
 | **5.15** | S+C | Support needs on the application (sight/glasses, hearing, mobility, learning, speech, social, medical, other, notes), carried to the pupil and the class's alerts | Apply form, application, Student → Medical |
 | **5.16** | S+C | Assessment diary: slots with a duration, no double booking of an assessor or a child, the candidate's details and question set beside each sitting | Admissions → Assessment diary |
 | **5.14** | C | Delete dead code: `useGrade`, `useTaxRulesList`, `usePayPeriodsList`, `useBirthdaysThisMonth` (if the feed covers it), unused API functions (`getDepartment`, `getRole`, `getSalaryComponent`, `getSettingByKey`, `getTaxRule`, `getPayslipDownloadUrl`) | — |
+| **5.17** | S+C | Positions carry default access: everyone in a position has its access roles on top of their own, worked out on every request | Setup → Positions, Team & access, staff record → Access |
 
 ---
 

@@ -16,10 +16,6 @@ export async function getGrades(includeInactive = false): Promise<Grade[]> {
   return (await api.get(`/grades${query}`)) as unknown as Grade[];
 }
 
-export async function getGrade(id: string): Promise<Grade> {
-  return (await api.get(`/grades/${id}`)) as unknown as Grade;
-}
-
 export async function createGrade(dto: CreateGradeDto): Promise<Grade> {
   return (await api.post('/grades', dto)) as unknown as Grade;
 }

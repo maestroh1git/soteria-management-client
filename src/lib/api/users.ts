@@ -45,10 +45,6 @@ export async function getUsers(): Promise<User[]> {
   return (await api.get('/users')) as unknown as User[];
 }
 
-export async function getUser(id: string): Promise<User> {
-  return (await api.get(`/users/${id}`)) as unknown as User;
-}
-
 export async function createUser(data: CreateUserDto): Promise<InviteResponse> {
   return (await api.post('/users', data)) as unknown as InviteResponse;
 }

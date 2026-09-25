@@ -93,6 +93,11 @@ export interface User {
   employeeId?: string | null;
   tenant?: Tenant | null;
   employee?: Employee | null;
+  /**
+   * What this login inherits from its employee's position (5.17), on `/users`
+   * responses. `systemRoles` stays the access given to the person themselves.
+   */
+  positionAccess?: { positionId: string; positionName: string; roles: string[] } | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -363,17 +368,10 @@ export interface Role {
   /** The role this one reports to, and whether that line is advisory. */
   reportingTo: string | null;
   isDottedLine: boolean;
-  permissions?: Permission[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Permission {
-  id: string;
-  name: string;
-  description: string | null;
-  resource: string;
-  action: string;
+  /** Access everyone in this position has, on top of their own (5.17). */
+  accessRoles?: string[];
+  /** Active staff in the position: whom its default access reaches. */
+  staffCount?: number;
   createdAt: string;
   updatedAt: string;
 }

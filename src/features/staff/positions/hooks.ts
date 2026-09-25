@@ -5,7 +5,6 @@ import { useResourceMutation } from '@/lib/hooks/use-resource-mutation';
 import {
   createRole,
   deleteRole,
-  getPermissions,
   getRoles,
   updateRole,
   type CreateRoleDto,
@@ -21,11 +20,6 @@ const invalidate = [POSITIONS_KEY];
 
 export function usePositions(enabled = true) {
   return useQuery({ queryKey: POSITIONS_KEY, queryFn: getRoles, enabled });
-}
-
-/** What a position may be granted (the permission catalogue). */
-export function usePermissionCatalogue(enabled = true) {
-  return useQuery({ queryKey: ['permissions'], queryFn: getPermissions, enabled });
 }
 
 export function useCreatePosition() {

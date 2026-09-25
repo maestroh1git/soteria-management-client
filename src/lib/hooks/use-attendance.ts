@@ -22,7 +22,6 @@ import {
     recordReturn,
     setCalendarRange,
     submitRegister,
-    updateSchoolDay,
     type SubmitResult,
 } from '../api/attendance';
 import { shiftDate } from '../utils/dates';
@@ -168,24 +167,6 @@ export function useGenerateCalendar() {
                     ? 'The calendar for this term is already complete. Nothing was changed.'
                     : `Calendar created — ${r.teaching} teaching days of ${r.created}.`,
             );
-            qc.invalidateQueries({ queryKey: ['attendance'] });
-        },
-    });
-}
-
-export function useUpdateSchoolDay() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: ({
-            id,
-            ...dto
-        }: {
-            id: string;
-            dayType: Parameters<typeof updateSchoolDay>[1]['dayType'];
-            note?: string;
-        }) => updateSchoolDay(id, dto),
-        onSuccess: () => {
-            toast.success('Calendar updated');
             qc.invalidateQueries({ queryKey: ['attendance'] });
         },
     });

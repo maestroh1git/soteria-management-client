@@ -232,10 +232,6 @@ export async function getExpenses(status?: string): Promise<Expense[]> {
     return (await api.get(`/expenses${qs}`)) as unknown as Expense[];
 }
 
-export async function getExpense(id: string): Promise<Expense> {
-    return (await api.get(`/expenses/${id}`)) as unknown as Expense;
-}
-
 export async function createExpense(dto: {
     description: string;
     amount: number;
@@ -271,19 +267,6 @@ export async function payExpense(
     return (await api.post(`/expenses/${id}/pay`, dto)) as unknown as Expense;
 }
 
-export async function getSpendByAccount(
-    from?: string,
-    to?: string,
-): Promise<Array<{ code: string; name: string; total: string }>> {
-    const q = new URLSearchParams();
-    if (from) q.set('from', from);
-    if (to) q.set('to', to);
-    const qs = q.toString();
-    return (await api.get(
-        `/expenses/by-account${qs ? `?${qs}` : ''}`,
-    )) as unknown as Array<{ code: string; name: string; total: string }>;
-}
-
 // ── Budgets ─────────────────────────────────────────────────────────────────
 
 export interface Budget {
@@ -310,10 +293,6 @@ export interface BudgetVariance {
     remaining: string;
     usedPercent: number | null;
     overBudget: boolean;
-}
-
-export async function getBudgets(): Promise<Budget[]> {
-    return (await api.get('/budgets')) as unknown as Budget[];
 }
 
 export async function getBudgetVariance(filters?: {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Pencil, Trash2, Loader2, Shield } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PrerequisiteNotice } from '@/components/onboarding/prerequisite-notice';
@@ -46,11 +45,14 @@ import { useDepartments } from '@/features/staff/departments/hooks';
 import {
     useCreatePosition,
     useDeletePosition,
-    usePermissionCatalogue,
     usePositions,
     useUpdatePosition,
 } from '@/features/staff/positions/hooks';
 import { PageHeader } from '@/components/layout/page-header';
+import { useCan } from '@/lib/hooks/use-can';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { AccessChecklist } from '@/features/access/components/access-checklist';
+import { ACCESS_LABELS, grantableAccess } from '@/features/access/roles';
 
 export default function PositionsPage() {
     const { data: roles = [], isLoading } = usePositions();
@@ -69,6 +71,30 @@ export default function PositionsPage() {
     const updateMutation = useUpdatePosition();
 
     const delMutation = useDeletePosition();
+
+    // A position's default access gives access to everyone in it (5.17), so it
+    // is set by those who manage access, and a change that reaches people
+    // says so before it is saved.
+    const can = useCan();
+    const canGiveAccess = can('users.manage');
+    const [pendingAccess, setPendingAccess] = useState<{
+        role: Role;
+        dto: CreateRoleDto;
+        added: string[];
+        removed: string[];
+    } | null>(null);
+
+    const saveEdit = (id: string, dto: CreateRoleDto) =>
+        updateMutation.mutate(
+            { id, dto },
+            {
+                onSuccess: () => {
+                    setEditTarget(null);
+                    setDialogOpen(false);
+                    setPendingAccess(null);
+                },
+            },
+        );
 
     if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -104,7 +130,7 @@ export default function PositionsPage() {
                             <th className="px-4 py-3 text-left font-medium">Name</th>
                             <th className="px-4 py-3 text-left font-medium">Department</th>
                             <th className="px-4 py-3 text-left font-medium">Type</th>
-                            <th className="px-4 py-3 text-left font-medium">Permissions</th>
+                            <th className="px-4 py-3 text-left font-medium">Default access</th>
                             <th className="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -119,12 +145,17 @@ export default function PositionsPage() {
                                     <Badge variant="outline">{role.roleType}</Badge>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <div className="flex items-center gap-1">
-                                        <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                                        <span className="text-xs text-muted-foreground">
-                                            {role.permissions?.length ?? 0}
-                                        </span>
-                                    </div>
+                                    {role.accessRoles?.length ? (
+                                        <div className="flex flex-wrap gap-1">
+                                            {role.accessRoles.map((r) => (
+                                                <Badge key={r} variant="secondary" className="font-normal">
+                                                    {ACCESS_LABELS[r] ?? r}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">None</span>
+                                    )}
                                 </td>
                                 <td className="px-4 py-3">
                                     <div className="flex items-center justify-end gap-1">
@@ -132,6 +163,7 @@ export default function PositionsPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
+                                            aria-label={`Edit ${role.name}`}
                                             onClick={() => {
                                                 setEditTarget(role);
                                                 setDialogOpen(true);
@@ -143,6 +175,7 @@ export default function PositionsPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-red-600"
+                                            aria-label={`Delete ${role.name}`}
                                             onClick={() => setDeleteTarget(role)}
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -167,23 +200,39 @@ export default function PositionsPage() {
                 onOpenChange={setDialogOpen}
                 role={editTarget}
                 isLoading={createMutation.isPending || updateMutation.isPending}
+                canGiveAccess={canGiveAccess}
                 onSubmit={(values) => {
                     const dto: CreateRoleDto = {
                         name: values.name,
                         description: values.description || undefined,
                         departmentId: values.departmentId || undefined,
                         roleType: values.roleType,
-                        permissionIds: values.permissionIds,
                     };
+                    if (canGiveAccess) dto.accessRoles = values.accessRoles ?? [];
                     if (editTarget) {
-                        updateMutation.mutate(
-                            { id: editTarget.id, dto },
-                            { onSuccess: () => { setEditTarget(null); setDialogOpen(false); } },
-                        );
+                        const before = editTarget.accessRoles ?? [];
+                        const after = dto.accessRoles ?? before;
+                        const added = after.filter((r) => !before.includes(r));
+                        const removed = before.filter((r) => !after.includes(r));
+                        if ((added.length || removed.length) && (editTarget.staffCount ?? 0) > 0) {
+                            setPendingAccess({ role: editTarget, dto, added, removed });
+                            return;
+                        }
+                        saveEdit(editTarget.id, dto);
                     } else {
                         createMutation.mutate(dto, { onSuccess: () => setDialogOpen(false) });
                     }
                 }}
+            />
+
+            <ConfirmDialog
+                open={!!pendingAccess}
+                onOpenChange={(open) => !open && setPendingAccess(null)}
+                title={`Change access for everyone in ${pendingAccess?.role.name ?? 'this position'}?`}
+                description={pendingAccess ? describeAccessChange(pendingAccess) : ''}
+                confirmLabel="Change their access"
+                loading={updateMutation.isPending}
+                onConfirm={() => pendingAccess && saveEdit(pendingAccess.role.id, pendingAccess.dto)}
             />
 
             <ConfirmDialog
@@ -212,16 +261,20 @@ function RoleFormDialog({
     onOpenChange,
     role,
     isLoading,
+    canGiveAccess,
     onSubmit,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     role: Role | null;
     isLoading: boolean;
+    canGiveAccess: boolean;
     onSubmit: (values: CreateRoleValues) => void;
 }) {
     const { data: departments = [] } = useDepartments();
-    const { data: permissions = [] } = usePermissionCatalogue();
+    const { tenantOrgType } = useAuth();
+    // Ownership belongs to a named person, never to a post.
+    const accessOptions = grantableAccess(tenantOrgType, false);
     // For the reporting line. A role cannot report to itself.
     const { data: allRoles = [] } = usePositions();
     const reportingOptions = allRoles.filter((r) => r.id !== role?.id);
@@ -237,7 +290,7 @@ function RoleFormDialog({
                 baseSalaryRange: role.baseSalaryRange ?? undefined,
                 reportingTo: role.reportingTo ?? '',
                 isDottedLine: role.isDottedLine ?? false,
-                permissionIds: role.permissions?.map((p) => p.id) ?? [],
+                accessRoles: role.accessRoles ?? [],
             }
             : {
                 name: '',
@@ -247,7 +300,7 @@ function RoleFormDialog({
                 baseSalaryRange: undefined,
                 reportingTo: '',
                 isDottedLine: false,
-                permissionIds: [],
+                accessRoles: [],
             },
     });
 
@@ -444,58 +497,35 @@ function RoleFormDialog({
                             />
                         ) : null}
 
-                        {/* Permissions */}
-                        <FormField
-                            control={form.control}
-                            name="permissionIds"
-                            render={() => (
-                                <FormItem>
-                                    <FormLabel>Permissions</FormLabel>
-                                    <ScrollArea className="h-40 rounded-md border p-3">
-                                        <div className="space-y-2">
-                                            {permissions.map((perm) => (
-                                                <FormField
-                                                    key={perm.id}
-                                                    control={form.control}
-                                                    name="permissionIds"
-                                                    render={({ field }) => (
-                                                        <FormItem className="flex items-center space-x-2 space-y-0">
-                                                            <FormControl>
-                                                                <Checkbox
-                                                                    checked={field.value?.includes(perm.id)}
-                                                                    onCheckedChange={(checked) => {
-                                                                        const current = field.value ?? [];
-                                                                        field.onChange(
-                                                                            checked
-                                                                                ? [...current, perm.id]
-                                                                                : current.filter((id) => id !== perm.id),
-                                                                        );
-                                                                    }}
-                                                                />
-                                                            </FormControl>
-                                                            <span className="text-sm">
-                                                                {perm.name}
-                                                                {perm.description && (
-                                                                    <span className="text-xs text-muted-foreground ml-1">
-                                                                        — {perm.description}
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            ))}
-                                            {permissions.length === 0 && (
-                                                <p className="text-xs text-muted-foreground text-center py-4">
-                                                    No permissions available
-                                                </p>
-                                            )}
-                                        </div>
-                                    </ScrollArea>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {/* Default access (5.17) */}
+                        {canGiveAccess ? (
+                            <FormField
+                                control={form.control}
+                                name="accessRoles"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel id="position-access-label">Default access</FormLabel>
+                                        <p className="text-xs text-muted-foreground">
+                                            Everyone in this position has this access, on top of any
+                                            given to them in Team &amp; access.
+                                        </p>
+                                        <AccessChecklist
+                                            options={accessOptions}
+                                            value={field.value ?? []}
+                                            onChange={field.onChange}
+                                            labelledBy="position-access-label"
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        ) : role?.accessRoles?.length ? (
+                            <p className="text-sm text-muted-foreground">
+                                Default access:{' '}
+                                {role.accessRoles.map((r) => ACCESS_LABELS[r] ?? r).join(', ')}. Only
+                                someone who manages access can change it.
+                            </p>
+                        ) : null}
 
                         <DialogFooter>
                             <Button
@@ -512,4 +542,24 @@ function RoleFormDialog({
             </DialogContent>
         </Dialog>
     );
+}
+
+/** "Everyone in Head Teacher (4 people) will have Approver, and no longer Viewer." */
+function describeAccessChange({
+    role,
+    added,
+    removed,
+}: {
+    role: Role;
+    added: string[];
+    removed: string[];
+}): string {
+    const names = (rs: string[]) => rs.map((r) => ACCESS_LABELS[r] ?? r).join(', ');
+    const n = role.staffCount ?? 0;
+    const who = `${n} ${n === 1 ? 'person' : 'people'} in ${role.name}`;
+    const parts = [
+        added.length ? `will have ${names(added)}` : '',
+        removed.length ? `${added.length ? 'and ' : 'will '}no longer have ${names(removed)} from this position` : '',
+    ].filter(Boolean);
+    return `The ${who} ${parts.join(', ')}. It applies from their next click. Access given to them individually is not changed.`;
 }

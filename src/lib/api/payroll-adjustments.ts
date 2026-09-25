@@ -41,16 +41,6 @@ export async function createAdjustment(
   )) as unknown as PayrollAdjustment;
 }
 
-export async function updateAdjustment(
-  id: string,
-  dto: UpdatePayrollAdjustmentDto,
-): Promise<PayrollAdjustment> {
-  return (await api.patch(
-    `/payroll-adjustments/${id}`,
-    dto,
-  )) as unknown as PayrollAdjustment;
-}
-
 export async function approveAdjustment(
   id: string,
 ): Promise<PayrollAdjustment> {
