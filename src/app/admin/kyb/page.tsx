@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, ShieldX, ClipboardCheck } from 'lucide-react';
+import { ShieldCheck, ShieldX } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { LoadingSkeleton } from '@/components/common/loading-skeleton';
-import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/layout/page-header';
+import { DataTable } from '@/components/common/data-table';
+import type { ColumnDef } from '@tanstack/react-table';
+import { tenantHref } from '@/features/admin/tenant-columns';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { RejectKybDialog } from '@/components/admin/reject-kyb-dialog';
 import { useTenants, useUpdateKybStatus } from '@/lib/hooks/use-admin-tenants';
@@ -22,8 +24,6 @@ export default function KybQueuePage() {
     status: KybStatus.VERIFIED | KybStatus.REJECTED;
   } | null>(null);
 
-  if (isLoading) return <LoadingSkeleton variant="table" />;
-
   const queue = tenants
     .filter((t) => t.kybStatus === KybStatus.SUBMITTED)
     .sort(
@@ -34,82 +34,75 @@ export default function KybQueuePage() {
 
   const isReject = pending?.status === KybStatus.REJECTED;
 
+  const columns: ColumnDef<Tenant>[] = [
+    {
+      id: 'tenant',
+      header: 'Tenant',
+      meta: { cardTitle: true },
+      cell: ({ row }) => (
+        <div>
+          <Link href={tenantHref(row.original)} className="font-medium hover:underline underline-offset-2">
+            {row.original.name}
+          </Link>
+          <p className="text-xs text-muted-foreground">{row.original.slug}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'cac',
+      header: 'CAC',
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.cacNumber || '—'}</span>,
+    },
+    {
+      id: 'tin',
+      header: 'TIN',
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.tinNumber || '—'}</span>,
+    },
+    {
+      id: 'submitted',
+      header: 'Submitted',
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{formatDate(row.original.kybSubmittedAt)}</span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">KYB Review Queue</h1>
-        <p className="text-muted-foreground">
-          Tenants that have submitted compliance details for verification
-        </p>
-      </div>
+      <PageHeader
+        title="KYB review queue"
+        description="Tenants that have sent their compliance details for verification, oldest first."
+      />
 
-      {queue.length === 0 ? (
-        <EmptyState
-            isError={isError}
-            subject="the review queue"
-          icon={ClipboardCheck}
-          title="Queue is clear"
-          description="No tenants are currently awaiting KYB review."
-        />
-      ) : (
-        <div className="rounded-md border bg-white dark:bg-slate-950">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Tenant</th>
-                <th className="px-4 py-3 text-left font-medium">CAC</th>
-                <th className="px-4 py-3 text-left font-medium">TIN</th>
-                <th className="px-4 py-3 text-left font-medium">Submitted</th>
-                <th className="px-4 py-3 text-right font-medium">Decision</th>
-              </tr>
-            </thead>
-            <tbody>
-              {queue.map((t) => (
-                <tr key={t.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/tenants/${t.id}`}
-                      className="font-medium text-violet-700 hover:underline dark:text-violet-400"
-                    >
-                      {t.name}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">{t.slug}</p>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs">{t.cacNumber || '—'}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{t.tinNumber || '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatDate(t.kybSubmittedAt)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setPending({ tenant: t, status: KybStatus.VERIFIED })
-                        }
-                      >
-                        <ShieldCheck className="mr-1.5 h-4 w-4 text-emerald-600" />
-                        Verify
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setPending({ tenant: t, status: KybStatus.REJECTED })
-                        }
-                      >
-                        <ShieldX className="mr-1.5 h-4 w-4 text-red-600" />
-                        Reject
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={queue}
+        loading={isLoading}
+        isError={isError}
+        errorSubject="the review queue"
+        rowActions={(t) => (
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPending({ tenant: t, status: KybStatus.VERIFIED })}
+            >
+              <ShieldCheck className="mr-1.5 h-4 w-4 text-emerald-600" />
+              Verify
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPending({ tenant: t, status: KybStatus.REJECTED })}
+            >
+              <ShieldX className="mr-1.5 h-4 w-4 text-red-600" />
+              Reject
+            </Button>
+          </div>
+        )}
+        emptyTitle="The queue is clear"
+        emptyDescription="No tenants are waiting for a KYB review."
+      />
 
       <ConfirmDialog
         open={!!pending && !isReject}

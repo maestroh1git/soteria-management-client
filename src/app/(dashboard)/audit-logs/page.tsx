@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Shield, User, Activity, Lock, Search, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,45 +12,17 @@ import { useAuditLogs, useAuditSummary } from '@/lib/hooks/use-audit';
 import type { AuditFilters, AuditLog } from '@/lib/api/audit';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/utils/dates';
+import { StatusBadge } from '@/components/common/status-badge';
+import { statusOf } from '@/lib/status/registry';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
-const ACTION_COLORS: Record<string, string> = {
-  CREATE:        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  UPDATE:        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  DELETE:        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  APPROVE:       'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  REJECT:        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  DISBURSE:      'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-  PROCESS:       'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-  MARK_PAID:     'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
-  BULK_PAYMENT:  'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
-  LOGIN:         'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
-  REGISTER:      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  LOGIN_FAILED:  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  FINANCIAL:     'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
-  EMPLOYEE:      'bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400',
-  CONFIGURATION: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
-  SECURITY:      'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400',
-};
-
 export function ActionBadge({ action }: { action: string }) {
-  return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', ACTION_COLORS[action] ?? 'bg-slate-100 text-slate-600')}>
-      {action}
-    </span>
-  );
+  return <StatusBadge kind="auditAction" status={action} />;
 }
 
 export function CategoryBadge({ category }: { category: string }) {
-  return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', CATEGORY_COLORS[category] ?? 'bg-slate-100 text-slate-600')}>
-      {category}
-    </span>
-  );
+  return <StatusBadge kind="auditCategory" status={category} />;
 }
 
 function changedKeys(log: AuditLog): string {
@@ -147,7 +118,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="_all">All actions</SelectItem>
-          {ACTIONS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+          {ACTIONS.map((a) => <SelectItem key={a} value={a}>{statusOf('auditAction', a).label}</SelectItem>)}
         </SelectContent>
       </Select>
 
@@ -160,7 +131,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="_all">All categories</SelectItem>
-          {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{statusOf('auditCategory', c).label}</SelectItem>)}
         </SelectContent>
       </Select>
 

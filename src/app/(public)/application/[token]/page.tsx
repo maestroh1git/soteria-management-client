@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use } from 'react';
 import {
     Loader2,
     AlertCircle,
@@ -17,11 +17,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    getApplicationStatus,
-    type PublicApplicationStatus,
-    type PublicAppointment,
-} from '@/lib/api/public-admissions';
+import type { PublicAppointment } from '@/lib/api/public-admissions';
+import { useApplicationStatus } from '@/lib/hooks/use-public';
 import { formatDate, formatLongDate, formatTime } from '@/lib/utils/dates';
 
 /**
@@ -165,14 +162,7 @@ export default function ApplicationStatusPage({
     params: Promise<{ token: string }>;
 }) {
     const { token } = use(params);
-    const [status, setStatus] = useState<PublicApplicationStatus | null>(null);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        getApplicationStatus(token)
-            .then(setStatus)
-            .catch((e) => setError(e.message));
-    }, [token]);
+    const { data: status, error } = useApplicationStatus(token);
 
     if (error) {
         return (

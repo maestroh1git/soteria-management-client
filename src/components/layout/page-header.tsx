@@ -47,8 +47,15 @@ export function PageHeader({
     const pathname = usePathname();
     const section = sectionFor(pathname);
     const nested = !!section && pathname !== section.href;
+    // Inside the app, the trail starts from the sidebar's section. Outside it
+    // (the parent portal, the platform console), the page's own crumbs are
+    // the whole trail.
     const trail: Crumb[] =
-        nested && section ? [{ label: section.title, href: section.href }, ...(crumbs ?? [])] : [];
+        nested && section
+            ? [{ label: section.title, href: section.href }, ...(crumbs ?? [])]
+            : !section
+              ? (crumbs ?? [])
+              : [];
 
     return (
         <div className={cn('space-y-2', className)}>

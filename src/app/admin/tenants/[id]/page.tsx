@@ -1,16 +1,15 @@
 'use client';
 
 import { use, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Ban, CheckCircle2, ShieldCheck, ShieldX } from 'lucide-react';
+import { Ban, CheckCircle2, ShieldCheck, ShieldX } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { EmptyState } from '@/components/common/empty-state';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import { KybBadge } from '@/components/admin/kyb-badge';
+import { StatusBadge } from '@/components/common/status-badge';
+import { PageHeader } from '@/components/layout/page-header';
 import { RejectKybDialog } from '@/components/admin/reject-kyb-dialog';
 import {
   useTenant,
@@ -99,29 +98,18 @@ export default function TenantDetailPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link href="/admin/tenants">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to tenants
-        </Link>
-      </Button>
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{tenant.name}</h1>
-            <Badge variant={tenant.isActive ? 'default' : 'secondary'}>
-              {tenant.isActive ? 'Active' : 'Suspended'}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{tenant.slug}</span>
-            <span>·</span>
-            <KybBadge status={tenant.kybStatus} />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        crumbs={[{ label: 'Tenants', href: '/admin/tenants' }, { label: tenant.name }]}
+        title={tenant.name}
+        badge={
+          <>
+            <StatusBadge kind="tenant" status={tenant.isActive ? 'ACTIVE' : 'SUSPENDED'} />
+            <StatusBadge kind="kyb" status={tenant.kybStatus} />
+          </>
+        }
+        description={tenant.slug}
+        actions={
+          <>
           {tenant.kybStatus !== KybStatus.VERIFIED && (
             <Button
               variant="outline"
@@ -147,14 +135,15 @@ export default function TenantDetailPage({
               <CheckCircle2 className="mr-2 h-4 w-4" /> Reactivate
             </Button>
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Organization profile */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Organization</CardTitle>
+            <CardTitle className="text-base">Organisation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Field label="Type" value={tenant.organizationType} />
@@ -175,7 +164,7 @@ export default function TenantDetailPage({
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between border-b pb-3">
               <span className="text-sm text-muted-foreground">Status</span>
-              <KybBadge status={tenant.kybStatus} />
+              <StatusBadge kind="kyb" status={tenant.kybStatus} />
             </div>
             <Field label="CAC number" value={tenant.cacNumber} mono />
             <Field label="TIN" value={tenant.tinNumber} mono />
