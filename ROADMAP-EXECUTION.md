@@ -25,7 +25,8 @@ run in parallel unless a dependency is named.
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
 | 4 Reorganise | **Done** 25 Sep | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.17 done; Paystack checkout (the rest of 5.12) still to come | same |
+| 5 Finish | **Done** 25 Sep, except 5.12b Paystack checkout: **planned**, §9 | same |
+| 6 Other organisation types | **Planned**, §9b: modules enforced on the server, then core-only readiness, then shared additions, then packs per signed customer | — |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -442,7 +443,7 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
   locked Approver, and a change confirmed for "1 person" and followed in
   Team & access).
 
-Left in Wave 5: Paystack checkout (the rest of 5.12).
+Left in Wave 5: Paystack checkout, now planned in full as 5.12b (§9).
 
 ### Left for later waves
 
@@ -564,7 +565,11 @@ Sep.** D1, D2 and D5 are done in Wave 1; the rest land with the wave named.
 | D5 | Who **downloads the bank payment file**? | Keep Owner/Admin/Finance; hide the button from Payroll Officers (preview only). |
 | D6 | What does an **Educator** see of the pupil list? | Default "my class", switch to "whole school" (API unchanged until timetables). |
 | D7 | **Pupil or student?** | "Pupil" in primary tenants, "Student" in secondary, set per tenant; one term per screen, from a glossary helper. If one word: "Student" (it is the API's word). |
-| D8 | **Payment gateway** for parents | Paystack (NGN, card + transfer), behind a feature flag. Wave 5. |
+| D8 | **Payment gateway** for parents | Paystack (NGN, card + transfer), hosted checkout, 5.12b. There is no feature-flag system: each school switches it on in Setup, and no Paystack key on the API means no Pay button anywhere. |
+| D9 | **Whose Paystack account** | Soteria's, with a **sub-account per school**; Paystack settles each school's money straight to the school's bank. Schools need no keys or Paystack setup, there is one webhook, and Soteria never holds the money. A school's KYB must be approved first. |
+| D10 | **Who pays the card fee** | **The parent**, shown as its own line ("Bill ₦250,000 + processing ₦2,000"). The school receives the bill in full. Soteria's cut is 0% for now; the split allows one later. |
+| D11 | **What stops a hospital calling `/students`?** | Today, nothing: school pages are only hidden in the menu. Each tenant gets **modules**, from its type and switchable by the operator, and the API refuses a module the tenant lacks (6.0). |
+| D12 | **When to build a type's own features** | Only with a signed pilot customer of that type, as the school side was shaped by a real school. Until then they get the shared core. |
 
 ---
 
@@ -763,12 +768,144 @@ Every item already has an API route, most already have a hook.
 | **5.9** | S+C | Registrar parent invite (D4): `POST /students/guardians/:id/invite` | Student → Guardians |
 | **5.10** | C | Admissions: criteria editor, duplicates merge, retention due / purge | Admissions tabs |
 | **5.11** | S+C | Public offer accept/decline and document upload on the status page | `/application/[token]` |
-| **5.12** | C | Parent portal: invoices with PDFs; later Paystack checkout (D8) | Portal |
+| **5.12** | C | Parent portal: invoices with PDFs | Portal |
+| **5.12b** | S+C | Paystack checkout (D8–D10): parents pay bills online, receipted and posted on Paystack's word, settled into the bank reconciliation | Portal → Bills, `/invoice/[token]`, Setup → Online payments |
 | **5.13** | C | Platform: create a tenant for a customer | `/admin/tenants` |
 | **5.15** | S+C | Support needs on the application (sight/glasses, hearing, mobility, learning, speech, social, medical, other, notes), carried to the pupil and the class's alerts | Apply form, application, Student → Medical |
 | **5.16** | S+C | Assessment diary: slots with a duration, no double booking of an assessor or a child, the candidate's details and question set beside each sitting | Admissions → Assessment diary |
 | **5.14** | C | Delete dead code: `useGrade`, `useTaxRulesList`, `usePayPeriodsList`, `useBirthdaysThisMonth` (if the feed covers it), unused API functions (`getDepartment`, `getRole`, `getSalaryComponent`, `getSettingByKey`, `getTaxRule`, `getPayslipDownloadUrl`) | — |
 | **5.17** | S+C | Positions carry default access: everyone in a position has its access roles on top of their own, worked out on every request | Setup → Positions, Team & access, staff record → Access |
+
+### 5.12b Paystack checkout — plan
+
+**What it does.** A parent pays one or more bills online, from the portal or
+from the bill link the school's messages send (`/invoice/[token]`), so a
+family without a portal login can pay too. The receipt, its postings and the
+bill's new balance appear within a minute, with no one keying anything, and
+the next day's settlement matches one line on the bank statement.
+
+**Decisions** (D8–D10):
+
+| Question | Answer |
+|---|---|
+| Card fee | Paid by the parent, as a line of its own. Grossed up so the school gets the bill in full: total = (bill + flat fee) ÷ (1 − rate), capped at bill + cap. Today's local rate is 1.5% + ₦100 (the ₦100 waived under ₦2,500), capped at ₦2,000. Confirm at go-live; it lives in config, not code. |
+| Account | Soteria's Paystack account with one sub-account per school (`bearer: subaccount`, Soteria's share 0%). |
+| Card data | Never seen: Paystack's hosted checkout. |
+| What a parent may pay | The full balance of the bills they pick, by default; part payments down to ₦1,000. Money over a bill's balance lands as an unallocated credit, as a receipt already does. |
+| Switch | Per school in Setup; nowhere at all without `PAYSTACK_SECRET_KEY`. |
+
+**What is already there.** `FeePaymentService.record()` allocates, posts
+and refuses a reference already receipted, which makes a repeated webhook
+harmless. `PaymentMethod.ONLINE` is reserved for it. The public bill link and
+the portal's bills exist (5.12). Bank reconciliation matches statement lines
+(5.8). Column encryption exists for the bank account number. Missing: raw
+request bodies (needed to check Paystack's signature), a clearing account and
+anything that talks to Paystack.
+
+**The books.**
+
+| When | Debit | Credit |
+|---|---|---|
+| Paystack says it is paid | **Paystack clearing** (new asset account): total less Paystack's actual fee; **Payment processing charges**: the actual fee | **Fees receivable**: the bill amount; **Processing fees recovered**: the surcharge |
+| Paystack settles (daily job reading its settlements) | Bank | Paystack clearing |
+
+The fee and the surcharge net to within kobo, and both are visible. The
+clearing account standing at zero proves nothing went missing between a
+parent's payment and the school's bank.
+
+**The flow.**
+
+1. **Setup → Online payments** (new action `payments.configure`: Owner,
+   Finance Admin). Pick the bank and type the account number; Paystack reads
+   back the account name, and the school confirms it (a mistyped account
+   fails here, not on payday). The school's KYB must be approved. The
+   sub-account is created and its code kept; the account number is encrypted.
+2. **Pay.** `POST /portal/children/:studentId/checkout` (guardian-owns-child,
+   as the bills) and `POST /public/invoices/:token/checkout` record a
+   **payment intent**: a reference of our own, the bills and amounts it pays,
+   the bill total, the surcharge, PENDING. Paystack's initialise call returns
+   its checkout page, and the parent goes there.
+3. **Webhook.** `POST /webhooks/paystack`, public, throttled, registered in
+   `public-routes.spec.ts`. It checks the HMAC-SHA512 signature over the raw
+   body, finds the intent by reference, then asks Paystack's verify endpoint
+   for the amount, currency (NGN) and status, never trusting the webhook body
+   alone. It locks the intent, marks it PAID and calls `record()` (ONLINE,
+   Paystack's reference, the clearing account, the intent's allocations), in
+   one transaction. A second delivery finds the reference receipted and does
+   nothing. A wrong amount posts nothing: the intent is flagged and the
+   bursar told.
+4. **Back from Paystack.** `/pay/return?reference=…` verifies too, so a slow
+   webhook does not leave the parent wondering. It shows "Paid: receipt
+   R-00123" with the PDF, and the receipt is emailed.
+5. **Clean-up job** every 15 minutes: an intent PENDING for over 10 minutes
+   is verified; after 24 hours it is marked EXPIRED.
+6. **Disputes and refunds.** `charge.dispute.create` flags the receipt and
+   tells the bursar. "Refund to card" on an online receipt goes through the
+   Approvals inbox, then voids the receipt (reversed, never deleted) and
+   calls Paystack's refund.
+
+**The school sees** receipts marked Online in Fees → Receipts, the
+surcharge nowhere on the bill's balance, and the clearing account in the
+ledger. **The parent sees** a Pay button on each unpaid bill, the fee before
+they commit, and a receipt at the end.
+
+**Tests.** API e2e against a Paystack stub (`PAYSTACK_BASE_URL`): intent →
+signed webhook → one receipt and its postings; the same webhook twice, one
+receipt; a bad signature, 401; a changed amount, nothing posted and the
+intent flagged; another family's child, 403; a school not switched on, no
+checkout; settlement moves clearing to bank; the clean-up job expires and
+recovers intents. Persona: a parent pays a bill in the stub checkout and sees
+it paid. Unit: the gross-up at the ₦2,500 threshold and the cap.
+
+**Needed before going live** (the build and every test run in Paystack's
+test mode without them):
+
+1. Soteria's Paystack business account, approved for live payments (CAC
+   registration), and its secret key in the API's environment.
+2. The API at a public HTTPS address, with the webhook URL registered in the
+   Paystack dashboard.
+3. Each pilot school's settlement account, and its KYB approved.
+
+**Effort** 1½–2 weeks. **Done when** a parent pays a real bill in live mode,
+the receipt and postings appear within a minute, and the next day's
+settlement reconciles.
+
+---
+
+## 9b. Wave 6 — Other organisation types
+
+The school is covered, pending feedback from real use. The other types
+(`HOSPITAL`, `CORPORATE`, `NGO`, `GOVERNMENT`, `NONPROFIT`, `HOSPITALITY`,
+`OTHER`) already have the shared core: staff, pay runs (PAYE, pension, NHF),
+loans, leave, expenses, budgets, bank reconciliation, the ledger, reports,
+approvals, access and self-service. Provisioning already gives each type its
+own starting departments, positions and pay-component groups.
+
+School-only today: pupils, admissions, classes, attendance, awards, fees and
+the parent portal. They are hidden from other types **only in the menus**;
+the API never reads the organisation type.
+
+| PR | Repo | What | Effort |
+|---|---|---|---|
+| **6.0** | S+C | **Modules enforced on the server** (D11). Each tenant has modules (`core`, `school`; later `grants`, `rostering`…), starting from its type and switchable by the operator in the console. `@RequiresModule('school')` on every school controller; the action registry leaves out a module's actions for tenants without it, so menus, Setup, access roles and `useCan` follow with no lists kept by hand. School access roles (Educator, Registrar, Admissions, Attendance, Parent) belong to `school`. Tests: a hospital tenant gets 403 on every school route; the audit fails on a school controller without the guard. | 1 week |
+| **6.1** | S+C | **Core-only readiness.** `seed:personas --org-type=CORPORATE` and the full persona sweep against it. The school's words out of shared screens (dashboard tiles, "term" in pay and leave, "School calendar" as the only calendar). A getting-started checklist per type. **Corporate and Other can be sold from here.** | 1 week |
+| **6.2** | S+C | **Shared additions**, built once for every type: cost centres / projects on pay runs, expenses, budgets and the ledger (grants, wards, outlets); hourly and shift pay from imported timesheets, with overtime rules; casual and contract workers paid by the day or the job; reminders for expiring licences, certificates and contracts. | 2–3 weeks |
+| **6.3** | S+C | **Type packs**, one at a time, each only with a signed pilot (D12). | 2–3 weeks each |
+
+**6.3 packs:**
+
+| Type | Pack | Out of scope |
+|---|---|---|
+| NGO / Nonprofit | Restricted funds by grant; donor budget against actual; grant reports; spending checked against the funds available | Fundraising CRM |
+| Hospital | Duty rosters; on-call, night and hazard allowances; locum pay; licence tracking | Patient billing and medical records: integrate, never build |
+| Hospitality | Service-charge pool shared out; daily pay for casuals; seasonal staff | Bookings, point of sale |
+| Government | Salary tables by grade level and step; promotions with arrears; the government payroll's formats if a customer needs them | — |
+
+**Order:** 6.0 → 6.1, and sell Corporate/Other. Then 6.2's cost centres and
+shift pay. Then the pack for whichever non-school customer signs first.
+
+**Each phase is done** when that type's persona sweep, the audit, drift and
+the full e2e suite pass, as for Waves 1–5.
 
 ---
 
@@ -778,6 +915,8 @@ Every item already has an API route, most already have a hook.
 Wave 0 ──► Wave 1 ──► Wave 2 ──► Wave 4 (reorganise)
                  └──► Wave 3 ──┘      ▲
                            └──► Wave 5 (features, per hub as it lands)
+                                      └──► 5.12b Paystack
+Wave 6: 6.0 modules ──► 6.1 core-only ──► 6.2 shared additions ──► 6.3 packs (per customer)
 ```
 
 | Wave | Effort (one developer) | Calendar with API + client in parallel |
@@ -788,6 +927,10 @@ Wave 0 ──► Wave 1 ──► Wave 2 ──► Wave 4 (reorganise)
 | 3 Foundations | 7 days | weeks 3–4 |
 | 4 Reorganise | 15 days | weeks 5–7 |
 | 5 Finish | 15–20 days | weeks 6–9 |
+| 5.12b Paystack | 7–10 days | then; live once D9's account and a public API exist |
+| 6.0–6.1 Modules, core-only | 10 days | alongside 5.12b |
+| 6.2 Shared additions | 10–15 days | after 6.1 |
+| 6.3 Each pack | 10–15 days | when a customer signs |
 
 About nine weeks for two developers, or twelve for one. Wave 1 alone removes
 every hard block in the map and is worth shipping before anything else.
@@ -808,6 +951,9 @@ every hard block in the map and is worth shipping before anything else.
 | Tabs not in the URL | 9 of 10 | 0 | review |
 | Sidebar entries | 36 | 22 | C4.1 |
 | `audit-actors.py --gaps` | 0 (blind to the above) | 0 with S2.5 checks | CI |
+| School routes a non-school tenant can call | all of them | 0 | 6.0 e2e + audit |
+| Online payments without a receipt after 15 minutes | — | 0 | 5.12b clean-up job |
+| Paystack clearing balance after settlement | — | ₦0 | ledger, daily |
 
 ---
 
@@ -820,3 +966,9 @@ every hard block in the map and is worth shipping before anything else.
 | Identity-first register opens reads too wide | S1.3 authorises the GET in the service too, with e2e for "other arm → 403" |
 | Two repos drift during Waves 2–4 | `actions.json` is generated, and S0.2 runs the audit on every API PR |
 | Staff relearn the navigation | Old URLs redirect; ⌘K finds pages by old names too; ship C4.1 at a term boundary |
+| A Paystack webhook is lost or late | The return page verifies too, and the clean-up job verifies anything PENDING after 10 minutes |
+| A webhook is forged or replayed | Signature over the raw body, then Paystack's verify call; a reference is receipted once |
+| Paystack changes its fees | Rate, flat fee, threshold and cap are config; the actual fee is posted from Paystack's own figure |
+| Chargebacks land on Soteria's account (D9) | Dispute webhook flags the receipt and tells the school; refunds go through Approvals |
+| A school route is added without its module guard | The 6.0 audit check fails CI |
+| A type pack is built on guesses | D12: only with a signed pilot |
