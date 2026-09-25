@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { OnboardTenantDialog, OnboardedDialog } from '@/features/admin/onboard-tenant-dialog';
+import type { OnboardedTenant } from '@/lib/api/tenants';
 
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable } from '@/components/common/data-table';
@@ -12,6 +16,8 @@ export default function AdminTenantsPage() {
   const { data: tenants = [], isLoading, isError } = useTenants();
   const [status, setStatus] = useState<string>();
   const [kyb, setKyb] = useState<string>();
+  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState<OnboardedTenant | null>(null);
 
   const shown = tenants.filter(
     (t) =>
@@ -22,7 +28,16 @@ export default function AdminTenantsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Tenants" description="Every organisation on the platform." />
+      <PageHeader
+        title="Tenants"
+        description="Every organisation on the platform."
+        actions={
+          <Button onClick={() => setCreating(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Set up an organisation
+          </Button>
+        }
+      />
 
       <DataTable
         columns={tenantColumns({ withType: true })}
@@ -41,6 +56,9 @@ export default function AdminTenantsPage() {
         emptyTitle={filtered ? 'No tenants match' : 'No tenants yet'}
         emptyDescription={filtered ? 'Try another status.' : undefined}
       />
+
+      <OnboardTenantDialog open={creating} onOpenChange={setCreating} onCreated={setCreated} />
+      <OnboardedDialog result={created} onClose={() => setCreated(null)} />
     </div>
   );
 }

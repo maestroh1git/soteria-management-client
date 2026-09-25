@@ -5,6 +5,7 @@ import {
   getTenant,
   updateTenantKybStatus,
   setTenantActive,
+  onboardTenant,
 } from '@/lib/api/tenants';
 import type { KybStatus } from '@/lib/types/enums';
 import { getApiErrorMessage } from '@/lib/utils/api-error';
@@ -60,4 +61,16 @@ export function useSetTenantActive() {
     },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Failed to update tenant')),
   });
+}
+
+/** Set up an organisation for a customer and invite its owner (5.13). */
+export function useOnboardTenant() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: onboardTenant,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admin', 'tenants'] });
+            qc.invalidateQueries({ queryKey: ['admin', 'platform-metrics'] });
+        },
+    });
 }
