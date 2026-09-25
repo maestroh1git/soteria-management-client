@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/empty-state';
 import { AwardDialog } from '@/components/attendance/award-dialog';
 import { MedicalAlertsCard } from '@/components/attendance/medical-alerts-card';
+import { ClassWeekGrid } from '@/components/attendance/class-week-grid';
 import { useMyClass, useMyClasses } from '@/lib/hooks/use-attendance';
 import { useCan } from '@/lib/hooks/use-can';
 import { formatTime } from '@/lib/utils/dates';
@@ -41,7 +42,8 @@ export default function MyClassPage({
     const { data: mine } = useMyClasses();
     const summary = mine?.classes.find((c) => c.classArmId === armId);
     // Their own pupils, or anyone the role allows (the office, Educators).
-    const canRecognise = useCan()('awards.grant') || !!summary;
+    const can = useCan();
+    const canRecognise = can('awards.grant') || !!summary;
     const [recognising, setRecognising] = useState<{ id: string; name: string } | null>(
         null,
     );
@@ -187,7 +189,14 @@ export default function MyClassPage({
 
             <MedicalAlertsCard alerts={data.medicalAlerts} />
 
-            <Card>
+            {/* Their own class, or the office's export right (5.4). */}
+            <ClassWeekGrid
+                armId={armId}
+                className={data.className}
+                canExport={!!summary || can('attendance.export')}
+            />
+
+            <Card id="the-class" className="scroll-mt-20">
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Users className="h-4 w-4" />

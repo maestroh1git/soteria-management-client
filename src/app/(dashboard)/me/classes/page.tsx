@@ -1,10 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, Users } from 'lucide-react';
+import {
+    AlertTriangle,
+    ArrowRight,
+    Award as AwardIcon,
+    CalendarDays,
+    CheckCircle2,
+    DoorOpen,
+    Loader2,
+    Users,
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/layout/page-header';
 import { useMyClasses } from '@/lib/hooks/use-attendance';
 import { formatDayOfWeek } from '@/lib/utils/dates';
 
@@ -46,10 +56,7 @@ export default function MyClassesPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold">My classes</h1>
-                <p className="mt-1 text-sm text-muted-foreground">{when}</p>
-            </div>
+            <PageHeader title="My classes" description={`Today, ${when}`} />
 
             {classes.map((c) => (
                 <Card key={c.classArmId}>
@@ -111,6 +118,29 @@ export default function MyClassesPage() {
                                 </Button>
                             </div>
                         )}
+
+                        {/* Today at a glance: who has gone home, and the way to
+                            recognise a child, one tap from the class. */}
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                                <DoorOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                                {c.signedOutToday === 0
+                                    ? 'Nobody signed out today'
+                                    : `${c.signedOutToday} signed out today`}
+                            </span>
+                            <span className="ml-auto flex flex-wrap gap-2">
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/me/classes/${c.classArmId}#the-class`}>
+                                        <AwardIcon className="mr-2 h-4 w-4" /> Recognise a pupil
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/me/classes/${c.classArmId}`}>
+                                        <CalendarDays className="mr-2 h-4 w-4" /> The week
+                                    </Link>
+                                </Button>
+                            </span>
+                        </div>
 
                         {c.needsAWord.length > 0 && (
                             <div>

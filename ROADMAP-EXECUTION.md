@@ -24,8 +24,8 @@ run in parallel unless a dependency is named.
 | 1 Unblock | **Done** 24 Sep | same two pull requests |
 | 2 Guarantee | **Done** 24 Sep | branch `claude/zealous-keller-5aeha8` in both repos |
 | 3 Foundations | **Done** 24 Sep | same branches |
-| 4 Reorganise | **In progress**: C4.1–C4.7 and C4.9 done; C4.8, C4.10, C4.11 left | branch `claude/zealous-keller-5aeha8` |
-| 5 Finish | **In progress**: 5.1–5.3, 5.6, 5.9 done; 5.4 the pupil half; the report exports half of 5.7 | same |
+| 4 Reorganise | **In progress**: C4.1–C4.9 done; C4.10, C4.11 left | branch `claude/zealous-keller-5aeha8` |
+| 5 Finish | **In progress**: 5.1–5.4, 5.6, 5.7 (reports and attendance CSV; the parent attendance export is left), 5.9 done | same |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -150,8 +150,21 @@ passes 26/26. Its first 19 tests were run against the code before Wave 1, and
 - **Checks:** persona tests 36/36 (each record's every tab, per persona);
   API unit 811/811, e2e 532 passed (2 skipped); audit 0 (12 hooks still
   unbuilt); lint ratchet 41.
-- **Next in Wave 4:** C4.8 Today (with 5.4's class week grid and export),
-  C4.10 persona homes, C4.11 portal and console.
+- **C4.8 Today**: a form teacher who does not also run part of the school
+  lands on My Classes at sign-in (`landingAfterSignIn` asks the session which
+  classes are theirs). Each class shows the register, who has signed out
+  today (`signedOutToday` on `GET /attendance/my-classes`), who needs a
+  word, and a step to recognise a pupil or read the week.
+- **5.4, the class half**: the week grid on each class (`GET
+  /attendance/my-classes/:armId/week`): a row per pupil, a column per day,
+  each cell's letter as well as its colour, holidays shown as such. A form
+  teacher exports their own class as CSV; `GET /attendance/export` now lets
+  them, and only for their class (`assertCanExport`).
+- **5.7, attendance CSV**: the office downloads the register for any dates,
+  the whole school or one class, from the Register page.
+- **Checks:** persona tests 40/40; API unit 811/811, e2e 537 passed (2
+  skipped); audit 0; lint ratchet 41.
+- **Next in Wave 4:** C4.10 persona homes, C4.11 portal and console.
 
 ### Left for later waves
 

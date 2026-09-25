@@ -1,4 +1,5 @@
 import api from './client';
+import { saveBlob } from '@/lib/utils/download';
 import type { Student, StudentMedical } from './students';
 
 export type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -179,6 +180,8 @@ export interface MyClass {
     excused: number;
     termRate: number | null;
     needsAWord: AtRiskPupil[];
+    /** Pupils of this class signed out at the gate today. */
+    signedOutToday: number;
 }
 
 export interface Collector {
@@ -479,4 +482,43 @@ export async function createAward(
         `/students/${studentId}/awards`,
         dto,
     )) as unknown as StudentAward;
+}
+
+/** A class, Monday to Friday: each pupil's current mark per day (5.4). */
+export interface ClassWeek {
+    classArmId: string;
+    className: string;
+    from: string;
+    to: string;
+    days: Array<{ date: string; dayType: string | null }>;
+    pupils: Array<{
+        studentId: string;
+        firstName: string;
+        lastName: string;
+        admissionNumber: string;
+        marks: Record<string, AttendanceStatus>;
+    }>;
+}
+
+export async function getClassWeek(armId: string, date: string): Promise<ClassWeek> {
+    return (await api.get(`/attendance/my-classes/${armId}/week`, {
+        params: { date },
+    })) as unknown as ClassWeek;
+}
+
+/**
+ * The register as CSV. The office may export the whole school; a form teacher
+ * their own class (the API decides).
+ */
+export async function downloadAttendance(params: {
+    from: string;
+    to: string;
+    classArmId?: string;
+    /** For the file name: "Primary 4 Gold". */
+    label?: string;
+}): Promise<void> {
+    const { label, ...query } = params;
+    const data = await api.get('/attendance/export', { params: query, responseType: 'blob' });
+    const stem = (label ?? 'attendance').replace(/[^\w-]+/g, '-').toLowerCase();
+    saveBlob(data as unknown as BlobPart, `${stem}_${params.from}_to_${params.to}.csv`, 'text/csv');
 }

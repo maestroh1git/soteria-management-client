@@ -506,3 +506,76 @@ test.describe('My Pay (5.6)', () => {
         expect(problems, problems.join('\n')).toEqual([]);
     });
 });
+
+test.describe('Today (C4.8) and the class week (5.4)', () => {
+    const has = (key: string) => personas.some((p) => p.key === key);
+
+    test.describe('a form teacher', () => {
+        test.skip(!has('formteacher'), 'no formteacher persona');
+
+        test('lands on their classes when they sign in', async ({ page }) => {
+            const persona = personas.find((p) => p.key === 'formteacher')!;
+            await page.goto('/login');
+            await page.locator('input[name="email"]').fill(persona.email);
+            await page.locator('input[name="password"]').fill(persona.password);
+            await page.locator('button[type="submit"]').click();
+            await page.waitForURL(/\/me\/classes$/, { timeout: 60_000 });
+            await expect(page.getByRole('heading', { level: 1 })).toHaveText('My classes');
+        });
+
+        test.describe('in their class', () => {
+            test.use({ storageState: storageFor('formteacher') });
+
+            test('reads the week, pupil by day, and downloads it', async ({ page }) => {
+                const problems = watch(page);
+                await page.goto('/me/classes');
+                await settle(page);
+                await expect(page.getByText(/signed out today/i).first()).toBeVisible();
+                await page.locator('main h2 a[href^="/me/classes/"]').first().click();
+                await page.waitForURL(/\/me\/classes\/[0-9a-f-]{36}$/);
+                await settle(page);
+                const week = page.locator('table').filter({ has: page.locator('caption') });
+                await expect(week.locator('thead th')).toHaveCount(6);
+                await page.getByRole('button', { name: 'Previous week' }).click();
+                await settle(page);
+                const [file] = await Promise.all([
+                    page.waitForEvent('download'),
+                    page.getByRole('button', { name: /^csv$/i }).click(),
+                ]);
+                expect(file.suggestedFilename()).toMatch(/\.csv$/);
+                expect(problems, problems.join('\n')).toEqual([]);
+            });
+        });
+    });
+
+    test.describe('someone who runs the school', () => {
+        test.skip(!has('admin'), 'no admin persona');
+
+        test('still lands on the dashboard', async ({ page }) => {
+            const persona = personas.find((p) => p.key === 'admin')!;
+            await page.goto('/login');
+            await page.locator('input[name="email"]').fill(persona.email);
+            await page.locator('input[name="password"]').fill(persona.password);
+            await page.locator('button[type="submit"]').click();
+            await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 60_000 });
+            expect(new URL(page.url()).pathname).toBe('/');
+        });
+    });
+
+    test.describe('the attendance office', () => {
+        test.skip(!has('attendance'), 'no attendance persona');
+        test.use({ storageState: storageFor('attendance') });
+
+        test('downloads the whole school’s register', async ({ page }) => {
+            const problems = watch(page);
+            await page.goto('/attendance');
+            await settle(page);
+            const [file] = await Promise.all([
+                page.waitForEvent('download'),
+                page.getByRole('button', { name: /download csv/i }).click(),
+            ]);
+            expect(file.suggestedFilename()).toMatch(/^attendance_.*\.csv$/);
+            expect(problems, problems.join('\n')).toEqual([]);
+        });
+    });
+});

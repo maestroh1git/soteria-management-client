@@ -16,6 +16,8 @@ import {
     getRegister,
     getStudentSummary,
     getMarkHistory,
+    getClassWeek,
+    downloadAttendance,
     recordDeparture,
     recordReturn,
     setCalendarRange,
@@ -48,6 +50,25 @@ export function useMyClass(armId?: string) {
         enabled: !!armId,
         staleTime: 30 * 1000,
         retry: false,
+    });
+}
+
+/** A class, the week holding `date` (5.4). */
+export function useClassWeek(armId?: string, date?: string) {
+    return useQuery({
+        queryKey: ['attendance', 'week', armId, date],
+        queryFn: () => getClassWeek(armId!, date!),
+        enabled: !!armId && !!date,
+        retry: false,
+    });
+}
+
+/** Download the register as CSV; a refusal or an empty range says why. */
+export function useDownloadAttendance() {
+    return useMutation({
+        mutationFn: downloadAttendance,
+        onError: (err) =>
+            toast.error(getApiErrorMessage(err, 'The register could not be downloaded.')),
     });
 }
 
