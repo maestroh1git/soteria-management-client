@@ -28,6 +28,7 @@ run in parallel unless a dependency is named.
 | 5 Finish | **Done** 25 Sep, except 5.12b Paystack checkout: **planned**, §9 | same |
 | 6 Other organisation types | **Planned**, §9b: modules enforced on the server, then core-only readiness, then shared additions, then packs per signed customer | — |
 | 7 Academic records | **Planned**, §9c: subjects and who teaches them, then the gradebook, then report cards in the portal, then a hand-built timetable. Recommended before Wave 6.2–6.3 while schools are the customers | — |
+| 8 Messages: WhatsApp and email | **Planned**, §9d: one outbox and log for every message, the school's own sender, then messages to parents and staff (bills, receipts, absences, the gate, payslips), then WhatsApp. **D16–D19 are open** | — |
 
 Wave 1's exit test passes: all 17 persona tests are green against a seeded
 school (every persona's sidebar loads with no 401/403/5xx and no page error,
@@ -587,7 +588,7 @@ page-by-page table in §8 tracks it.
 ## 2. Decisions
 
 These are policy, not code. **All eight recommendations were accepted on 24
-Sep.** D1, D2 and D5 are done in Wave 1; the rest land with the wave named.
+Sep.** D16–D19 (Wave 8) are open. D1, D2 and D5 are done in Wave 1; the rest land with the wave named.
 
 | # | Question | Decision |
 |---|---|---|
@@ -606,6 +607,10 @@ Sep.** D1, D2 and D5 are done in Wave 1; the rest land with the wave named.
 | D13 | **Build a timetable solver?** | **No.** A hand-built weekly grid with clash checks gives registers per period and each teacher's week. Generating a timetable automatically is a constraint solver, and it is where established school systems win (`ERP-ROADMAP.md` in the API). Integrate one if a customer needs it. |
 | D14 | **Store report cards or regenerate them?** | **Store the bytes when a report is released**, by the API README's test (*would it say the same thing a year from now?*): a score corrected after release would silently change a document the parent already has, as a payslip's year-to-date would. A correction is a re-release, and the portal shows the latest. |
 | D15 | **Grading scale** | **Each school's own**, set in Setup, starting from the WAEC-style A1–F9 bands. Whether to print a position in class is a school setting, off by default. |
+| D16 | **WhatsApp provider** (Wave 8) | **Open.** Meta's WhatsApp Cloud API directly, or an aggregator such as Termii (WhatsApp and SMS through one account, billed in naira). Recommended: build to one channel interface either way, and choose by who can put a school live soonest with an SMS fallback; confirm prices at signing. |
+| D17 | **Whose WhatsApp number** (Wave 8) | **Open.** Recommended: one Soteria number, with the school's name in every message, so no school needs its own Meta business verification to start; a school's own verified number later, as an upgrade. |
+| D18 | **Who pays for messages** (Wave 8) | **Open**, decided with pricing (GTM blocker 3, billing). Recommended: an allowance per pupil per term in the plan, with overage billed; email stays free. |
+| D19 | **Consent** (Wave 8) | **Open.** Recommended: messages about a family's own child (bills, receipts, absences, the gate, reports) are on by default, each with an opt-out that is honoured per channel; nothing promotional is ever sent. The admission form and the portal say so, as the Nigeria Data Protection Act expects. |
 
 ---
 
@@ -981,6 +986,44 @@ report's numbers equal the gradebook's at release; drift and the audit clean.
 
 ---
 
+## 9d. Wave 8 — Messages: WhatsApp and email
+
+**Why.** Parents rarely log in, and the moments that matter to them happen
+while they are not looking: a bill issued, a payment landing, a child marked
+absent, a child signed out at the gate. Today the school has to tell them
+itself, by hand. Email already exists, but only for staff and admissions:
+
+- `core/mail` has one SMTP transport, configured in the API's environment, so
+  every school sends from the same address (`GTM.md`: SMTP settings UI).
+- It sends payslips, loan approved / rejected / disbursed, salary paid,
+  birthdays, and admissions letters to guardians.
+- Nothing records what was sent: no delivery status, no resend, and nothing
+  stops a re-run sending twice.
+- Nothing goes to parents about fees, attendance or the gate, and there is
+  no WhatsApp or SMS at all. 5.12b already assumes "the bill link the
+  school's messages send"; this wave is what sends it.
+
+| PR | Repo | What | Effort |
+|---|---|---|---|
+| **8.0** | S | **One outbox, one log.** A `messages` table (tenant, recipient and who they are to the school, channel, template, the values filled in, status queued → sent → delivered / failed / read, the provider's message id, attempts, error). Sent by a worker with retries and backoff, never in the request. **Idempotent** on (source type, source id, template, recipient), as ledger postings are on their source, so a retried job or a re-issued bill cannot message a parent twice. The existing emails move onto it unchanged. | 1 week |
+| **8.1** | S+C | **The school's own sender, and the log in the app.** Setup → Messages: sender name and reply-to (optionally the school's own SMTP or domain), each message type on or off for the school. A Messages page (Owner, Admin, Registrar, Finance for their own types) lists what went to whom and when, with its status, and can resend a failed one. New actions: `messages.read`, `messages.manage`. | 3–4 days |
+| **8.2** | S | **Messages to parents and staff**, by email first, so they work before D16 is decided. Parents: bill issued (the bill's own link and its PDF), payment received (the receipt), overdue reminders (the school's cadence, capped), pupil absent and not yet explained (after the register is submitted), signed out at the gate (by whom, when), report released (with 7.3). Staff: payslip ready (existing), loan decisions (existing), register not taken by a school-set time (to the form teacher), a daily digest of what is waiting on an approver, leave decisions. | 1–1.5 weeks |
+| **8.3** | S+C | **Preferences and consent** (D19). Per guardian and per member of staff: WhatsApp, email or both, and an opt-out per channel, shown on their record and editable by them in the portal or My Profile. Quiet hours for anything that is not urgent (the gate and absences are). A message to a guardian is only ever about their own linked children. | 3–4 days |
+| **8.4** | S | **WhatsApp** (D16, D17), behind one channel interface so the provider can change. Numbers normalised to +234. The templates registered for approval (WhatsApp only allows pre-approved templates for messages a school starts), one per 8.2 message. Delivery and read receipts by webhook into the log. SMS fallback where WhatsApp fails, if the provider offers it. Opt-out replies ("STOP") honoured. | 1–1.5 weeks, plus the provider's template-approval time |
+
+**Order:** 8.0 → 8.1 → 8.2 by email, which is worth shipping on its own. Then
+8.3, which must land before any WhatsApp message is sent, and 8.4 once
+D16–D18 are decided. 5.12b's payment link and 7.3's report release each add
+a message when they land.
+
+**Checks, as for every wave:** e2e: a message is never sent twice for the
+same source; an opted-out channel is never used; a guardian never receives a
+message about a child who is not theirs, nor another school's; a failed send
+is retried and then shown as failed. Persona sweep: the Messages page for
+each role that may see it, and a 403 for the rest. Audit and drift clean.
+
+---
+
 ## 10. Sequence and effort
 
 ```
@@ -991,6 +1034,7 @@ Wave 0 ──► Wave 1 ──► Wave 2 ──► Wave 4 (reorganise)
 Wave 6: 6.0 modules ──► 6.1 core-only ──► 6.2 shared additions ──► 6.3 packs (per customer)
 Wave 7: 7.1 subjects ──► 7.2 gradebook ──► 7.3 report cards
                     └──► 7.4 timetable grid
+Wave 8: 8.0 outbox ──► 8.1 sender + log ──► 8.2 messages (email) ──► 8.3 preferences ──► 8.4 WhatsApp (after D16–D18)
 ```
 
 | Wave | Effort (one developer) | Calendar with API + client in parallel |
@@ -1007,6 +1051,8 @@ Wave 7: 7.1 subjects ──► 7.2 gradebook ──► 7.3 report cards
 | 6.3 Each pack | 10–15 days | when a customer signs |
 | 7.1–7.3 Subjects, gradebook, report cards | 18–23 days | before 6.2 while schools are the customers; ship by a term's end |
 | 7.4 Timetable grid | 7–8 days | after 7.1 |
+| 8.0–8.3 Outbox, sender, messages by email, preferences | 15–18 days | alongside Wave 7; the email messages can ship first |
+| 8.4 WhatsApp | 5–8 days | once D16–D18 are decided and templates approved |
 
 About nine weeks for two developers, or twelve for one. Wave 1 alone removes
 every hard block in the map and is worth shipping before anything else.
