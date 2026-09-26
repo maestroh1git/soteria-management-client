@@ -188,3 +188,27 @@ on('GET', /^\/reports\/fees-vs-payroll$/, () => ({
   months: [[4, 21400000, 16980000], [5, 8200000, 17050000], [6, 3100000, 17120000], [7, 1200000, 17310000], [8, 600000, 17380000], [9, 48200000, 17460000]]
     .map(([month, fees, pay]) => ({ year: 2026, month, feesIn: fees.toFixed(2), payrollCost: pay.toFixed(2) })),
 }));
+
+// ── Register, remembered: a submit is kept, so the next load is "taken" ──
+let REGISTER = null; // studentId → mark, once submitted
+on('POST', /^\/attendance\/register$/, ({ body }) => {
+  const at = new Date('2026-09-24T07:53:00').toISOString();
+  const was = REGISTER;
+  REGISTER = {};
+  let created = 0, corrected = 0, unchanged = 0;
+  for (const m of body.marks) {
+    const prev = was?.[m.studentId];
+    const same = prev && prev.status === m.status && (prev.reasonCode ?? null) === (m.reasonCode ?? null);
+    REGISTER[m.studentId] = same ? prev : { ...m, recordedAt: was ? new Date('2026-09-24T10:12:00').toISOString() : at, recordedByName: was ? 'Grace Ade' : 'Amaka Eze' };
+    if (!prev) created++; else if (same) unchanged++; else corrected++;
+  }
+  return { created, corrected, unchanged, rejected: [], conflicts: [], warnings: [] };
+});
+on('GET', /^\/attendance\/register$/, ({ q }) => ({
+  classArmId: 'arm-jss2-gold', className: 'JSS2 Gold', date: q.get('date'), dayType: 'TEACHING', termId: 'term1', termName: 'First Term',
+  markable: true, blockedReason: null, alreadyMarked: !!REGISTER, canAmend: true,
+  pupils: JSS2.map((p) => {
+    const m = REGISTER?.[p.studentId];
+    return m ? { ...p, status: m.status, reasonCode: m.reasonCode ?? null, minutesLate: m.minutesLate ?? null, markId: 'm-' + p.studentId, recordedAt: m.recordedAt, recordedByName: m.recordedByName } : p;
+  }),
+}));

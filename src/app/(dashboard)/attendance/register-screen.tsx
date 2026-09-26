@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CalendarOff, Check, Loader2 } from 'lucide-react';
+import { AlertTriangle, CalendarOff, CircleCheck, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import {
     type SubmitMark,
 } from '@/lib/api/attendance';
 import { cn } from '@/lib/utils';
-import { formatDayOfWeek } from '@/lib/utils/dates';
+import { formatDateTime, formatDayOfWeek, formatTime } from '@/lib/utils/dates';
 import { StudentLink } from '@/components/common/entity-link';
 
 interface Draft {
@@ -26,6 +26,21 @@ interface Draft {
 }
 
 const REASONS = Object.keys(ABSENCE_REASON_LABELS) as AbsenceReason[];
+
+const STATUS_LABEL: Record<AttendanceStatus, string> = {
+    PRESENT: 'Present',
+    LATE: 'Late',
+    ABSENT: 'Absent',
+    EXCUSED: 'Excused',
+};
+
+/** Whether a mark on screen says something different from the one on record. */
+function differs(a: Draft | undefined, b: Draft | undefined): boolean {
+    if (!a || !b) return a !== b;
+    if (a.status !== b.status) return true;
+    if ((a.reasonCode ?? null) !== (b.reasonCode ?? null)) return true;
+    return a.status === 'LATE' && (a.minutesLate ?? null) !== (b.minutesLate ?? null);
+}
 
 /** A crash or a back-swipe must not cost a marked register. */
 const draftKey = (armId: string, date: string) => `attendance-draft:${armId}:${date}`;
@@ -39,11 +54,22 @@ export function RegisterScreen({
     date: string;
     onDateChange?: (date: string) => void;
 }) {
-    const { data, isLoading, isError } = useRegister(classArmId, date);
+    const { data, dataUpdatedAt, isLoading, isError } = useRegister(classArmId, date);
     const submit = useSubmitRegister();
     const [drafts, setDrafts] = useState<Record<string, Draft>>({});
     const [correctionNote, setCorrectionNote] = useState('');
-    const [submitted, setSubmitted] = useState(false);
+    /**
+     * What was just saved, held only until the refetch brings the server's
+     * copy (`at` is when the payload it was saved over arrived). Without it the
+     * bar would flash "Save 14 changes" between the save landing and the
+     * register reloading; held any longer, a mark the server refused would
+     * pass for saved. Keyed on the fetch time, not the payload: a refetch that
+     * finds nothing changed (every mark refused) returns the same object.
+     */
+    const [justSaved, setJustSaved] = useState<{
+        marks: Record<string, Draft>;
+        at: number;
+    } | null>(null);
     const [seededFor, setSeededFor] = useState<string | null>(null);
 
     /**
@@ -107,11 +133,57 @@ export function RegisterScreen({
 
         setSeededFor(seedKey);
         setDrafts({ ...seeded, ...(usable ?? {}) });
-        setSubmitted(false);
+        setJustSaved(null);
     }
 
+    /*
+     * The register as the school has it: each pupil's mark on record, or none
+     * when the register has never been taken. Everything the bar says comes
+     * from comparing the screen with this.
+     */
+    const saved = useMemo<Record<string, Draft> | null>(() => {
+        if (justSaved && justSaved.at === dataUpdatedAt) return justSaved.marks;
+        if (!data?.alreadyMarked) return null;
+        const out: Record<string, Draft> = {};
+        for (const p of data.pupils) {
+            if (!p.status) continue;
+            out[p.studentId] = {
+                status: p.status,
+                reasonCode: p.reasonCode ?? undefined,
+                minutesLate: p.minutesLate ?? undefined,
+            };
+        }
+        return out;
+    }, [data, dataUpdatedAt, justSaved]);
+    const taken = saved !== null;
+    const changed = useMemo(
+        () =>
+            saved
+                ? Object.keys(drafts).filter((id) => differs(drafts[id], saved[id]))
+                : [],
+        [drafts, saved],
+    );
+
+    // Who took the register and when, and the latest correction if there was
+    // one, from the marks themselves. Said in the bar so a glance answers
+    // "has this been done?" without opening anything.
+    const takenBy = useMemo(() => {
+        const stamped = (data?.pupils ?? [])
+            .filter((p) => p.recordedAt)
+            .sort((a, b) => a.recordedAt!.localeCompare(b.recordedAt!));
+        if (!stamped.length) return null;
+        const first = stamped[0];
+        const last = stamped[stamped.length - 1];
+        const corrected =
+            new Date(last.recordedAt!).getTime() - new Date(first.recordedAt!).getTime() >
+            60_000;
+        return { first, last: corrected ? last : null };
+    }, [data]);
+
     useEffect(() => {
-        if (!data || submitted) return;
+        // Only a register not yet taken needs protecting against a lost tab;
+        // once taken, the server is the record.
+        if (!data || taken) return;
         if (!Object.keys(drafts).length) return;
         try {
             window.localStorage.setItem(
@@ -121,7 +193,7 @@ export function RegisterScreen({
         } catch {
             // Nothing to do; the in-memory state is still authoritative.
         }
-    }, [drafts, data, submitted]);
+    }, [drafts, data, taken]);
 
     const tally = useMemo(() => {
         const t = { PRESENT: 0, LATE: 0, ABSENT: 0, EXCUSED: 0 };
@@ -198,11 +270,19 @@ export function RegisterScreen({
         );
     }
 
-    const setDraft = (studentId: string, patch: Partial<Draft>) =>
+    const setDraft = (studentId: string, patch: Partial<Draft>) => {
+        setJustSaved(null);
         setDrafts((prev) => ({
             ...prev,
             [studentId]: { ...prev[studentId], ...patch },
         }));
+    };
+
+    /** Back to the register as it was saved. */
+    const discard = () => {
+        if (saved) setDrafts((prev) => ({ ...prev, ...saved }));
+        setCorrectionNote('');
+    };
 
     const onSubmit = () => {
         const marks: SubmitMark[] = Object.entries(drafts).map(([studentId, d]) => ({
@@ -219,8 +299,17 @@ export function RegisterScreen({
                 correctionNote: correctionNote.trim() || undefined,
             },
             {
-                onSuccess: () => {
-                    setSubmitted(true);
+                onSuccess: (result) => {
+                    // Held as saved: what landed. A refused mark keeps the one
+                    // on record, so it still shows as a change to save.
+                    const refused = new Set(result.rejected.map((r) => r.studentId));
+                    const landed: Record<string, Draft> = {};
+                    for (const [id, d] of Object.entries(drafts)) {
+                        if (!refused.has(id)) landed[id] = d;
+                        else if (saved?.[id]) landed[id] = saved[id];
+                    }
+                    setJustSaved({ marks: landed, at: dataUpdatedAt });
+                    setCorrectionNote('');
                     try {
                         window.localStorage.removeItem(
                             draftKey(data.classArmId, data.date),
@@ -245,7 +334,12 @@ export function RegisterScreen({
      * is a backfill, not a correction, and needs no explanation.
      */
     const needsCorrectionNote =
-        !isToday && data.alreadyMarked && !correctionNote.trim();
+        !isToday && taken && changed.length > 0 && !correctionNote.trim();
+    // A note is asked for only when there is something to explain: a backfill,
+    // or a change to a register taken on another day.
+    const showNote = !isToday && (!taken || changed.length > 0);
+    const stamp = (at: string) => (isToday ? formatTime(at) : formatDateTime(at));
+    const tallyText = `${tally.PRESENT} present · ${tally.LATE} late · ${tally.ABSENT} absent`;
 
     return (
         <div className="space-y-4">
@@ -258,9 +352,17 @@ export function RegisterScreen({
                         {data.termName}
                     </p>
                 </div>
-                <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold tabular-nums">
-                    {data.pupils.length} pupils
-                </span>
+                <div className="flex items-center gap-2">
+                    {taken && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                            Taken
+                        </span>
+                    )}
+                    <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold tabular-nums">
+                        {data.pupils.length} pupils
+                    </span>
+                </div>
             </div>
 
             <div
@@ -303,18 +405,18 @@ export function RegisterScreen({
                 </dl>
             </details>
 
-            {data.alreadyMarked && !submitted && (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-                    This register has already been taken. Changes you make will be
-                    saved as corrections, and the original marks are kept.
+            {taken && changed.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                    Tap a mark to correct it. Corrections are saved alongside the
+                    original marks, which are kept.
                 </p>
             )}
 
-            {!isToday && (
+            {showNote && (
                 <div className="space-y-2">
                     <Label htmlFor="correction-note">
                         Why is this register being changed after its own day?
-                        {data.alreadyMarked ? (
+                        {taken ? (
                             <span className="ml-1 text-muted-foreground">
                                 (required)
                             </span>
@@ -325,7 +427,7 @@ export function RegisterScreen({
                         value={correctionNote}
                         onChange={(e) => setCorrectionNote(e.target.value)}
                         placeholder="The school office will be asked about this"
-                        aria-required={data.alreadyMarked}
+                        aria-required={taken}
                     />
                 </div>
             )}
@@ -335,8 +437,16 @@ export function RegisterScreen({
                     const draft = drafts[p.studentId] ?? { status: 'PRESENT' as const };
                     const needsReason =
                         draft.status === 'ABSENT' || draft.status === 'EXCUSED';
+                    const isChanged = changed.includes(p.studentId);
+                    const was = isChanged ? saved?.[p.studentId] : undefined;
                     return (
-                        <li key={p.studentId} className="px-3 py-2.5">
+                        <li
+                            key={p.studentId}
+                            className={cn(
+                                'px-3 py-2.5',
+                                isChanged && 'bg-amber-50 shadow-[inset_3px_0_0_var(--color-amber-500)] dark:bg-amber-950/20',
+                            )}
+                        >
                             {/* Stacked on a phone. Side by side, a four-way
                                 control leaves the name about 90px, and
                                 "Nwachuk…" is not a pupil a teacher can tell
@@ -355,6 +465,11 @@ export function RegisterScreen({
                                         </p>
                                         <p className="truncate text-xs tabular-nums text-muted-foreground">
                                             {p.admissionNumber}
+                                            {isChanged && (
+                                                <span className="ml-2 font-medium text-amber-700 dark:text-amber-400">
+                                                    {was ? `was ${STATUS_LABEL[was.status]}` : 'not marked yet'}
+                                                </span>
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -468,26 +583,72 @@ export function RegisterScreen({
                             reason before this register can be saved.
                         </p>
                     )}
-                    <Button
-                        className="h-12 w-full text-base"
-                        onClick={onSubmit}
-                        disabled={
-                            submit.isPending || incomplete > 0 || needsCorrectionNote
-                        }
-                    >
-                        {submit.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : submitted ? (
-                            <Check className="h-4 w-4" />
-                        ) : null}
-                        <span className="ml-2">
-                            {submitted ? 'Register saved' : 'Submit register'}
-                            <span className="ml-2 text-xs font-normal opacity-80 tabular-nums">
-                                {tally.PRESENT} present · {tally.LATE} late ·{' '}
-                                {tally.ABSENT} absent
+                    {!taken ? (
+                        <Button
+                            className="h-12 w-full text-base"
+                            onClick={onSubmit}
+                            disabled={submit.isPending || incomplete > 0}
+                        >
+                            {submit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                            <span className="ml-2">
+                                Submit register
+                                <span className="ml-2 text-xs font-normal opacity-80 tabular-nums">
+                                    {tallyText}
+                                </span>
                             </span>
-                        </span>
-                    </Button>
+                        </Button>
+                    ) : changed.length === 0 ? (
+                        /* Taken and unchanged: a statement, not a button. There
+                           is nothing to do, so nothing to press. */
+                        <div
+                            role="status"
+                            className="flex min-h-12 flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200"
+                        >
+                            <CircleCheck className="h-4 w-4 flex-none" aria-hidden="true" />
+                            <span className="font-medium">
+                                Register taken
+                                {takenBy?.first.recordedAt && (
+                                    <>
+                                        {' '}· {stamp(takenBy.first.recordedAt)}
+                                        {takenBy.first.recordedByName && ` by ${takenBy.first.recordedByName}`}
+                                    </>
+                                )}
+                            </span>
+                            <span className="text-xs tabular-nums opacity-80">{tallyText}</span>
+                            {takenBy?.last?.recordedAt && (
+                                <span className="w-full pl-6 text-xs opacity-80">
+                                    Last corrected {stamp(takenBy.last.recordedAt)}
+                                    {takenBy.last.recordedByName && ` by ${takenBy.last.recordedByName}`}
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                className="h-12"
+                                onClick={discard}
+                                disabled={submit.isPending}
+                            >
+                                Discard
+                            </Button>
+                            <Button
+                                className="h-12 flex-1 text-base"
+                                onClick={onSubmit}
+                                disabled={submit.isPending || incomplete > 0 || needsCorrectionNote}
+                            >
+                                {submit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                <span className="ml-2">
+                                    Save {changed.length} {changed.length === 1 ? 'change' : 'changes'}
+                                    {/* Beside Discard there is no room on a phone; the
+                                        tally is at the top of the register anyway. */}
+                                    <span className="ml-2 hidden text-xs font-normal opacity-80 tabular-nums sm:inline">
+                                        {tallyText}
+                                    </span>
+                                </span>
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
