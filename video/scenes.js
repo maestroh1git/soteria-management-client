@@ -50,7 +50,7 @@
    * A browser window holding the desktop app at its real 1440×900, scaled.
    * `frame` is the unscaled coordinate space for pointers.
    */
-  function desk(parent, F, { x, y, scale = 0.72, url, active, user = 'Adebayo Bello' }) {
+  function desk(parent, F, { x = 620, y = 175, scale = 0.86, url, active, user = 'Adebayo Bello' }) {
     const W = 1440, H = 936;
     const win = place(h('div', 'bw', parent), { x, y, w: W * scale, h: H * scale });
     const frame = h('div', 'bw-frame', win);
@@ -84,7 +84,9 @@
     /**
      * Zoom inside the window, like a screen recording that punches in:
      * keys = [[time, zoom, fx, fy]], (fx, fy) the focus as fractions of the page.
-     * The window stays put; its contents scale about the focus.
+     * The window stays put; its contents scale about the focus. `desk.CONTENT`
+     * is the zoom at which the page's main area exactly fills the window (the
+     * sidebar slides wholly out of frame rather than being cut through).
      */
     const zoom = (t, keys) => {
       let [z, fx, fy] = keys[0].slice(1);
@@ -96,7 +98,7 @@
       const px = fx * W, py = fy * H;
       frame.style.transform = `translate(${scale * px * (1 - z)}px, ${scale * py * (1 - z)}px) scale(${scale * z})`;
     };
-    return { win, frame, app, main, mainEl, setActive, zoom };
+    return { win, frame, app, main, mainEl, setActive, zoom, C: W / (W - 256) };
   }
 
   /** A phone: a 390×844 screen with a status bar, then the app or a page below it. */
@@ -239,8 +241,8 @@
 
   function register(root, sc, F) {
     const s = F.story;
-    const caps = captions(root, sc, { x: 130, y: 380, width: 900 });
-    const ph = phone(root, { x: 1300, y: 140, time: '7:52' });
+    const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
+    const ph = phone(root, { x: 1060, y: 115, scale: 1, time: '7:52' });
     const { main } = phoneApp(ph.content, 'AE');
     // register/page.tsx + register-screen.tsx
     h('div', 'reg-h', main, `<div class="row gap12" style="align-items:flex-start">${I('ArrowLeft')}<div><div class="h1s">Register</div><div class="mut">${s.pupilClass}</div></div></div><div><div class="lbl" style="margin-bottom:4px">Date</div><div class="inp num" style="width:150px">24/09/2026 ${I('Calendar')}</div></div>`);
@@ -301,8 +303,8 @@
 
   function atrisk(root, sc, F) {
     const s = F.story;
-    const caps = captions(root, sc, { x: 1230, y: 330, width: 620 });
-    const d = desk(root, F, { x: 95, y: 200, url: 'greenfield.soteria.app/attendance/at-risk', active: 'Follow up' });
+    const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
+    const d = desk(root, F, { url: 'greenfield.soteria.app/attendance/at-risk', active: 'Follow up' });
     h('div', '', d.main, `<div class="h1">Pupils to follow up</div><div class="lead">Attendance below your threshold this term, worst first. A child who stops coming usually stops weeks before anyone notices.</div>`);
     h('div', 'row', d.main, `<div><div class="lbl">Term</div><div class="inp" style="width:208px">First Term<span class="chev">${I('ChevronDown')}</span></div></div><div style="margin-left:16px"><div class="lbl">Below (%)</div><div class="inp num" style="width:96px">85</div></div><div class="mut" style="margin:22px 0 0 16px"><span class="cnt">3</span> pupils of 14 teaching days so far.</div>`).style.marginTop = '24px';
     const cnt = d.main.querySelector('.cnt');
@@ -339,7 +341,7 @@
 
     return (lt) => {
       caps(lt);
-      A.slide(d.win, lt, 0, { dx: -80, dur: 0.7 });
+      A.slide(d.win, lt, 0, { dx: 80, dur: 0.7 });
       // Tobi's slide below the others lands him first on a list sorted worst first.
       const enter = ease.outQuint(prog(lt, 1.9, 0.5));
       T.rows.slice(1).forEach((r, i) => A.rise(r, lt, 0.35 + i * 0.1, { dy: 12 }));
@@ -364,7 +366,7 @@
       if (lt >= 6.5) A.pop(lastCell.firstChild, lt, 6.5, { from: 0.8 });
       const [lx, ly] = at(logBtn, d.frame, -30, 0);
       const [sx, sy] = at(save, d.frame, -10, -4);
-      d.zoom(lt, [[0, 1, 0.5, 0.5], [1.8, 1, 0.5, 0.5], [2.3, 1.45, 0.3, 0.42], [3.3, 1.45, 0.3, 0.42], [3.7, 1.25, 0.75, 0.42], [4.1, 1.4, 0.5, 0.42], [6.3, 1.4, 0.5, 0.42], [6.8, 1.35, 0.72, 0.42]]);
+      d.zoom(lt, [[0, 1, 1, 0], [1.6, 1, 1, 0], [2.1, d.C, 1, 0.15], [3.8, d.C, 1, 0.15], [4.2, d.C, 1, 0.4], [6.4, d.C, 1, 0.4], [6.8, d.C, 1, 0.2]]);
       move(lt, [[3.1, 1100, 750], [3.8, lx, ly], [4.2, lx, ly], [5.8, sx + 60, sy + 60], [6.1, sx, sy], [6.6, sx, sy], [7.2, 900, 780]], [3.95, 6.2], 3.1);
     };
   }
@@ -372,8 +374,8 @@
   /* ── 3 · The gate (Front desk) ─────────────────────────────────── */
 
   function gate(root, sc, F) {
-    const caps = captions(root, sc, { x: 120, y: 380 });
-    const d = desk(root, F, { x: 830, y: 200, url: 'greenfield.soteria.app/attendance/gate', active: 'The Gate' });
+    const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
+    const d = desk(root, F, { url: 'greenfield.soteria.app/attendance/gate', active: 'The Gate' });
     h('div', '', d.main, `<div class="h1s">The gate</div><div class="subs">Sign a pupil out during the day, and back in when they return.</div>`);
     const card = h('div', 'cd', d.main);
     card.style.cssText = 'margin-top:24px;padding:20px 24px 24px';
@@ -429,7 +431,7 @@
       results.style.display = 'none'; chosen.style.display = 'block';
       const pb = P(barred, -380), pm = P(mum, -380), pg = P(go, -10);
       [results.style.display, chosen.style.display] = shown;
-      d.zoom(lt, [[0, 1, 0.5, 0.5], [0.4, 1, 0.5, 0.5], [0.9, 1.3, 0.5, 0.25], [1.9, 1.3, 0.5, 0.3], [2.3, 1.4, 0.45, 0.42], [4.6, 1.4, 0.45, 0.42], [5.2, 1.15, 0.5, 0.45]]);
+      d.zoom(lt, [[0, 1, 1, 0], [0.4, 1, 1, 0], [0.9, d.C, 1, 0.1], [1.9, d.C, 1, 0.2], [2.3, d.C, 1, 0.55], [4.6, d.C, 1, 0.55], [5.2, d.C, 1, 0.3]]);
       move(lt, [[1.0, 900, 700], [1.45, ...r1], [1.8, ...r1], [2.3, ...pb], [3.3, ...pb], [3.55, ...pm], [3.9, ...pm], [4.25, ...pg], [4.8, ...pg], [5.4, 1100, 820]], [1.6, 2.4, 3.6, 4.3], 1.0);
     };
   }
@@ -439,8 +441,8 @@
   function invoice(root, sc, F) {
     const s = F.story;
     const bal = s.feeTotal - s.feePaid;
-    const caps = captions(root, sc, { x: 120, y: 330 });
-    const d = desk(root, F, { x: 830, y: 200, url: 'greenfield.soteria.app/fees/invoices/inv-0413', active: 'Fees' });
+    const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
+    const d = desk(root, F, { url: 'greenfield.soteria.app/fees/invoices/inv-0413', active: 'Fees' });
     h('div', 'tabs-u', d.main, [['Price list', 'BadgeDollarSign'], ['Invoices', 'ReceiptText'], ['Receipts', 'HandCoins'], ['Concessions', 'BadgePercent'], ['Optional fees', 'Bus'], ['Arrears', 'TrendingDown']].map(([t, i]) => `<span class="${t === 'Invoices' ? 'on' : ''}">${I(i)}${t}</span>`).join(''));
     const head = h('div', 'row', d.main, `<div class="grow"><div class="mut row gap8" style="font-size:13px">${I('ArrowLeft', 'i14')}Invoices</div><div class="h1s b7" style="margin-top:4px">INV-2026-0413</div><div class="subs">Adeyemi, Tobi · GFC/2025/0339 · JSS2 · First Term</div></div>`);
     head.style.alignItems = 'flex-start';
@@ -457,7 +459,7 @@
     const move = pointer(d.frame);
 
     // The parent's phone: the school sends the PDF, whose link opens the bill.
-    const ph = phone(root, { x: 1300, y: 140, time: '14:00' });
+    const ph = phone(root, { x: 1060, y: 115, scale: 1, time: '14:00' });
     const chat = h('div', 'chat', ph.content, `<div class="chat-h">${I('ChevronLeft', 'i20')}<span class="sb-logo" style="width:32px;height:32px;border-radius:50%;font-size:13px">G</span><div><div class="b6">${s.school}</div><div class="xs mut">Bursary</div></div></div><div class="chat-body"></div>`);
     const body = chat.querySelector('.chat-body');
     const msg = h('div', 'bubble', body, `<div class="att">${I('FileText', 'i20')}<div><div class="b5">invoice-INV-2026-0413.pdf</div><div class="xs mut">PDF · 1 page</div></div></div><div style="margin-top:8px">Good afternoon Ma. ${s.pupil.split(' ')[0]}'s ${s.term.split(' ').slice(0, 2).join(' ')} bill. You can also open it here:</div><div class="link">greenfield.soteria.app/invoice/7fk2Q…</div><div class="xs mut r" style="margin-top:4px">2:00 PM</div>`);
@@ -482,7 +484,7 @@
       set(pdf, { s: lt >= 1.5 && lt < 1.65 ? 0.95 : 1 });
       A.slide(dl, lt, 1.75, { dy: 20, dur: 0.4 });
       const [px, py] = at(pdf, d.frame, -8, -2);
-      d.zoom(lt, [[0, 1, 0.5, 0.5], [0.6, 1, 0.5, 0.5], [1.1, 1.3, 0.75, 0.22], [3, 1.3, 0.75, 0.22]]);
+      d.zoom(lt, [[0, 1, 1, 0], [0.6, 1, 1, 0], [1.1, d.C, 1, 0.05], [3, d.C, 1, 0.05]]);
       move(lt, [[0.8, 700, 700], [1.35, px, py]], [1.5], 0.8);
       A.slide(ph.el, lt, 3.2, { dy: 140, dur: 0.6 });
       A.slide(msg, lt, 3.6, { dy: 20, dur: 0.4, s: 0.96 });
@@ -500,8 +502,8 @@
   function ledger(root, sc, F) {
     const s = F.story;
     const bal = s.feeTotal - s.feePaid;
-    const caps = captions(root, sc, { x: 120, y: 360 });
-    const d = desk(root, F, { x: 830, y: 200, url: 'greenfield.soteria.app/fees/payments', active: 'Fees' });
+    const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
+    const d = desk(root, F, { url: 'greenfield.soteria.app/fees/payments', active: 'Fees' });
     // Before: Receipts, with "Record a payment" open.
     const rec = h('div', 'layer-a', d.main);
     h('div', 'tabs-u', rec, [['Price list', 'BadgeDollarSign'], ['Invoices', 'ReceiptText'], ['Receipts', 'HandCoins'], ['Concessions', 'BadgePercent'], ['Optional fees', 'Bus'], ['Arrears', 'TrendingDown']].map(([t, i]) => `<span class="${t === 'Receipts' ? 'on' : ''}">${I(i)}${t}</span>`).join(''));
@@ -551,7 +553,7 @@
     edlg.style.top = '380px';
     const move = pointer(d.frame);
     // The parent's bill, now settled.
-    const mini = phone(root, { x: 1620, y: 430, scale: 0.56, time: '16:10' });
+    const mini = phone(root, { x: 1640, y: 470, scale: 0.56, time: '16:10' });
     const mp = h('div', 'pub', mini.content);
     mp.innerHTML = `<div style="text-align:center"><div class="b7" style="font-size:20px;line-height:28px">${s.school}</div><div class="mut">Invoice INV-2026-0413 · ${s.term}</div></div>
       <div class="cd due"><div class="stp"><div class="mut">Still to pay</div><div class="due-v num">${naira2(bal)}</div><div class="mut">Due Sep 30, 2026</div></div><div class="paid">${I('CircleCheck', 'i20')}<div class="b6" style="font-size:18px;color:#16a34a;margin-top:8px">Paid in full</div><div class="mut" style="margin-top:6px">Thank you. Nothing is outstanding on this bill.</div></div></div>
@@ -594,7 +596,7 @@
       else set(ovl, { o: eo * (1 - eclose) });
       const [gx, gy] = at(go, d.frame, -10, -4);
       const [jx, jy] = at(jNew, d.frame, -200, 0);
-      d.zoom(lt, [[0, 1.35, 0.5, 0.42], [1.9, 1.35, 0.5, 0.42], [2.4, 1, 0.5, 0.5], [2.8, 1, 0.5, 0.5], [3.3, 1.25, 0.4, 0.45], [3.7, 1.25, 0.4, 0.45], [4.0, 1.35, 0.5, 0.52], [6.9, 1.35, 0.5, 0.52], [7.3, 1.1, 0.4, 0.4]]);
+      d.zoom(lt, [[0, d.C, 1, 0.3], [1.9, d.C, 1, 0.3], [2.4, 1, 1, 0], [2.8, 1, 1, 0], [3.3, d.C, 1, 0.2], [3.7, d.C, 1, 0.2], [4.0, d.C, 1, 0.45], [6.9, d.C, 1, 0.45], [7.3, d.C, 1, 0.2]]);
       move(lt, [[0.9, 1000, 820], [1.6, gx, gy], [2.3, gx, gy], [3.2, jx + 100, jy + 80], [3.6, jx, jy], [4.2, jx, jy]], [1.85, 3.7], 0.9, 4.3);
       A.slide(mini.el, lt, 4.4, { dy: 60, dur: 0.6 });
       const pk = ease.outCubic(prog(lt, 5.0, 0.35));
@@ -608,8 +610,8 @@
 
   function payroll(root, sc, F) {
     const s = F.story;
-    const caps = captions(root, sc, { x: 120, y: 360 });
-    const d = desk(root, F, { x: 700, y: 200, url: 'greenfield.soteria.app/payroll/september-2026', active: 'Pay runs' });
+    const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
+    const d = desk(root, F, { url: 'greenfield.soteria.app/payroll/september-2026', active: 'Pay runs' });
     h('div', 'mut row gap8', d.main, `Pay runs ${I('ChevronRight', 'i14')} Payroll ${I('ChevronRight', 'i14')} ${s.payrollMonth}`);
     h('div', 'row gap12', d.main, `<div class="h1">${s.payrollMonth}</div><span class="bdg t-waiting">Processing</span>`).style.marginTop = '8px';
     h('div', 'lead', d.main, 'Sep 1, 2026 – Sep 30, 2026 · Paid Sep 25, 2026');
@@ -628,7 +630,7 @@
     const T = table(card, '48px 1.6fr 1fr 1fr 1fr 1fr 110px', ['<span class="cbx"></span>', 'Employee', '>Gross', '>Deductions', '>Net', 'Status', '>Actions'], staff.map(([n, g, dd]) => [['<span class="cbx"></span>', ''], n, [naira2(g), 'r num'], [naira2(dd), 'r num red'], [naira2(g - dd), 'r num b7'], ['<span class="bdg t-active">Approved</span>', ''], [`<span class="row gap12" style="justify-content:flex-end">${I('Eye')}<span style="color:#2563eb">${I('CreditCard')}</span></span>`, 'r']]));
     T.rows.forEach((r) => (r.style.height = '60px'));
     // Amaka's own view: My Pay on her phone.
-    const ph = phone(root, { x: 1560, y: 205, scale: 0.8, time: '9:41' });
+    const ph = phone(root, { x: 1545, y: 180, scale: 0.85, time: '9:41' });
     const { main } = phoneApp(ph.content, 'AE');
     h('div', '', main, `<div class="h1">My Pay</div><div class="lead" style="margin-top:0">${s.educator.replace(/^Mrs /, '')} · GFC-E-014 · T3 · Educator</div>`);
     const slips = h('div', 'cd cd-p', main);
@@ -653,7 +655,7 @@
         x.out.textContent = x.f(count(lt, 0.4, 1.4, 0, x.v, ease.outCubic));
       });
       T.rows.forEach((r, i) => A.rise(r, lt, 0.9 + i * 0.08, { dy: 10 }));
-      d.zoom(lt, [[0, 1, 0.5, 0.5], [0.2, 1, 0.5, 0.5], [0.7, 1.25, 0.32, 0.3], [2.4, 1.25, 0.32, 0.3], [2.9, 1.15, 0.3, 0.55]]);
+      d.zoom(lt, [[0, 1, 1, 0], [0.2, 1, 1, 0], [0.7, d.C, 1, 0.15], [2.4, d.C, 1, 0.15], [2.9, d.C, 1, 0.5]]);
       A.slide(ph.el, lt, 2.3, { dy: 120, dur: 0.6 });
       sep.textContent = naira2(Math.round(count(lt, 2.7, 0.8, 0, s.payslipNet, ease.outExpo)));
       P.rows[0].style.background = lt >= 2.7 ? `rgba(219,234,254,${0.8 * (1 - prog(lt, 4.2, 0.8))})` : '#fff';

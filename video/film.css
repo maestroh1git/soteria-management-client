@@ -39,11 +39,11 @@ body { font-family: var(--t-fontSans), system-ui, sans-serif; -webkit-font-smoot
 
 /* ── Captions ────────────────────────────────────────────────────── */
 .caps { position: absolute; width: 700px; }
-.cap-line { font-size: 74px; line-height: 1.02; font-weight: 800; letter-spacing: -0.045em; color: var(--t-ink); white-space: nowrap; }
+.cap-line { font-size: 60px; line-height: 1.05; font-weight: 800; letter-spacing: -0.04em; color: var(--t-ink); white-space: normal; }
 .cap-big { font-size: 140px; letter-spacing: -0.055em; }
 .cap-word { display: inline-block; transform-origin: 30% 70%; margin-right: 0.22em; }
 .cap-word:last-child { margin-right: 0; }
-.cap-small { margin-top: 36px; font-size: 30px; line-height: 1.35; font-weight: 500; letter-spacing: -0.01em; color: var(--t-inkMuted); max-width: 600px; white-space: normal; }
+.cap-small { margin-top: 30px; font-size: 25px; line-height: 1.4; font-weight: 500; letter-spacing: -0.01em; color: var(--t-inkMuted); max-width: 470px; white-space: normal; }
 
 /* ── Devices ─────────────────────────────────────────────────────── */
 /* A browser window; the app inside is 1440 wide and scaled as one piece. */
