@@ -96,6 +96,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The product film (video/README.md): a standalone render tool, not app code.
+    "video/**",
   ]),
 ]);
 

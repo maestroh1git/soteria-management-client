@@ -10,6 +10,7 @@ import {
 } from '@/lib/api/payslips';
 import {
   getMonthlySummary,
+  getFeesVsPayroll,
   getTaxSummary,
   getLoanPortfolio,
   getDepartmentCost,
@@ -84,6 +85,14 @@ export function useMonthlySummary(
   return useQuery({
     queryKey: ['reports', 'monthly-summary', month, year],
     queryFn: () => getMonthlySummary(month, year),
+    enabled,
+  });
+}
+
+export function useFeesVsPayroll(months = 6, enabled = true) {
+  return useQuery({
+    queryKey: ['reports', 'fees-vs-payroll', months],
+    queryFn: () => getFeesVsPayroll(months),
     enabled,
   });
 }
