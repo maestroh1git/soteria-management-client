@@ -22,11 +22,40 @@
   <script src="icons.js"></script>
   <script src="scenes.js"></script>
   <script>
+    /**
+     * A cut is another edit of the same film (film.json → cuts): its own frame
+     * size and scene list. The scenes play back to back in the order given,
+     * each keeping its length, so every cue inside a scene stays on the beat.
+     */
+    function applyCut(F, name) {
+      F.soundtrack = 'soundtrack.wav';
+      if (!name) return F;
+      const cut = F.cuts[name];
+      if (!cut) throw new Error(`No cut named ${name} in film.json`);
+      let t = 0;
+      F.scenes = cut.scenes.map((id) => {
+        const sc = F.scenes.find((x) => x.id === id);
+        const dur = sc.end - sc.start;
+        const placed = { ...sc, start: t, end: t + dur };
+        t += dur;
+        return placed;
+      });
+      F.duration = t;
+      F.output = cut.output;
+      F.portrait = cut.output.height > cut.output.width;
+      F.soundtrack = `soundtrack-${name}.wav`;
+      return F;
+    }
+
     (async function boot() {
       const { h, set, ease, prog, clamp } = E;
-      const F = (window.FILM = await (await fetch('film.json')).json());
+      const q = new URLSearchParams(location.search);
+      const F = (window.FILM = applyCut(await (await fetch('film.json')).json(), q.get('cut')));
       for (const [k, v] of Object.entries(F.theme)) if (!k.startsWith('_')) document.documentElement.style.setProperty('--t-' + k, v);
       const stage = document.getElementById('stage');
+      stage.style.width = F.output.width + 'px';
+      stage.style.height = F.output.height + 'px';
+      stage.classList.toggle('portrait', !!F.portrait);
 
       const scenes = F.scenes.map((sc) => {
         const el = h('div', 'scene', stage);
@@ -84,17 +113,16 @@
       await document.fonts.load(`800 100px "${F.theme.fontSans}"`);
       await document.fonts.load(`500 20px "${F.theme.fontMono}"`);
       await document.fonts.ready;
-      const q = new URLSearchParams(location.search);
       seek(Number(q.get('t') || 0));
 
       if (!q.has('render')) {
         // Preview: scale to fit, scrub, and play in real time with the soundtrack if it has been built.
         document.body.classList.add('preview');
-        const fit = () => (stage.style.transform = `scale(${Math.min(innerWidth / 1920, (innerHeight - 44) / 1080)})`);
+        const fit = () => (stage.style.transform = `scale(${Math.min(innerWidth / F.output.width, (innerHeight - 44) / F.output.height)})`);
         addEventListener('resize', fit); fit();
         const scrub = document.getElementById('scrub'), tc = document.getElementById('tc'), btn = document.getElementById('play');
         scrub.max = F.duration;
-        const audio = new Audio('out/soundtrack.wav');
+        const audio = new Audio(`out/${F.soundtrack}`);
         let playing = false, t0 = 0, from = 0;
         const show = (t) => { seek(t); scrub.value = t; tc.textContent = t.toFixed(2) + 's'; };
         scrub.oninput = () => { from = Number(scrub.value); audio.currentTime = from; t0 = performance.now(); show(from); };

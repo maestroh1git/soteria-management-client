@@ -171,3 +171,36 @@ body { font-family: var(--t-fontSans), system-ui, sans-serif; -webkit-font-smoot
 .wordmark { position: absolute; left: 0; right: 0; text-align: center; font-weight: 800; letter-spacing: -0.06em; }
 .cta { position: absolute; left: 50%; display: flex; align-items: center; gap: 14px; height: 84px; padding: 0 44px; border-radius: 999px; background: var(--t-cta); color: var(--t-ctaText); font-size: 34px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
 .cta-url { position: absolute; left: 0; right: 0; text-align: center; font-family: var(--t-fontMono), monospace; font-size: 20px; letter-spacing: 0.12em; color: var(--t-inkMuted); }
+
+/* Owner dashboard (features/home/owner-overview.tsx) */
+.own-stat { padding: 24px; }
+.own-t { font-size: 14px; line-height: 19px; font-weight: 500; color: #737373; min-height: 38px; }
+.own-ic { padding: 10px; border-radius: 8px; background: rgba(23,23,23,0.1); display: grid; place-items: center; color: #171717; }
+.own-lower { display: grid; grid-template-columns: 2fr 3fr; gap: 24px; margin-top: 24px; }
+.own-wait { overflow: hidden; }
+.own-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid #e5e5e5; line-height: 20px; }
+.own-chart { padding: 24px; }
+.own-plot { position: relative; height: 240px; margin: 20px 0 0 56px; }
+.own-grid { position: absolute; left: 0; right: 0; border-top: 1px dashed #e5e5e5; }
+.own-grid span { position: absolute; right: calc(100% + 8px); top: -8px; font-size: 12px; color: #737373; white-space: nowrap; }
+.own-bars { position: absolute; inset: 0; display: flex; justify-content: space-around; align-items: flex-end; }
+.own-g { height: 100%; display: flex; flex-direction: column; align-items: center; position: relative; flex: 1; }
+.own-pair { flex: 1; display: flex; align-items: flex-end; gap: 2px; }
+.own-pair i { display: block; width: 28px; border-radius: 4px 4px 0 0; }
+.own-pair .fi { background: #059669; } .own-pair .pc { background: #2563eb; }
+.own-g span { position: absolute; top: calc(100% + 6px); font-size: 12px; color: #737373; }
+.own-legend { display: flex; justify-content: center; gap: 16px; margin-top: 32px; font-size: 13px; }
+.own-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
+
+/* ── Portrait (the 9:16 cut) ─────────────────────────────────────── */
+.portrait .hud-brand { left: 64px; top: 70px; font-size: 16px; }
+.portrait .hud-clockwrap { right: 64px; top: 58px; }
+.portrait .hud-persona { left: 64px; bottom: 70px; }
+.portrait .hud-progress { right: 64px; bottom: 76px; }
+.portrait .hud-progress i { width: 48px; }
+.portrait .caps { width: 920px; }
+.portrait .cap-line { font-size: 84px; }
+.portrait .cap-big { font-size: 130px; }
+.portrait .cap-small { font-size: 32px; max-width: 900px; }
+.portrait .one-window { top: 760px; }
+.portrait #stage::before, .portrait::before { background: radial-gradient(ellipse 80% 50% at 50% 55%, rgba(255,255,255,0.045), transparent 70%); }

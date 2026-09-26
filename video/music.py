@@ -2,7 +2,8 @@
 """
 The soundtrack, synthesised from scratch and timed from film.json.
 
-    python3 video/music.py   ->  video/out/soundtrack.wav
+    python3 video/music.py               ->  video/out/soundtrack.wav
+    python3 video/music.py --cut vertical  ->  video/out/soundtrack-vertical.wav
 
 Scene starts become impacts (with a whoosh leading in), caption lines become
 short hits, and the groove sits on the same 120 BPM grid the picture is cut
@@ -11,6 +12,7 @@ built here from sine waves and noise. Needs numpy and scipy.
 """
 import json
 import os
+import sys
 import wave
 
 import numpy as np
@@ -18,6 +20,18 @@ from scipy.signal import butter, sosfilt, fftconvolve
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILM = json.load(open(os.path.join(HERE, 'film.json')))
+CUT = sys.argv[sys.argv.index('--cut') + 1] if '--cut' in sys.argv else None
+if CUT:
+    # The same rule as index.html's applyCut: the cut's scenes back to back,
+    # each keeping its length.
+    t = 0
+    placed = []
+    for sid in FILM['cuts'][CUT]['scenes']:
+        sc = next(x for x in FILM['scenes'] if x['id'] == sid)
+        dur = sc['end'] - sc['start']
+        placed.append({**sc, 'start': t, 'end': t + dur})
+        t += dur
+    FILM['scenes'], FILM['duration'] = placed, t
 SR = 48000
 BPM = FILM['bpm']
 BEAT = 60 / BPM
@@ -177,6 +191,8 @@ def riser(dur):
 scenes = {s['id']: s for s in FILM['scenes']}
 S = lambda i: scenes[i]['start']
 GROOVE_FROM, GROOVE_TO = S('register'), S('end') + 2.5
+# The clap and arpeggio join on the second scene of the day, whichever it is in this cut.
+LAYER2 = FILM['scenes'][2]['start']
 # A minor: Am – F – C – G, one chord per bar.
 PROG = [('A2', ['A3', 'C4', 'E4']), ('F2', ['F3', 'A3', 'C4']), ('C3', ['G3', 'C4', 'E4']), ('G2', ['G3', 'B3', 'D4'])]
 ARP = [0, 1, 2, 1, 2, 0, 1, 2]
@@ -200,7 +216,7 @@ beats = np.arange(GROOVE_FROM, GROOVE_TO - 1e-6, BEAT)
 for b in beats:
     add(kick(), b, 0.9)
     i = int(round((b - GROOVE_FROM) / BEAT))
-    if i % 2 == 1 and b >= S('atrisk'):
+    if i % 2 == 1 and b >= LAYER2:
         add(clap(), b, 0.8, -0.1)
     add(hat(open_=True), b + BEAT / 2, 0.8, 0.25)
     for q in (0.25, 0.75):
@@ -212,7 +228,7 @@ for j, b in enumerate(np.arange(GROOVE_FROM, GROOVE_TO - 1e-6, bar_len)):
         f = note(root) * (2 if e % 2 else 1)
         add(bass(f, BEAT / 2 * 0.95), b + e * BEAT / 2, 0.55, duck=True)
     add(pad([note(n) for n in chord], bar_len), b, 0.45, duck=True)
-    if b >= S('atrisk'):
+    if b >= LAYER2:
         for k in range(16):  # sixteenth-note arpeggio, an octave up
             f = note(chord[ARP[k % 8]]) * 2
             add(pluck(f), b + k * BEAT / 4, 0.55 if k % 4 == 0 else 0.35, 0.35 if k % 2 else -0.35, duck=True)
@@ -270,7 +286,7 @@ n_out = int(DUR * SR)
 pcm = (np.stack([L[:n_out], R[:n_out]], axis=1) * 32767).astype('<i2')
 
 os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
-path = os.path.join(HERE, 'out', 'soundtrack.wav')
+path = os.path.join(HERE, 'out', f'soundtrack-{CUT}.wav' if CUT else 'soundtrack.wav')
 with wave.open(path, 'wb') as w:
     w.setnchannels(2)
     w.setsampwidth(2)

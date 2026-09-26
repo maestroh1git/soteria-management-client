@@ -16,7 +16,8 @@
 
   /* ── Captions ──────────────────────────────────────────────────── */
 
-  function captions(parent, sc, { x, y, width = 700 }) {
+  function captions(parent, sc, pos) {
+    const { x, y, width = 700 } = window.FILM.portrait ? { x: 80, y: 190, width: 920 } : pos;
     const box = place(h('div', 'caps', parent), { x, y, w: width });
     const items = sc.captions.map((c) => {
       if (c.small) return { c, el: h('div', 'cap-small', box, c.text) };
@@ -187,7 +188,11 @@
       ['receipt', 560, 150, -6, 3.0, '0414', 60000],
       ['sheet', 130, 770, -3, 3.25, 'fees_2026_FINAL_v4.xlsx'],
       ['chat', 1760, 600, 6, 3.5, 'Bursary', 'Who approved this expense??', 5],
-    ].map(([kind, x, y, r, t0, a, b, c], i) => {
+    ].map(([kind, x0, y0, r, t0, a, b, c], i) => {
+      // Portrait: the same scatter folded into the tall frame.
+      const P = F.portrait;
+      const x = P ? Math.round(((x0 - 130) / 1630) * 720) : x0;
+      const y = P ? Math.round(560 + (y0 / 980) * 1150) : y0;
       const el = place(h('div', 'frag frag-' + kind, root), { x, y });
       if (kind === 'sheet') {
         const rows = ['', 'A', 'B', 'C', 'D', '1', 'Name', 'Class', 'Amount', 'Paid?', '2', 'Adeyemi T.', 'JSS2', '185,000', '??', '3', 'Bello A.', 'JSS1', '185,000', 'yes', '4', 'Okoro D.', 'SS1', '#REF!', ''];
@@ -197,16 +202,16 @@
       } else {
         el.innerHTML = `<b>RECEIPT No. ${a}</b>Received from: ________<br>Sum of: ₦${b.toLocaleString('en-US')}<br>Being: school fees<br>Sign: ______`;
       }
-      return { el, x, y, r, t0, i, dim: x < 900 && y > 120 && y < 700 };
+      return { el, x, y, r, t0, i, dim: F.portrait ? false : x < 900 && y > 120 && y < 700 };
     });
 
-    const caps = place(h('div', 'caps', root), { x: 120, y: 330, w: 820 });
+    const caps = place(h('div', 'caps', root), F.portrait ? { x: 80, y: 200, w: 920 } : { x: 120, y: 330, w: 820 });
     const lines = sc.captions.filter((c) => !c.big).map((c) => {
       const line = h('div', 'cap-line', caps);
       return { c, line, words: c.text.split(' ').map((w) => h('span', 'cap-word', line, w)) };
     });
     const bigC = sc.captions.find((c) => c.big);
-    const big = place(h('div', 'cap-line cap-big abs', root), { x: 0, y: 590, w: 1920 });
+    const big = place(h('div', 'cap-line cap-big abs', root), F.portrait ? { x: 0, y: 1130, w: 1080 } : { x: 0, y: 590, w: 1920 });
     big.style.textAlign = 'center';
     const bigWords = bigC.text.split(' ').map((w) => h('span', 'cap-word', big, w));
     const win = h('div', 'one-window', root, `<span class="logo">${F.brand.product[0]}</span><span class="wm">${F.brand.product}</span>`);
@@ -220,8 +225,8 @@
         const ck = ease.inCubic(collapse);
         set(f.el, {
           o: clamp(k * 3) * (f.dim ? 0.35 : 1) * (1 - ck),
-          x: lerp(0, 960 - f.x - 150, ck) + Math.sin(lt * 37 + f.i * 3) * shake,
-          y: lerp(0, 415 - f.y - 50, ck) + Math.sin(lt * 1.4 + f.i) * 6,
+          x: lerp(0, (F.portrait ? 540 : 960) - f.x - 150, ck) + Math.sin(lt * 37 + f.i * 3) * shake,
+          y: lerp(0, (F.portrait ? 880 : 415) - f.y - 50, ck) + Math.sin(lt * 1.4 + f.i) * 6,
           s: lerp(0.7, 1, ease.outBack(k)) * lerp(1, 0.2, ck),
           r: f.r * (1 + ck * 3),
         });
@@ -242,7 +247,7 @@
   function register(root, sc, F) {
     const s = F.story;
     const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
-    const ph = phone(root, { x: 1060, y: 115, scale: 1, time: '7:52' });
+    const ph = phone(root, F.portrait ? { x: 296, y: 700, scale: 1.18, time: '7:52' } : { x: 1060, y: 115, scale: 1, time: '7:52' });
     const { main } = phoneApp(ph.content, 'AE');
     // register/page.tsx + register-screen.tsx
     h('div', 'reg-h', main, `<div class="row gap12" style="align-items:flex-start">${I('ArrowLeft')}<div><div class="h1s">Register</div><div class="mut">${s.pupilClass}</div></div></div><div><div class="lbl" style="margin-bottom:4px">Date</div><div class="inp num" style="width:150px">24/09/2026 ${I('Calendar')}</div></div>`);
@@ -375,7 +380,7 @@
 
   function gate(root, sc, F) {
     const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
-    const d = desk(root, F, { url: 'greenfield.soteria.app/attendance/gate', active: 'The Gate' });
+    const d = desk(root, F, { ...(F.portrait && { x: 40, y: 780, scale: 0.694 }), url: 'greenfield.soteria.app/attendance/gate', active: 'The Gate' });
     h('div', '', d.main, `<div class="h1s">The gate</div><div class="subs">Sign a pupil out during the day, and back in when they return.</div>`);
     const card = h('div', 'cd', d.main);
     card.style.cssText = 'margin-top:24px;padding:20px 24px 24px';
@@ -431,7 +436,12 @@
       results.style.display = 'none'; chosen.style.display = 'block';
       const pb = P(barred, -380), pm = P(mum, -380), pg = P(go, -10);
       [results.style.display, chosen.style.display] = shown;
-      d.zoom(lt, [[0, 1, 1, 0], [0.4, 1, 1, 0], [0.9, d.C, 1, 0.1], [1.9, d.C, 1, 0.2], [2.3, d.C, 1, 0.55], [4.6, d.C, 1, 0.55], [5.2, d.C, 1, 0.3]]);
+      if (F.portrait) {
+        // Narrow frame: punch further in on the form's left, where the names
+        // and the button are. `fx` keeps the crop's left edge on the sidebar's.
+        const z = 1.6, fx = 256 / (1 - 1 / z) / 1440;
+        d.zoom(lt, [[0, d.C, 1, 0.1], [0.5, d.C, 1, 0.1], [0.9, z, fx, 0.12], [1.9, z, fx, 0.22], [2.3, z, fx, 0.6], [4.6, z, fx, 0.6], [5.2, d.C, 1, 0.35]]);
+      } else d.zoom(lt, [[0, 1, 1, 0], [0.4, 1, 1, 0], [0.9, d.C, 1, 0.1], [1.9, d.C, 1, 0.2], [2.3, d.C, 1, 0.55], [4.6, d.C, 1, 0.55], [5.2, d.C, 1, 0.3]]);
       move(lt, [[1.0, 900, 700], [1.45, ...r1], [1.8, ...r1], [2.3, ...pb], [3.3, ...pb], [3.55, ...pm], [3.9, ...pm], [4.25, ...pg], [4.8, ...pg], [5.4, 1100, 820]], [1.6, 2.4, 3.6, 4.3], 1.0);
     };
   }
@@ -442,7 +452,7 @@
     const s = F.story;
     const bal = s.feeTotal - s.feePaid;
     const caps = captions(root, sc, { x: 110, y: 300, width: 470 });
-    const d = desk(root, F, { url: 'greenfield.soteria.app/fees/invoices/inv-0413', active: 'Fees' });
+    const d = desk(root, F, { ...(F.portrait && { x: 40, y: 780, scale: 0.694 }), url: 'greenfield.soteria.app/fees/invoices/inv-0413', active: 'Fees' });
     h('div', 'tabs-u', d.main, [['Price list', 'BadgeDollarSign'], ['Invoices', 'ReceiptText'], ['Receipts', 'HandCoins'], ['Concessions', 'BadgePercent'], ['Optional fees', 'Bus'], ['Arrears', 'TrendingDown']].map(([t, i]) => `<span class="${t === 'Invoices' ? 'on' : ''}">${I(i)}${t}</span>`).join(''));
     const head = h('div', 'row', d.main, `<div class="grow"><div class="mut row gap8" style="font-size:13px">${I('ArrowLeft', 'i14')}Invoices</div><div class="h1s b7" style="margin-top:4px">INV-2026-0413</div><div class="subs">Adeyemi, Tobi · GFC/2025/0339 · JSS2 · First Term</div></div>`);
     head.style.alignItems = 'flex-start';
@@ -459,7 +469,7 @@
     const move = pointer(d.frame);
 
     // The parent's phone: the school sends the PDF, whose link opens the bill.
-    const ph = phone(root, { x: 1060, y: 115, scale: 1, time: '14:00' });
+    const ph = phone(root, F.portrait ? { x: 296, y: 700, scale: 1.18, time: '14:00' } : { x: 1060, y: 115, scale: 1, time: '14:00' });
     const chat = h('div', 'chat', ph.content, `<div class="chat-h">${I('ChevronLeft', 'i20')}<span class="sb-logo" style="width:32px;height:32px;border-radius:50%;font-size:13px">G</span><div><div class="b6">${s.school}</div><div class="xs mut">Bursary</div></div></div><div class="chat-body"></div>`);
     const body = chat.querySelector('.chat-body');
     const msg = h('div', 'bubble', body, `<div class="att">${I('FileText', 'i20')}<div><div class="b5">invoice-INV-2026-0413.pdf</div><div class="xs mut">PDF · 1 page</div></div></div><div style="margin-top:8px">Good afternoon Ma. ${s.pupil.split(' ')[0]}'s ${s.term.split(' ').slice(0, 2).join(' ')} bill. You can also open it here:</div><div class="link">greenfield.soteria.app/invoice/7fk2Q…</div><div class="xs mut r" style="margin-top:4px">2:00 PM</div>`);
@@ -666,39 +676,55 @@
 
   function end(root, sc, F) {
     const s = F.story;
-    const d = desk(root, F, { x: 330, y: 150, scale: 0.875, url: 'greenfield.soteria.app', active: 'Dashboard' });
-    // (dashboard)/page.tsx for the owner: what waits on them, then the figures.
-    h('div', '', d.main, `<div class="h1">Welcome back, Adebayo</div><div class="lead">Here's an overview of ${s.school}'s payroll status</div>`);
-    h('div', 'caps-l', d.main, 'Waiting on you').style.cssText = 'margin:24px 0 12px;font-size:13px';
-    const waits = h('div', 'dash-waits', d.main);
-    [['Inbox', '2 decisions waiting on you', ''], ['ClipboardCheck', '3 registers not taken today', ''], ['BadgeDollarSign', '14 invoices overdue', '₦1,240,000.00 owed']].forEach(([ic, t, sub]) => h('div', 'cd dash-wait', waits, `<span style="color:#ea580c">${I(ic, 'i20')}</span><div class="grow"><div>${t}</div>${sub ? `<div class="xs mut num">${sub}</div>` : ''}</div>${I('ArrowRight')}`));
+    const P = F.portrait;
+    const d = desk(root, F, P ? { x: 40, y: 640, scale: 0.694, url: 'greenfield.soteria.app', active: 'Dashboard' } : { x: 330, y: 150, scale: 0.875, url: 'greenfield.soteria.app', active: 'Dashboard' });
+    // features/home/owner-overview.tsx: how the school is doing, on one screen.
+    h('div', '', d.main, `<div class="h1">Good afternoon, Adebayo</div><div class="lead">${s.school} · Thursday 24 September</div>`);
     const stats = h('div', 'dash-stats', d.main);
-    const sv = [['Total Employees', 'Users', s.payrollStaff, (v) => Math.round(v), 'Active employees'], ['Monthly Payroll', 'Calculator', s.payrollTotal + 2640000, compact, 'Sep 2026 gross'], ['Active Loans', 'Receipt', 11, (v) => Math.round(v), 'Outstanding loans'], ['Outstanding Balance', 'Landmark', 3840000, compact, 'Total loan balance']].map(([k, ic, v, f, sub]) => {
-      const el = h('div', 'cd stat', stats, `<div class="stat-top"><span>${k}</span><span class="stat-ic">${I(ic)}</span></div><div class="stat-v num"></div><div class="stat-s">${sub}</div>`);
+    const sv = [
+      ['Fees collected this term', 'HandCoins', 48200000, compact, '87% of ₦55.4M billed'],
+      ['Outstanding', 'Receipt', 7200000, compact, '142 pupils owing'],
+      ['Attendance today', 'UserCheck', 94, (v) => Math.round(v) + '%', '575 of 612 in school'],
+      [`Payroll · ${s.payrollMonth.slice(0, 3)}`, 'Calculator', s.payrollTotal + 2640000, compact, 'Gross, approved'],
+    ].map(([k, ic, v, f, sub]) => {
+      const el = h('div', 'cd own-stat', stats, `<div class="row" style="justify-content:space-between;align-items:flex-start"><span class="own-t">${k}</span><span class="own-ic">${I(ic, 'i20')}</span></div><div class="stat-v num" style="margin-top:0"></div><div class="stat-s">${sub}</div>`);
       return { el, v, f, out: el.querySelector('.stat-v') };
     });
-    const fees = h('div', 'cd cd-p', d.main, `<div class="row"><div class="grow"><div class="cd-t">Fees</div><div class="subs" style="margin-top:0">${s.term}</div></div><span class="mut row gap8" style="font-size:13px">Arrears ${I('ArrowRight', 'i14')}</span></div><div class="fees-4"><div><div class="xs mut">Billed</div><div class="fv num">₦55,400,000.00</div></div><div><div class="xs mut">Collected</div><div class="fv num" style="color:#16a34a">₦48,200,000.00 <span class="xs mut">87%</span></div></div><div><div class="xs mut">Outstanding</div><div class="fv num">₦7,200,000.00 <span class="xs mut">142 owing</span></div></div><div><div class="xs mut">Net this session</div><div class="fv num">₦16,800,000.00</div></div></div>`);
-    fees.style.marginTop = '24px';
-    const school = h('div', 'cd cd-p', d.main, `<div class="row"><div class="grow"><div class="cd-t">The school</div><div class="subs" style="margin-top:0">Who is here, and who is coming.</div></div><span class="mut row gap8" style="font-size:13px">Pupils ${I('ArrowRight', 'i14')}</span></div><div class="school-3"><div class="row gap12">${I('GraduationCap', 'i20')}<div><div class="b7 num" style="font-size:24px">612</div><div class="xs mut">on the roll</div></div></div><div class="row gap12">${I('School', 'i20')}<div><div class="b7 num" style="font-size:24px">24</div><div class="xs mut">classes</div></div></div><div class="row gap12">${I('ClipboardList', 'i20')}<div><div class="b7 num" style="font-size:24px">9</div><div class="xs mut">applications waiting</div></div></div></div>`);
-    school.style.marginTop = '24px';
+    const lower = h('div', 'own-lower', d.main);
+    const wait = h('div', 'cd own-wait', lower, `<div class="cd-t" style="padding:20px 20px 12px">Waiting on you</div>${[['Inbox', '2 decisions waiting on you', ''], ['ClipboardCheck', '3 registers not taken today', ''], ['Receipt', '14 invoices overdue', '₦1,240,000.00 owed']].map(([ic, t, sub]) => `<div class="own-row"><span style="color:#d97706">${I(ic)}</span><div class="grow">${t}${sub ? `<div class="xs mut num">${sub}</div>` : ''}</div><span class="mut">${I('ArrowRight')}</span></div>`).join('')}`);
+    const chart = h('div', 'cd own-chart', lower, `<div class="row" style="align-items:flex-start"><div class="grow"><div class="cd-t">Fees in vs payroll cost</div><div class="subs" style="margin-top:2px">Last six months, as the ledger records them</div></div><div class="tabs-p xs"><span class="on">Chart</span><span>Table</span></div></div>`);
+    const plot = h('div', 'own-plot', chart);
+    ['₦60M', '₦45M', '₦30M', '₦15M', '₦0'].forEach((t, i) => h('div', 'own-grid', plot, `<span>${t}</span>`).style.top = i * 25 + '%');
+    const bars = h('div', 'own-bars', plot);
+    const months = [['Apr', 21.4, 16.98], ['May', 8.2, 17.05], ['Jun', 3.1, 17.12], ['Jul', 1.2, 17.31], ['Aug', 0.6, 17.38], ['Sep', 48.2, 17.46]].map(([m, fi, pc], i) => {
+      const g = h('div', 'own-g', bars, `<div class="own-pair"><i class="fi"></i><i class="pc"></i></div><span>${m}</span>`);
+      return { fi: g.querySelector('.fi'), pc: g.querySelector('.pc'), fv: fi / 60, pv: pc / 60, i };
+    });
+    h('div', 'own-legend', chart, '<span><i style="background:#059669"></i>Fees in</span><span><i style="background:#2563eb"></i>Payroll cost</span>');
 
-    const mark = place(h('div', 'wordmark', root, F.brand.product), { y: 300 });
-    mark.style.fontSize = '200px';
-    const tag = place(h('div', 'wordmark', root, F.brand.tagline), { y: 560 });
-    tag.style.cssText += 'font-size:58px;font-weight:600;letter-spacing:-0.03em;color:var(--t-inkMuted)';
-    const cta = place(h('div', 'cta', root, `${F.brand.cta}<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`), { y: 700 });
-    const url = F.brand.ctaUrl ? place(h('div', 'cta-url', root, F.brand.ctaUrl), { y: 820 }) : null;
+    const Y = P ? [560, 830, 980, 1110] : [300, 560, 700, 820];
+    const mark = place(h('div', 'wordmark', root, F.brand.product), { y: Y[0] });
+    mark.style.fontSize = P ? '190px' : '200px';
+    const tag = place(h('div', 'wordmark', root, F.brand.tagline), { y: Y[1] });
+    tag.style.cssText += `font-size:${P ? 54 : 58}px;font-weight:600;letter-spacing:-0.03em;color:var(--t-inkMuted)`;
+    const cta = place(h('div', 'cta', root, `${F.brand.cta}<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`), { y: Y[2] });
+    const url = F.brand.ctaUrl ? place(h('div', 'cta-url', root, F.brand.ctaUrl), { y: Y[3] }) : null;
 
     return (lt) => {
       const out = ease.inCubic(prog(lt, 2.2, 0.45));
       set(d.win, { o: ease.outCubic(prog(lt, 0, 0.3)) * (1 - out), s: lerp(1.06, 1, ease.outQuint(prog(lt, 0, 0.8))) * lerp(1, 0.86, out), blur: 10 * out });
-      [...waits.children].forEach((c, i) => A.rise(c, lt, 0.15 + i * 0.08, { dy: 12 }));
+      if (P) d.zoom(lt, [[0, d.C, 1, 0], [2.2, d.C, 1, 0]]);
       sv.forEach((x, i) => {
-        A.rise(x.el, lt, 0.35 + i * 0.08, { dy: 12 });
-        x.out.textContent = x.f(count(lt, 0.4, 1.2, 0, x.v));
+        A.rise(x.el, lt, 0.15 + i * 0.07, { dy: 12 });
+        x.out.textContent = x.f(count(lt, 0.3, 1.2, 0, x.v));
       });
-      A.rise(fees, lt, 0.7, { dy: 12 });
-      A.rise(school, lt, 0.8, { dy: 12 });
+      A.rise(wait, lt, 0.5, { dy: 12 });
+      A.rise(chart, lt, 0.6, { dy: 12 });
+      months.forEach((m) => {
+        const g = ease.outCubic(prog(lt, 0.7 + m.i * 0.07, 0.6));
+        m.fi.style.height = m.fv * 100 * g + '%';
+        m.pc.style.height = m.pv * 100 * g + '%';
+      });
       A.slam(mark, lt, 2.5, { from: 1.25, dur: 0.3 });
       A.rise(tag, lt, 3.0, { dy: 24 });
       if (lt < 3.5) set(cta, { o: 0 });

@@ -6,6 +6,7 @@
  *   node video/render.mjs --stills 7,15   PNG stills at those seconds → video/out/still-*.png
  *   node video/render.mjs --preview       serve the preview at http://localhost:4173
  *   node video/render.mjs --from 14 --to 22   render only part (for quick checks)
+ *   node video/render.mjs --cut vertical      the 9:16 edit (film.json → cuts)
  *
  * Frames are split across workers, each piping PNGs into its own ffmpeg; the
  * pieces are joined and the soundtrack (video/out/soundtrack.wav, built by
@@ -21,14 +22,26 @@ import { fileURLToPath } from 'node:url';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(DIR, 'out');
-const film = JSON.parse(fs.readFileSync(path.join(DIR, 'film.json'), 'utf8'));
-const { width: W, height: H, fps: FPS } = film.output;
-
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
   const i = args.indexOf('--' + name);
   return i < 0 ? dflt : args[i + 1] ?? true;
 };
+
+// A cut (film.json → cuts) is another edit: its own frame and scene list,
+// played back to back — the same rule as applyCut in index.html.
+const film = JSON.parse(fs.readFileSync(path.join(DIR, 'film.json'), 'utf8'));
+const CUT = opt('cut', null);
+if (CUT) {
+  const cut = film.cuts[CUT];
+  if (!cut) throw new Error(`No cut named ${CUT} in film.json`);
+  film.output = cut.output;
+  film.duration = cut.scenes.reduce((t, id) => {
+    const sc = film.scenes.find((x) => x.id === id);
+    return t + (sc.end - sc.start);
+  }, 0);
+}
+const { width: W, height: H, fps: FPS } = film.output;
 
 /* ── Tools ───────────────────────────────────────────────────────── */
 
@@ -88,7 +101,7 @@ if (args.includes('--preview')) {
   console.log(`Preview: http://localhost:${server.address().port}/  (add ?t=12 to jump)`);
 } else {
   const server = await serve();
-  const url = `http://127.0.0.1:${server.address().port}/index.html?render`;
+  const url = `http://127.0.0.1:${server.address().port}/index.html?render${CUT ? `&cut=${CUT}` : ''}`;
   const { chromium } = loadPlaywright();
   const exe = process.env.CHROMIUM || undefined;
   const browser = await chromium.launch({ executablePath: exe, args: ['--font-render-hinting=none', '--disable-lcd-text'] });
@@ -98,7 +111,7 @@ if (args.includes('--preview')) {
       const page = await openPage(browser, url);
       for (const t of String(opt('stills')).split(',').map(Number)) {
         await page.evaluate((t) => window.seek(t), t);
-        const file = path.join(OUT, `still-${t.toFixed(2).padStart(5, '0')}.png`);
+        const file = path.join(OUT, `still-${CUT ? CUT + '-' : ''}${t.toFixed(2).padStart(5, '0')}.png`);
         await page.screenshot({ path: file });
         console.log(file);
       }
@@ -138,16 +151,17 @@ if (args.includes('--preview')) {
       parts.forEach((p) => fs.unlinkSync(p));
       fs.unlinkSync(list);
 
-      const name = opt('out', from === 0 && to === film.duration ? 'soteria-one-school-day.mp4' : `clip-${from}-${to}.mp4`);
+      const whole = CUT ? film.cuts[CUT].file : 'soteria-one-school-day.mp4';
+      const name = opt('out', from === 0 && to === film.duration ? whole : `clip-${CUT ? CUT + '-' : ''}${from}-${to}.mp4`);
       const final = path.join(OUT, name);
-      const wav = path.join(OUT, 'soundtrack.wav');
+      const wav = path.join(OUT, CUT ? `soundtrack-${CUT}.wav` : 'soundtrack.wav');
       if (fs.existsSync(wav)) {
         execFileSync(ffmpeg, ['-y', '-loglevel', 'error', '-i', silent, '-ss', String(from), '-t', String(to - from), '-i', wav,
           '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart', '-shortest', final]);
         fs.unlinkSync(silent);
       } else {
         fs.renameSync(silent, final);
-        console.log('(no soundtrack.wav yet — run `python3 video/music.py` for sound)');
+        console.log(`(no ${path.basename(wav)} yet — run \`python3 video/music.py${CUT ? ' --cut ' + CUT : ''}\` for sound)`);
       }
       console.log(final);
     }

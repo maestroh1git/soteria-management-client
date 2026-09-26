@@ -22,10 +22,21 @@ python3 video/music.py                     # → video/out/soundtrack.wav   (~5s
 node video/render.mjs                      # → video/out/soteria-one-school-day.mp4   (~5 min)
 ```
 
+The 9:16 edit (38 seconds: hook, register, gate, bill, end card) for social:
+
+```bash
+python3 video/music.py --cut vertical      # → video/out/soundtrack-vertical.wav
+node video/render.mjs --cut vertical       # → video/out/soteria-one-school-day-9x16.mp4
+```
+
+Cuts live in `film.json` → `cuts`: a frame size and a list of scenes, played
+back to back. Scenes lay themselves out for portrait when the frame is taller
+than it is wide.
+
 Useful while editing:
 
 ```bash
-node video/render.mjs --preview            # http://localhost:4173, scrub and play with sound
+node video/render.mjs --preview            # http://localhost:4173 (add ?cut=vertical), scrub and play with sound
 node video/render.mjs --stills 9,18.5,34   # PNGs of single moments
 node video/render.mjs --from 30 --to 40    # render just one scene
 ```

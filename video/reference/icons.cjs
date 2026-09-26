@@ -3,7 +3,7 @@
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const L = require('lucide-react');
-const names = 'Presentation Banknote TreePalm UserCircle LayoutDashboard Inbox Users GraduationCap ClipboardList CalendarClock ListChecks SlidersHorizontal School CalendarCheck DoorOpen AlertTriangle Trophy CalendarRange Calculator Receipt CalendarDays BadgeDollarSign Wallet PiggyBank ArrowLeftRight Scale BarChart3 Shield Settings Sun Bell ChevronDown ChevronLeft ChevronRight Search Phone MessageSquarePlus LogOut Download Plus TrendingUp TrendingDown DollarSign Eye CreditCard CircleCheck CheckCircle2 ArrowLeft ArrowRight ClipboardCheck Menu Landmark X Calendar Lock FileText Paperclip ReceiptText HandCoins BadgePercent Bus Info CircleAlert CircleCheckBig'.split(' ');
+const names = 'Presentation Banknote TreePalm UserCircle LayoutDashboard Inbox Users GraduationCap ClipboardList CalendarClock ListChecks SlidersHorizontal School CalendarCheck DoorOpen AlertTriangle Trophy CalendarRange Calculator Receipt CalendarDays BadgeDollarSign Wallet PiggyBank ArrowLeftRight Scale BarChart3 Shield Settings Sun Bell ChevronDown ChevronLeft ChevronRight Search Phone MessageSquarePlus LogOut Download Plus TrendingUp TrendingDown DollarSign Eye CreditCard CircleCheck CheckCircle2 ArrowLeft ArrowRight ClipboardCheck Menu Landmark X Calendar Lock FileText Paperclip ReceiptText HandCoins BadgePercent Bus Info CircleAlert CircleCheckBig UserCheck'.split(' ');
 const out = {};
 for (const n of names) {
   if (!L[n]) { console.error('missing', n); continue; }

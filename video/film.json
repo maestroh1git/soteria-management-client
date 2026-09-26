@@ -225,5 +225,23 @@
       "end": 60,
       "captions": []
     }
-  ]
+  ],
+  "cuts": {
+    "_readme": "Other edits of the same film. Scenes play back to back in this order, each keeping its length. Render with: node video/render.mjs --cut vertical (after python3 video/music.py --cut vertical).",
+    "vertical": {
+      "output": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 60
+      },
+      "scenes": [
+        "hook",
+        "register",
+        "gate",
+        "invoice",
+        "end"
+      ],
+      "file": "soteria-one-school-day-9x16.mp4"
+    }
+  }
 }
