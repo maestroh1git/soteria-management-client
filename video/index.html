@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>One School Day</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="film.css">
+  <style>
+    /* Preview only: fit the 1920×1080 stage to the window. The renderer uses ?render and a 1920×1080 viewport. */
+    body.preview { background: #111; }
+    body.preview #bar { position: fixed; left: 0; right: 0; bottom: 0; height: 44px; display: flex; gap: 12px; align-items: center; padding: 0 16px; background: #000; color: #aaa; font: 13px var(--t-fontMono), monospace; z-index: 100; }
+    body.preview #bar input { flex: 1; }
+    body.preview #bar button { background: #222; color: #eee; border: 1px solid #333; border-radius: 6px; padding: 4px 12px; font: inherit; cursor: pointer; }
+    #bar { display: none; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="bar"><button id="play">Play</button><input id="scrub" type="range" min="0" max="60" step="0.0166" value="0"><span id="tc">0.00s</span></div>
+  <script src="engine.js"></script>
+  <script src="scenes.js"></script>
+  <script>
+    (async function boot() {
+      const { h, set, ease, prog, clamp } = E;
+      const F = (window.FILM = await (await fetch('film.json')).json());
+      for (const [k, v] of Object.entries(F.theme)) if (!k.startsWith('_')) document.documentElement.style.setProperty('--t-' + k, v);
+      const stage = document.getElementById('stage');
+
+      const scenes = F.scenes.map((sc) => {
+        const el = h('div', 'scene', stage);
+        const cam = h('div', 'cam', el);
+        return { ...sc, el, cam, update: SCENES[sc.id](cam, sc, F) };
+      });
+
+      // HUD: brand, clock, persona and progress, shown for the day's scenes.
+      const hud = h('div', 'hud', stage);
+      h('div', 'hud-brand', hud, `<b>${F.brand.product}</b> — ${F.brand.filmTitle}`);
+      const cw = h('div', 'hud-clockwrap', hud, `<div class="hud-school">${F.story.school}</div>`);
+      const clock = h('div', 'hud-clock', cw);
+      const clockA = h('span', '', clock), clockB = h('span', '', clock);
+      const persona = h('div', 'hud-persona', hud);
+      const day = scenes.filter((s) => s.persona);
+      const progress = h('div', 'hud-progress', hud);
+      const segs = day.map(() => h('b', '', h('i', '', progress)));
+      const flash = h('div', 'flash', stage);
+      const fadeout = h('div', 'fadeout', stage);
+
+      function seek(t) {
+        const last = scenes[scenes.length - 1];
+        let cur = scenes[0];
+        for (const s of scenes) {
+          const on = t >= s.start && (t < s.end || (s === last && t <= s.end + 1));
+          s.el.style.display = on ? 'block' : 'none';
+          if (!on) continue;
+          cur = s;
+          const lt = t - s.start, dur = s.end - s.start;
+          s.update(lt, dur);
+          // Camera: punch in on the cut, then a slow push for the rest of the scene.
+          const punch = 1.035 - 0.035 * ease.outExpo(prog(lt, 0, 0.45));
+          s.cam.style.transform = `scale(${punch + 0.02 * (lt / dur)})`;
+        }
+        const lt = t - cur.start;
+        flash.style.opacity = cur.start > 0 ? 0.1 * (1 - prog(lt, 0, 0.12)) : 0;
+
+        const di = day.indexOf(cur);
+        hud.style.opacity = di < 0 ? 0 : 1;
+        if (di >= 0) {
+          const prev = day[di - 1];
+          const k = ease.outQuint(prog(lt, 0.05, 0.4));
+          clockA.textContent = prev ? prev.clock : '';
+          clockB.textContent = cur.clock;
+          set(clockA, { o: prev ? 1 - k : 0, y: -48 * k });
+          set(clockB, { o: prev ? k : ease.outCubic(prog(lt, 0.1, 0.3)), y: prev ? 48 * (1 - k) : 0 });
+          persona.textContent = cur.persona;
+          E.A.rise(persona, lt, 0.1, { dy: 10 });
+          segs.forEach((b, i) => (b.style.width = (i < di ? 100 : i > di ? 0 : 100 * prog(lt, 0, cur.end - cur.start)) + '%'));
+        }
+        fadeout.style.opacity = prog(t, F.duration - 0.35, 0.35);
+      }
+      window.seek = seek;
+
+      await document.fonts.load(`800 100px "${F.theme.fontSans}"`);
+      await document.fonts.load(`500 20px "${F.theme.fontMono}"`);
+      await document.fonts.ready;
+      const q = new URLSearchParams(location.search);
+      seek(Number(q.get('t') || 0));
+
+      if (!q.has('render')) {
+        // Preview: scale to fit, scrub, and play in real time with the soundtrack if it has been built.
+        document.body.classList.add('preview');
+        const fit = () => (stage.style.transform = `scale(${Math.min(innerWidth / 1920, (innerHeight - 44) / 1080)})`);
+        addEventListener('resize', fit); fit();
+        const scrub = document.getElementById('scrub'), tc = document.getElementById('tc'), btn = document.getElementById('play');
+        scrub.max = F.duration;
+        const audio = new Audio('out/soundtrack.wav');
+        let playing = false, t0 = 0, from = 0;
+        const show = (t) => { seek(t); scrub.value = t; tc.textContent = t.toFixed(2) + 's'; };
+        scrub.oninput = () => { from = Number(scrub.value); audio.currentTime = from; t0 = performance.now(); show(from); };
+        btn.onclick = () => {
+          playing = !playing; btn.textContent = playing ? 'Pause' : 'Play';
+          from = Number(scrub.value); t0 = performance.now();
+          if (playing) { audio.currentTime = from; audio.play().catch(() => {}); tick(); } else audio.pause();
+        };
+        function tick() {
+          if (!playing) return;
+          let t = from + (performance.now() - t0) / 1000;
+          if (t > F.duration) { from = 0; t0 = performance.now(); t = 0; audio.currentTime = 0; }
+          show(t); requestAnimationFrame(tick);
+        }
+        show(Number(q.get('t') || 0));
+      }
+      window.__ready = true;
+    })();
+  </script>
+</body>
+</html>

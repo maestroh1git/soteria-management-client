@@ -1,0 +1,124 @@
+{
+  "_readme": "Everything a non-developer should need to change lives here: words, numbers, colours, timing. Times are in seconds; at 120 BPM one beat is 0.5s and one bar is 2s, so keep cuts and captions on multiples of 0.5 to stay on the beat. The soundtrack reads this file too.",
+
+  "output": { "width": 1920, "height": 1080, "fps": 60 },
+  "bpm": 120,
+  "duration": 60,
+
+  "theme": {
+    "_readme": "Monochrome by default. To brand it, change accent (highlighted rows and selections on the app screens), alert (absences, the barred adult) and cta (the Book a demo button). ink/paper are the stage; ui* are the app screens.",
+    "stage": "#0a0a0a",
+    "stageRaised": "#161616",
+    "ink": "#fafafa",
+    "inkMuted": "#8a8a8a",
+    "inkFaint": "#3a3a3a",
+    "uiBg": "#ffffff",
+    "uiSubtle": "#f5f5f5",
+    "uiBorder": "#e5e5e5",
+    "uiText": "#0a0a0a",
+    "uiMuted": "#737373",
+    "accent": "#0a0a0a",
+    "accentText": "#fafafa",
+    "alert": "#0a0a0a",
+    "alertText": "#fafafa",
+    "cta": "#fafafa",
+    "ctaText": "#0a0a0a",
+    "fontSans": "Inter",
+    "fontMono": "JetBrains Mono"
+  },
+
+  "brand": {
+    "product": "Soteria",
+    "filmTitle": "One school day",
+    "tagline": "One school. One system.",
+    "cta": "Book a demo",
+    "ctaUrl": ""
+  },
+
+  "story": {
+    "school": "Greenfield College",
+    "pupil": "Tobi Adeyemi",
+    "pupilClass": "JSS2 Gold",
+    "guardian": "Mrs Funke Adeyemi",
+    "guardianPhone": "0803 412 7781",
+    "educator": "Mrs Amaka Eze",
+    "term": "First Term 2026/27",
+    "feeTotal": 185000,
+    "feePaid": 100000,
+    "attendanceFrom": 96,
+    "attendanceTo": 71,
+    "payrollMonth": "September 2026",
+    "payrollTotal": 14820000,
+    "payrollStaff": 64,
+    "payslipNet": 412500
+  },
+
+  "scenes": [
+    {
+      "id": "hook", "start": 0, "end": 6,
+      "captions": [
+        { "at": 0.5, "text": "Your school runs on" },
+        { "at": 1.5, "text": "12 spreadsheets," },
+        { "at": 2.5, "text": "3 WhatsApp groups" },
+        { "at": 3.5, "text": "and a receipt book." },
+        { "at": 4.5, "text": "Or one system.", "big": true }
+      ]
+    },
+    {
+      "id": "register", "start": 6, "end": 14, "clock": "07:52", "persona": "Educator",
+      "captions": [
+        { "at": 0.5, "text": "The register" },
+        { "at": 1.0, "text": "takes 40 seconds." },
+        { "at": 5.0, "text": "Tobi is absent. Third time this fortnight.", "small": true }
+      ]
+    },
+    {
+      "id": "atrisk", "start": 14, "end": 22, "clock": "10:30", "persona": "Registrar",
+      "captions": [
+        { "at": 0.5, "text": "Falling attendance" },
+        { "at": 1.0, "text": "shows up weeks" },
+        { "at": 1.5, "text": "before a withdrawal." },
+        { "at": 5.0, "text": "The guardian's number is on the row. One call, today.", "small": true }
+      ]
+    },
+    {
+      "id": "gate", "start": 22, "end": 30, "clock": "12:15", "persona": "Front desk",
+      "captions": [
+        { "at": 0.5, "text": "It knows who" },
+        { "at": 1.0, "text": "isn't allowed" },
+        { "at": 1.5, "text": "to collect." },
+        { "at": 5.5, "text": "Every sign-out is on the record.", "small": true }
+      ]
+    },
+    {
+      "id": "invoice", "start": 30, "end": 40, "clock": "14:00", "persona": "Bursar → Parent",
+      "captions": [
+        { "at": 0.5, "text": "Parents open" },
+        { "at": 1.0, "text": "the bill." },
+        { "at": 4.5, "text": "No app." },
+        { "at": 5.0, "text": "No password." },
+        { "at": 7.0, "text": "What's owed comes first.", "small": true }
+      ]
+    },
+    {
+      "id": "ledger", "start": 40, "end": 48, "clock": "16:10", "persona": "Bursar",
+      "captions": [
+        { "at": 0.5, "text": "Every naira" },
+        { "at": 1.0, "text": "lands in one ledger." },
+        { "at": 5.0, "text": "Double-entry. Balanced. Every report reads from it.", "small": true }
+      ]
+    },
+    {
+      "id": "payroll", "start": 48, "end": 54, "clock": "SEP 25", "persona": "Staff",
+      "captions": [
+        { "at": 0.5, "text": "Fees in." },
+        { "at": 1.5, "text": "Payroll out." },
+        { "at": 3.5, "text": "Same ledger." }
+      ]
+    },
+    {
+      "id": "end", "start": 54, "end": 60,
+      "captions": []
+    }
+  ]
+}
