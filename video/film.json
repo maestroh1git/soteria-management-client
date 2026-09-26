@@ -227,7 +227,7 @@
     }
   ],
   "cuts": {
-    "_readme": "Other edits of the same film. Scenes play back to back in this order, each keeping its length. Render with: node video/render.mjs --cut vertical (after python3 video/music.py --cut vertical).",
+    "_readme": "Other edits of the same film. Scenes play back to back in this order, each keeping its length. Render with: node video/render.mjs --cut vertical (after python3 video/music.py --cut vertical). Portrait scenes use the compositions in scenes-portrait.js where one exists.",
     "vertical": {
       "output": {
         "width": 1080,
@@ -239,6 +239,7 @@
         "register",
         "gate",
         "invoice",
+        "ledger",
         "end"
       ],
       "file": "soteria-one-school-day-9x16.mp4"

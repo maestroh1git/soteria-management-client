@@ -738,4 +738,6 @@
   }
 
   window.SCENES = { hook, register, atrisk, gate, invoice, ledger, payroll, end };
+  // The pieces scenes are made of, for the portrait compositions in scenes-portrait.js.
+  window.KIT = { I, naira2, plain2, compact, captions, desk, phone, phoneApp, pointer, tapper, at, table, toast };
 })();

@@ -21,6 +21,7 @@
   <script src="engine.js"></script>
   <script src="icons.js"></script>
   <script src="scenes.js"></script>
+  <script src="scenes-portrait.js"></script>
   <script>
     /**
      * A cut is another edit of the same film (film.json → cuts): its own frame
@@ -60,7 +61,7 @@
       const scenes = F.scenes.map((sc) => {
         const el = h('div', 'scene', stage);
         const cam = h('div', 'cam', el);
-        return { ...sc, el, cam, update: SCENES[sc.id](cam, sc, F) };
+        return { ...sc, el, cam, update: ((F.portrait && window.SCENES_PORTRAIT[sc.id]) || SCENES[sc.id])(cam, sc, F) };
       });
 
       // HUD: brand, clock, persona and progress, shown for the day's scenes.
