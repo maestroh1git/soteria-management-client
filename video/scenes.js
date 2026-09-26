@@ -1,35 +1,27 @@
 /*
- * The eight scenes. Each builder lays its DOM out once and returns
+ * The eight scenes.
+ *
+ * The screens are the app's own, rebuilt at its real size from the running
+ * client: the same layout, labels, icons and flows (see app.css for where the
+ * styles come from). Each builder lays its DOM out once and returns
  * update(lt), where lt is seconds since the scene started. Words and numbers
- * come from film.json (F.story, F.brand, scene captions); the screens copy
- * the real app's labels, so what is shown is what the product does.
+ * the film may want changed come from film.json.
  */
 (function () {
-  const { h, place, set, A, ease, prog, count, path, typed, centre, naira, nairaShort, clamp, lerp } = E;
-
-  const ICON = {
-    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
-    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
-    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
-    arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
-    msg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2z"/></svg>',
-    cursor: '<svg viewBox="0 0 24 24"><path d="M4 2.5l15.5 9.2-6.8 1.4 3.9 7.3-2.9 1.5-3.9-7.3L5 19.5z" fill="#0a0a0a" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>',
-    signal: '<svg viewBox="0 0 34 13" fill="currentColor"><rect x="0" y="8" width="3.5" height="5" rx="1"/><rect x="5.5" y="5.5" width="3.5" height="7.5" rx="1"/><rect x="11" y="3" width="3.5" height="10" rx="1"/><rect x="16.5" y="0" width="3.5" height="13" rx="1"/><rect x="24" y="1.5" width="10" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="26" y="3.5" width="6" height="6" rx="1.5"/></svg>',
-  };
-
-  const initials = (name) => name.replace(/^(Mr|Mrs|Ms|Dr) /, '').split(' ').map((w) => w[0]).join('').slice(0, 2);
+  const { h, place, set, A, ease, prog, count, path, typed, centre, clamp, lerp } = E;
+  const I = (name, cls = '') => `<span class="${cls}" style="display:inline-flex">${window.ICONS[name] || ''}</span>`;
+  const naira2 = (n) => '₦' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const plain2 = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const compact = (n) => '₦' + (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
 
   /* ── Captions ──────────────────────────────────────────────────── */
 
-  /** Big lines stack and slam in word by word; `small` lines rise in underneath. */
   function captions(parent, sc, { x, y, width = 700 }) {
     const box = place(h('div', 'caps', parent), { x, y, w: width });
     const items = sc.captions.map((c) => {
       if (c.small) return { c, el: h('div', 'cap-small', box, c.text) };
       const line = h('div', 'cap-line' + (c.big ? ' cap-big' : ''), box);
-      const words = c.text.split(' ').map((w) => h('span', 'cap-word', line, w));
-      return { c, el: line, words };
+      return { c, el: line, words: c.text.split(' ').map((w) => h('span', 'cap-word', line, w)) };
     });
     return (lt) => {
       for (const { c, el, words } of items) {
@@ -40,61 +32,110 @@
     };
   }
 
-  /* ── Devices ───────────────────────────────────────────────────── */
+  /* ── The app's shell ───────────────────────────────────────────── */
 
+  // nav-config.tsx, in order, with the icons it uses.
   const NAV = [
-    ['Home', ['Dashboard', 'Approvals']],
-    ['People', ['Staff', 'Students']],
-    ['School day', ['Classes', 'Register', 'The Gate', 'Follow up']],
-    ['Money', ['Fees', 'Ledger']],
-    ['Pay', ['Pay runs']],
+    ['Me', [['My Classes', 'Presentation'], ['My Pay', 'Banknote'], ['My Leave', 'TreePalm'], ['My Profile', 'UserCircle']]],
+    ['Home', [['Dashboard', 'LayoutDashboard'], ['Approvals', 'Inbox', 2]]],
+    ['People', [['Staff', 'Users'], ['Students', 'GraduationCap']]],
+    ['Admissions', [['Applications', 'ClipboardList'], ['Assessment diary', 'CalendarClock'], ['Question sets', 'ListChecks'], ['Criteria', 'SlidersHorizontal']]],
+    ['School day', [['Classes', 'School'], ['Register', 'CalendarCheck'], ['The Gate', 'DoorOpen'], ['Follow up', 'AlertTriangle'], ['Awards', 'Trophy'], ['School calendar', 'CalendarRange']]],
+    ['Pay', [['Pay runs', 'Calculator'], ['Loans & advances', 'Receipt'], ['Leave', 'CalendarDays']]],
+    ['Money', [['Fees', 'BadgeDollarSign'], ['Expenses', 'Wallet'], ['Budgets', 'PiggyBank'], ['Bank reconciliation', 'ArrowLeftRight'], ['Ledger', 'Scale']]],
+    ['Insight', [['Reports', 'BarChart3'], ['Audit log', 'Shield']]],
   ];
 
-  /** A browser window with the app's sidebar. Returns the window, its main area and the nav items. */
-  function browser(parent, F, { x, y, w, h: ht, url, active }) {
-    const win = place(h('div', 'win', parent), { x, y, w, h: ht });
-    h('div', 'win-bar', win, `<span class="dots"><i></i><i></i><i></i></span><div class="win-url">${ICON.lock}${url}</div><span style="width:52px"></span>`);
-    const body = h('div', 'win-body', win);
-    const side = h('aside', 'side', body);
-    h('div', 'side-org', side, `<span class="logo">${F.story.school[0]}</span>${F.story.school}`);
-    const nav = {};
-    for (const [label, items] of NAV) {
-      const g = h('div', 'side-group', side);
-      h('div', 'side-label', g, label);
-      for (const it of items) nav[it] = h('div', 'side-item' + (it === active ? ' on' : ''), g, it);
+  /**
+   * A browser window holding the desktop app at its real 1440×900, scaled.
+   * `frame` is the unscaled coordinate space for pointers.
+   */
+  function desk(parent, F, { x, y, scale = 0.72, url, active, user = 'Adebayo Bello' }) {
+    const W = 1440, H = 936;
+    const win = place(h('div', 'bw', parent), { x, y, w: W * scale, h: H * scale });
+    const frame = h('div', 'bw-frame', win);
+    frame.style.transform = `scale(${scale})`;
+    h('div', 'bw-bar', frame, `<span class="dots"><i></i><i></i><i></i></span><div class="bw-url">${I('Lock', 'i14')}${url}</div><span style="width:60px"></span>`);
+    const app = h('div', 'app app-desk', frame);
+    const sb = h('aside', 'sb', app);
+    h('div', 'sb-head', sb, `<div class="sb-logo">${F.story.school[0]}</div><div><div class="sb-org">${F.story.school}</div><div class="sb-orgsub">School Payroll</div></div>`);
+    const scroll = h('div', 'sb-scroll', sb);
+    const nav = h('nav', 'sb-nav', scroll);
+    const items = {};
+    for (const [label, list] of NAV) {
+      const g = h('div', 'sb-group', nav);
+      h('div', 'sb-label', g, `<span>${label}</span>${I('ChevronDown')}`);
+      for (const [t, icon, n] of list) items[t] = h('div', 'sb-item', g, `${I(icon)}<span>${t}</span>${n ? `<span class="sb-count">${n}</span>` : ''}`);
     }
-    const main = h('main', 'main', body);
-    const setActive = (name) => Object.entries(nav).forEach(([k, el]) => el.classList.toggle('on', k === name));
-    return { win, main, nav, setActive };
+    h('div', 'sb-foot', sb, `<div class="sb-collapse">${I('ChevronLeft')}Collapse</div>`);
+    const col = h('div', 'col', app);
+    const initials = user.split(' ').map((w) => w[0]).join('');
+    h('header', 'tb', col, `<span class="tb-icon">${I('Sun')}</span><span class="tb-icon">${I('Bell')}</span><span class="tb-user"><span class="avatar-g">${initials}</span>${user}</span>`);
+    const mainEl = h('main', 'main', col);
+    const main = h('div', 'main-inner', mainEl);
+    const setActive = (name) => {
+      Object.entries(items).forEach(([k, el]) => el.classList.toggle('on', k === name));
+      // Scrolled so the current page shows, as it would for someone who got there.
+      const el = items[name];
+      const off = el ? Math.max(0, el.offsetTop - 360) : 0;
+      nav.style.transform = `translateY(${-off}px)`;
+    };
+    setActive(active);
+    /**
+     * Zoom inside the window, like a screen recording that punches in:
+     * keys = [[time, zoom, fx, fy]], (fx, fy) the focus as fractions of the page.
+     * The window stays put; its contents scale about the focus.
+     */
+    const zoom = (t, keys) => {
+      let [z, fx, fy] = keys[0].slice(1);
+      for (let i = 1; i < keys.length; i++) {
+        if (t <= keys[i - 1][0]) break;
+        const k = ease.inOutCubic(prog(t, keys[i - 1][0], keys[i][0] - keys[i - 1][0]));
+        z = lerp(keys[i - 1][1], keys[i][1], k); fx = lerp(keys[i - 1][2], keys[i][2], k); fy = lerp(keys[i - 1][3], keys[i][3], k);
+      }
+      const px = fx * W, py = fy * H;
+      frame.style.transform = `translate(${scale * px * (1 - z)}px, ${scale * py * (1 - z)}px) scale(${scale * z})`;
+    };
+    return { win, frame, app, main, mainEl, setActive, zoom };
   }
 
-  function phone(parent, { x, y, time }) {
-    // The wrapper takes the entrance animation; the frame inside can be scaled on its own.
+  /** A phone: a 390×844 screen with a status bar, then the app or a page below it. */
+  function phone(parent, { x, y, scale = 0.9, time = '9:41', dark = false }) {
     const el = place(h('div', 'device', parent), { x, y });
     const frame = h('div', 'phone', el);
+    frame.style.transform = `scale(${scale})`;
     const screen = h('div', 'phone-screen', frame);
-    h('div', 'phone-status', screen, `<span>${time}</span><span class="isl"></span><span class="bars">${ICON.signal}</span>`);
+    const status = h('div', 'phone-status' + (dark ? ' dark' : ''), screen, `<span>${time}</span><span class="isl"></span><span class="bars">${I('signal')}</span>`);
+    status.querySelector('.bars').innerHTML = '<svg viewBox="0 0 34 13" fill="currentColor"><rect x="0" y="8" width="3.5" height="5" rx="1"/><rect x="5.5" y="5.5" width="3.5" height="7.5" rx="1"/><rect x="11" y="3" width="3.5" height="10" rx="1"/><rect x="16.5" y="0" width="3.5" height="13" rx="1"/><rect x="24" y="1.5" width="10" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="26" y="3.5" width="6" height="6" rx="1.5"/></svg>';
     const content = h('div', 'phone-content', screen);
-    return { el, screen, content };
+    return { el, frame, screen, content, status };
   }
 
-  /** A mouse pointer that follows keyframes and ripples on clicks. Coordinates are in `root`'s space. */
+  /** The app as a phone shows it: menu button, theme, bell, avatar, then the page. */
+  function phoneApp(parent, initials) {
+    const app = h('div', 'app app-phone', parent);
+    h('header', 'tb tb-m', app, `<span class="tb-icon">${I('Menu', 'i20')}</span><span class="right"><span class="tb-icon">${I('Sun')}</span><span class="tb-icon">${I('Bell')}</span><span class="avatar-g">${initials}</span></span>`);
+    const mainEl = h('main', 'main main-m', app);
+    return { app, main: h('div', 'main-inner', mainEl) };
+  }
+
+  /** Mouse pointer following keyframes, rippling on clicks. Coordinates in `root`'s space. */
   function pointer(root) {
-    const el = h('div', 'cursor', root, ICON.cursor);
+    const el = h('div', 'cursor', root, '<svg viewBox="0 0 24 24"><path d="M4 2.5l15.5 9.2-6.8 1.4 3.9 7.3-2.9 1.5-3.9-7.3L5 19.5z" fill="#0a0a0a" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>');
     const ripple = h('div', 'ripple', root);
-    return (t, keys, clicks = [], show = keys[0][0]) => {
+    return (t, keys, clicks = [], show = keys[0][0], hide = Infinity) => {
       const p = path(t, keys);
       const last = clicks.filter((c) => t >= c).pop();
       const pressed = last != null && t - last < 0.12;
-      set(el, { o: t < show ? 0 : ease.outCubic(prog(t, show, 0.2)), x: p.x, y: p.y, s: pressed ? 0.85 : 1 });
-      if (last != null && t - last < 0.45) {
+      set(el, { o: t < show || t > hide ? 0 : ease.outCubic(prog(t, show, 0.2)), x: p.x, y: p.y, s: pressed ? 0.85 : 1 });
+      if (last != null && t - last < 0.45 && t <= hide) {
         const k = prog(t, last, 0.45);
-        set(ripple, { o: 0.55 * (1 - k), x: p.x + 4, y: p.y + 4, s: lerp(0.3, 1.5, ease.outCubic(k)) });
+        set(ripple, { o: 0.5 * (1 - k), x: p.x + 4, y: p.y + 4, s: lerp(0.3, 1.5, ease.outCubic(k)) });
       } else ripple.style.opacity = 0;
     };
   }
 
-  /** A finger tap for phones: a soft disc that appears and fades at each tap. */
+  /** A finger tap on a phone. */
   function tapper(root) {
     const el = h('div', 'tap', root);
     return (t, taps) => {
@@ -106,11 +147,25 @@
     };
   }
 
-  /** Pointer target: centre of `el` in root space, nudged so the arrow tip sits on it. */
-  const at = (el, root, dx = -4, dy = -4) => {
+  const at = (el, root, dx = -2, dy = -2) => {
     const c = centre(el, root);
     return [c.x + dx, c.y + dy];
   };
+
+  /** Rows of a grid table; `cols` is a grid-template-columns string. */
+  function table(parent, cols, head, rows) {
+    const t = h('div', 'tbl-a', parent);
+    const th = h('div', 'tr-a th', t, head.map((c) => `<div${c.startsWith('>') ? ' class="r"' : ''}>${c.replace(/^>/, '')}</div>`).join(''));
+    th.style.gridTemplateColumns = cols;
+    const els = rows.map((cells) => {
+      const r = h('div', 'tr-a', t, cells.map((c) => (typeof c === 'string' ? `<div>${c}</div>` : `<div class="${c[1]}">${c[0]}</div>`)).join(''));
+      r.style.gridTemplateColumns = cols;
+      return r;
+    });
+    return { t, th, rows: els };
+  }
+
+  const toast = (parent, text) => h('div', 'toast-a', parent, `${I('CircleCheck')}<span>${text}</span>`);
 
   /* ── 0 · Hook ──────────────────────────────────────────────────── */
 
@@ -138,7 +193,7 @@
       } else if (kind === 'chat') {
         el.innerHTML = `<div class="grp"><span>${a}</span><span class="badge">${c}</span></div><div class="msg">${b}</div>`;
       } else {
-        el.innerHTML = `<b>RECEIPT No. ${a}</b>Received from: ________<br>Sum of: ${naira(b)}<br>Being: school fees<br>Sign: ______`;
+        el.innerHTML = `<b>RECEIPT No. ${a}</b>Received from: ________<br>Sum of: ₦${b.toLocaleString('en-US')}<br>Being: school fees<br>Sign: ______`;
       }
       return { el, x, y, r, t0, i, dim: x < 900 && y > 120 && y < 700 };
     });
@@ -152,7 +207,6 @@
     const big = place(h('div', 'cap-line cap-big abs', root), { x: 0, y: 590, w: 1920 });
     big.style.textAlign = 'center';
     const bigWords = bigC.text.split(' ').map((w) => h('span', 'cap-word', big, w));
-
     const win = h('div', 'one-window', root, `<span class="logo">${F.brand.product[0]}</span><span class="wm">${F.brand.product}</span>`);
 
     return (lt) => {
@@ -161,14 +215,11 @@
       for (const f of frags) {
         if (lt < f.t0) { f.el.style.opacity = 0; continue; }
         const k = prog(lt, f.t0, 0.3);
-        const floatY = Math.sin(lt * 1.4 + f.i) * 6;
-        const jx = Math.sin(lt * 37 + f.i * 3) * shake;
         const ck = ease.inCubic(collapse);
-        const x = lerp(0, 960 - f.x - 150, ck) + jx;
-        const y = lerp(0, 415 - f.y - 50, ck) + floatY;
         set(f.el, {
           o: clamp(k * 3) * (f.dim ? 0.35 : 1) * (1 - ck),
-          x, y,
+          x: lerp(0, 960 - f.x - 150, ck) + Math.sin(lt * 37 + f.i * 3) * shake,
+          y: lerp(0, 415 - f.y - 50, ck) + Math.sin(lt * 1.4 + f.i) * 6,
           s: lerp(0.7, 1, ease.outBack(k)) * lerp(1, 0.2, ck),
           r: f.r * (1 + ck * 3),
         });
@@ -184,328 +235,372 @@
     };
   }
 
-  /* ── 1 · Register (Educator) ───────────────────────────────────── */
+  /* ── 1 · Register (Educator, on a phone) ───────────────────────── */
 
   function register(root, sc, F) {
-    const caps = captions(root, sc, { x: 130, y: 360, width: 900 });
-    const ph = phone(root, { x: 1210, y: 125, time: '7:52' });
     const s = F.story;
-    const box = h('div', 'reg', ph.content);
-    h('div', 'reg-top', box, `<div class="crumb">My Classes › ${s.pupilClass}</div><div class="h1">Register</div><div class="sub">Thursday 24 September · Morning</div>`);
-    const counter = h('div', 'reg-count', box.firstChild, '<b class="num">0</b> / 30 present');
-    const list = h('div', 'reg-list', box);
-    const scroll = h('div', 'reg-scroll', list);
-    const pupils = ['Amina Bello', 'David Okafor', 'Esther Johnson', 'Ibrahim Sani', s.pupil, 'Grace Obi', 'Chidera Nnamdi', 'Oluwaseun Ade', 'Fatima Yusuf', 'Kemi Balogun', 'Michael Etim', 'Blessing Uche', 'Samuel Ojo', 'Halima Garba'];
-    const marks = pupils.map((p) => (p === s.pupil ? 'A' : p === 'Kemi Balogun' ? 'E' : 'P'));
-    const rows = pupils.map((p, i) => {
-      const row = h('div', 'reg-row', scroll);
-      h('div', 'avatar', row, initials(p));
-      const who = h('div', 'reg-who', row, `<div class="reg-name">${p}</div><div class="reg-adm">GFC/2025/${String(311 + i * 7).padStart(4, '0')}</div>`);
-      const ctl = h('div', 'reg-ctl', row);
-      const btn = {};
-      for (const l of ['P', 'L', 'A', 'E']) btn[l] = h('span', '', ctl, l);
-      return { row, who, btn };
+    const caps = captions(root, sc, { x: 130, y: 380, width: 900 });
+    const ph = phone(root, { x: 1300, y: 140, time: '7:52' });
+    const { main } = phoneApp(ph.content, 'AE');
+    // register/page.tsx + register-screen.tsx
+    h('div', 'reg-h', main, `<div class="row gap12" style="align-items:flex-start">${I('ArrowLeft')}<div><div class="h1s">Register</div><div class="mut">${s.pupilClass}</div></div></div><div><div class="lbl" style="margin-bottom:4px">Date</div><div class="inp num" style="width:150px">24/09/2026 ${I('Calendar')}</div></div>`);
+    h('div', 'row', main, `<div class="b7" style="font-size:20px;line-height:28px">${s.pupilClass}</div><span class="bdg t-neutral b6" style="margin-left:auto">14 pupils</span>`).style.marginTop = '20px';
+    h('div', 'mut', main, `Thursday 24 September · First Term`);
+    const tally = h('div', 'reg-tally num', main);
+    h('div', 'reg-details', main, `<span style="font-size:10px">▶</span> Absent or excused?`);
+    const list = h('div', 'cd reg-list', main);
+    const names = ['Amina Bello', 'David Okafor', 'Esther Johnson', 'Ibrahim Sani', s.pupil, 'Grace Obi', 'Chidera Nnamdi', 'Oluwaseun Ade', 'Fatima Yusuf'];
+    const rows = names.map((n, i) => {
+      const [f, l] = n.split(' ');
+      const row = h('div', 'reg-row', list, `<div class="row gap12"><span class="reg-av">${l.slice(0, 2).toUpperCase()}</span><div><div>${l}, ${f}</div><div class="xs mut num">GFC/2025/${String(311 + i * 7).padStart(4, '0')}</div></div></div>`);
+      const seg = h('div', 'seg4', row, '<span>P</span><span>L</span><span>A</span><span>E</span>');
+      return { row, seg };
     });
-    const tobi = rows[pupils.indexOf(s.pupil)];
-    const note = h('div', 'pill alert reg-note', tobi.who, '3rd absence in 2 weeks');
-    const foot = h('div', 'reg-foot', box);
-    const save = h('div', 'btn', foot, 'Save register');
-    const toast = h('div', 'toast', ph.screen, `${ICON.check}Register saved · 07:53`);
+    const tobi = rows[4];
+    const why = h('div', 'reg-why', tobi.row, `<div class="caps-l" style="margin:12px 0 8px">Why is ${s.pupil.split(' ')[0]} away?</div><div class="chips">${['Illness', 'Appointment', 'Family reason', 'Travelling', 'Bereavement', 'Religious observance', 'Suspended', 'Not known'].map((c) => `<span class="chip">${c}</span>`).join('')}</div>`);
+    const notKnown = why.querySelector('.chip:last-child');
+    const bar = h('div', 'reg-bar', ph.content);
+    const warn = h('div', 'reg-warn', bar, `${I('AlertTriangle', 'i14')} 1 pupil needs a reason before this register can be saved.`);
+    const submit = h('div', 'reg-submit', bar);
+    const done = toast(ph.content, `Register saved — 14 marked`);
+    done.style.cssText += 'right:17px;left:auto;top:70px;width:356px';
     const tap = tapper(ph.screen);
-    const T0 = 1.0, STEP = 0.18, ROW = 66;
-    const maxScroll = (pupils.length - 7.4) * ROW;
+    const WHY_H = 188;
 
     return (lt) => {
       caps(lt);
       A.slide(ph.el, lt, 0, { dy: 90, dur: 0.7 });
-      // Mark each row on a 16th-ish grid, scrolling to keep the current row in view.
-      let sy = clamp(((lt - T0) / STEP - 3.5) * ROW, 0, maxScroll);
-      if (lt > 5.3) sy = lerp(maxScroll, 0, ease.inOutCubic(prog(lt, 5.3, 0.7)));
-      scroll.style.transform = `translateY(${-sy}px)`;
-      const taps = [];
+      const absent = lt >= 1.45, reason = lt >= 2.45;
       rows.forEach((r, i) => {
-        const on = lt >= T0 + i * STEP;
-        for (const [l, b] of Object.entries(r.btn)) b.className = on && marks[i] === l ? (l === 'A' ? 'on alert' : 'on') : '';
-        const c = centre(r.btn[marks[i]], ph.screen);
-        taps.push([T0 + i * STEP, c.x, c.y - sy]);
+        const cells = r.seg.children;
+        const a = i === 4 && absent;
+        cells[0].className = a ? '' : 'P';
+        cells[2].className = a ? 'A' : '';
       });
-      const cs = centre(save, ph.screen);
-      taps.push([4.2, cs.x, cs.y]);
-      tap(lt, taps);
-      counter.firstChild.textContent = Math.round(count(lt, T0, pupils.length * STEP, 0, 28, ease.linear));
-      set(save, { s: lt >= 4.2 && lt < 4.35 ? 0.95 : 1 });
-      if (lt < 5.3) A.rise(toast, lt, 4.4, { dy: 20 });
-      else set(toast, { o: 1 - prog(lt, 5.3, 0.2), y: 0 });
-      place(toast, { x: 40, y: 660 });
-      tobi.row.classList.toggle('flag', lt >= 6.0);
-      A.pop(note, lt, 6.0);
+      tally.innerHTML = `<span>${absent ? 13 : 14} present</span><span>0 late</span><span>${absent ? 1 : 0} absent</span><span>0 excused</span>`;
+      why.style.height = WHY_H * ease.outCubic(prog(lt, 1.45, 0.35)) + 'px';
+      notKnown.classList.toggle('on', reason);
+      const needReason = absent && !reason;
+      warn.style.display = needReason ? 'flex' : 'none';
+      submit.classList.toggle('dis', needReason);
+      submit.innerHTML = `Submit register <small class="num">${absent ? 13 : 14} present · 0 late · ${absent ? 1 : 0} absent</small>`;
+      set(submit, { s: lt >= 3.3 && lt < 3.45 ? 0.97 : 1 });
+      // The teacher scrolls down to Tobi, taps A, picks a reason and submits.
+      const sy = 250 * ease.inOutCubic(prog(lt, 0.7, 0.5)) + 190 * ease.inOutCubic(prog(lt, 1.6, 0.5));
+      main.style.transform = `translateY(${-sy}px)`;
+      const A_ = centre(tobi.seg.children[2], ph.screen);
+      const nk = centre(notKnown, ph.screen);
+      const sb = centre(submit, ph.screen);
+      tap(lt, [[1.35, A_.x, A_.y - sy], [2.35, nk.x, nk.y - sy], [3.25, sb.x, sb.y]]);
+      if (lt < 5.2) A.slide(done, lt, 3.5, { dy: -20, dur: 0.4 });
+      else set(done, { o: 1 - prog(lt, 5.2, 0.25) });
     };
   }
 
-  /* ── 2 · Follow up (Registrar) ─────────────────────────────────── */
+  /* ── 2 · Pupils to follow up (Registrar) ───────────────────────── */
 
   function atrisk(root, sc, F) {
     const s = F.story;
     const caps = captions(root, sc, { x: 1230, y: 330, width: 620 });
-    const b = browser(root, F, { x: 100, y: 180, w: 1060, h: 720, url: 'greenfield.soteria.app/attendance/at-risk', active: 'Follow up' });
-    h('div', '', b.main, `<div class="crumb">School day</div><div class="h1">Follow up</div><div class="sub">Pupils whose attendance has fallen</div>`);
-    h('div', 'filters', b.main, `<div><div class="label">Term</div><div class="field" style="width:240px">${s.term}<span class="muted" style="margin-left:auto">▾</span></div></div><div><div class="label">Below (%)</div><div class="field num" style="width:110px">80</div></div>`);
-    const card = h('div', 'card risk-card', b.main);
-    const title = h('div', 'risk-title', card, 'Pupils to follow up <span class="pill num">3</span>');
-    const cols = 'grid-template-columns: 1.55fr 0.9fr 1.35fr 1.45fr 1.15fr';
-    h('div', 'tbl-row tbl-head', card, ['Pupil', 'Class', 'Attendance', 'Primary guardian', 'Phone'].map((c) => `<div>${c}</div>`).join('')).style.cssText = cols;
-    const body = h('div', 'risk-body', card);
-    const data = [
-      ['Daniel Okoro', 'SS1 Green', 76, 'Mr Samuel Okoro', '0812 553 0194'],
-      ['Ifeoma Nwosu', 'JSS1 Blue', 78, 'Mr Chinedu Nwosu', '0806 771 2230'],
-      ['Zainab Musa', 'JSS3 Gold', 79, 'Mrs Hauwa Musa', '0703 118 4462'],
-      [s.pupil, s.pupilClass, s.attendanceFrom, s.guardian, s.guardianPhone],
-    ];
-    const rows = data.map(([n, c, pct, g, p]) => {
-      const row = h('div', 'tbl-row risk-row', body);
-      row.style.cssText = cols;
-      h('div', '', row, `<b style="font-weight:600">${n}</b>`);
-      h('div', 'muted', row, c);
-      const att = h('div', 'att', row, `<span class="bar"><i></i></span><span class="num pct">${pct}%</span>`);
-      h('div', '', row, g);
-      const ph = h('div', 'callcell num', row, `${ICON.phone}${p}`);
-      return { row, att, ph, pct };
-    });
-    const tobi = rows[3];
-    const toast = h('div', 'toast', b.main, `${ICON.phone}Calling ${s.guardian} · ${s.guardianPhone}`);
-    const move = pointer(b.win);
-    const RH = 58;
+    const d = desk(root, F, { x: 95, y: 200, url: 'greenfield.soteria.app/attendance/at-risk', active: 'Follow up' });
+    h('div', '', d.main, `<div class="h1">Pupils to follow up</div><div class="lead">Attendance below your threshold this term, worst first. A child who stops coming usually stops weeks before anyone notices.</div>`);
+    h('div', 'row', d.main, `<div><div class="lbl">Term</div><div class="inp" style="width:208px">First Term<span class="chev">${I('ChevronDown')}</span></div></div><div style="margin-left:16px"><div class="lbl">Below (%)</div><div class="inp num" style="width:96px">85</div></div><div class="mut" style="margin:22px 0 0 16px"><span class="cnt">3</span> pupils of 14 teaching days so far.</div>`).style.marginTop = '24px';
+    const cnt = d.main.querySelector('.cnt');
+    h('div', 'row', d.main, `<div class="inp" style="width:288px"><span class="mut">${I('Search')}</span><span class="ph">Pupil, admission no. or guardian…</span></div><div class="inp" style="width:160px;margin-left:12px">All classes<span class="chev">${I('ChevronDown')}</span></div>`).style.marginTop = '24px';
+    const card = h('div', 'cd risk', d.main);
+    card.style.marginTop = '16px';
+    const cols = '160px 120px 106px 130px 234px 1fr 150px';
+    const person = (n, adm) => [`<div class="two">${n}<small class="num">${adm}</small></div>`, ''];
+    const call = (g, p) => [`<div class="row gap8">${I('Phone')}<div class="two">${g}<small class="num">${p}</small></div></div>`, ''];
+    const log = [`<span class="btn-a ghost">${I('MessageSquarePlus')}Log contact</span>`, 'r'];
+    const none = ['<span class="xs mut">None yet</span>', ''];
+    const T = table(card, cols, ['Pupil', 'Class', 'In school', 'Attendance', 'Who to call', 'Last contact', ''], [
+      [person('Adeyemi, Tobi', 'GFC/2025/0339'), ['JSS2 Gold', 'mut'], '10 of 14', ['<span class="bdg sq t-problem num tob">71.4%</span>', ''], call(s.guardian, s.guardianPhone), none, log],
+      [person('Okoro, Daniel', 'GFC/2023/0102'), ['SS1 Green', 'mut'], '11 of 14', ['<span class="bdg sq t-problem num">78.6%</span>', ''], call('Mr Samuel Okoro', '0812 553 0194'), ['<div class="two"><span class="bdg t-done">Spoke to them</span><small>Sep 18, 2026 · Grace Ade</small></div>', ''], log],
+      [person('Nwosu, Ifeoma', 'GFC/2026/0041'), ['JSS1 Blue', 'mut'], '11 of 14', ['<span class="bdg sq t-problem num">78.6%</span>', ''], call('Mr Chinedu Nwosu', '0806 771 2230'), none, log],
+      [person('Musa, Zainab', 'GFC/2024/0210'), ['JSS3 Gold', 'mut'], '12 of 14', ['<span class="bdg sq t-problem num">85.7%</span>', ''], call('Mrs Hauwa Musa', '0703 118 4462'), none, log],
+    ]);
+    T.rows.forEach((r) => (r.style.height = '53px'));
+    const [tobiRow] = T.rows;
+    const tobPct = tobiRow.querySelector('.tob');
+    const lastCell = tobiRow.children[5];
+    const logBtn = tobiRow.children[6].firstChild;
+    // log-contact-dialog.tsx
+    const ovl = h('div', 'ovl', d.app);
+    const dlg = h('div', 'dlg', d.app, `<div class="dlg-x">${I('X')}</div><div class="dlg-t">Log a contact about ${s.pupil}</div><div class="subs">Staff who follow up this pupil will see it on their record.</div>
+      <div class="grid2"><div><div class="lbl">How</div><div class="inp" style="width:122px">Phone call<span class="chev">${I('ChevronDown')}</span></div></div><div><div class="lbl">Did you get through?</div><div class="inp" style="width:147px">Yes, we spoke<span class="chev">${I('ChevronDown')}</span></div></div>
+      <div><div class="lbl">With</div><div class="inp">${s.guardian}</div></div><div><div class="lbl">When</div><div class="inp num">24/09/2026, 10:34</div></div></div>
+      <div class="lbl" style="margin-top:16px">What came of it</div><div class="inp note" style="height:64px;align-items:flex-start;padding-top:8px"></div>
+      <div class="row" style="justify-content:flex-end;gap:8px;margin-top:16px"><span class="btn-a out">Cancel</span><span class="btn-a save">Save contact</span></div>`);
+    dlg.style.top = '251px';
+    const note = dlg.querySelector('.note');
+    const save = dlg.querySelector('.save');
+    const move = pointer(d.frame);
 
     return (lt) => {
       caps(lt);
-      A.slide(b.win, lt, 0, { dx: -80, dur: 0.7 });
-      rows.slice(0, 3).forEach((r, i) => {
-        A.rise(r.row, lt, 0.35 + i * 0.1, { dy: 14 });
-        r.att.querySelector('i').style.width = r.pct + '%';
-      });
-      title.querySelector('.pill').textContent = lt >= 2.0 ? '4' : '3';
-      // Tobi arrives at the bottom, slides down to the lowest attendance, then jumps to the top.
-      const pct = Math.round(count(lt, 2.0, 1.4, s.attendanceFrom, s.attendanceTo, ease.inOutCubic));
-      tobi.att.querySelector('.pct').textContent = pct + '%';
-      tobi.att.querySelector('i').style.width = pct + '%';
-      const jump = ease.outQuint(prog(lt, 3.5, 0.5));
-      rows.slice(0, 3).forEach((r) => (r.row.style.transform = `translateY(${RH * jump}px)`));
-      if (lt < 2.0) set(tobi.row, { o: 0 });
-      else set(tobi.row, { o: ease.outCubic(prog(lt, 2.0, 0.3)), y: -3 * RH * jump });
-      tobi.row.classList.toggle('hot', lt >= 3.5);
-      const [px, py] = at(tobi.ph, b.win, -40, 0);
-      move(lt, [[4.0, 1000, 700], [4.7, px, py - 3 * RH]], [4.85], 4.0);
-      A.rise(toast, lt, 5.0, { dy: 16 });
-      place(toast, { x: 30, y: 590 });
+      A.slide(d.win, lt, 0, { dx: -80, dur: 0.7 });
+      // Tobi's slide below the others lands him first on a list sorted worst first.
+      const enter = ease.outQuint(prog(lt, 1.9, 0.5));
+      T.rows.slice(1).forEach((r, i) => A.rise(r, lt, 0.35 + i * 0.1, { dy: 12 }));
+      // Until he arrives the others sit in his slot; then they make room.
+      T.rows[1].style.marginTop = -53 * (1 - enter) + 'px';
+      if (lt < 1.9) { tobiRow.style.opacity = 0; }
+      else set(tobiRow, { o: enter, x: -30 * (1 - enter) });
+      tobiRow.style.background = lt >= 1.9 && lt < 3.6 ? `rgba(254,226,226,${0.6 * (1 - prog(lt, 3.0, 0.6))})` : '#fff';
+      cnt.textContent = lt >= 1.9 ? '4' : '3';
+      tobPct.textContent = count(lt, 1.9, 1.1, 85.7, 71.4, ease.outCubic).toFixed(1) + '%';
+      // Log contact → the dialog → saved, and the row shows it.
+      const open = lt >= 4.05 && lt < 6.45;
+      const k = open ? ease.outCubic(prog(lt, 4.05, 0.2)) : lt >= 6.45 ? 1 - prog(lt, 6.45, 0.15) : 0;
+      set(ovl, { o: k });
+      set(dlg, { o: k, s: lerp(0.96, 1, k) });
+      const tx = typed(lt, 4.5, 'Sick with malaria, back on Monday', 32);
+      note.innerHTML = tx ? tx + (lt < 5.7 ? '<span class="caret-a"></span>' : '') : '<span class="ph">Sick with malaria, back on Monday</span>';
+      if (!tx) note.firstChild.style.color = 'var(--muted)';
+      note.classList.toggle('focus', lt >= 4.4 && lt < 5.9);
+      set(save, { s: lt >= 6.2 && lt < 6.35 ? 0.96 : 1 });
+      lastCell.innerHTML = lt >= 6.5 ? '<div class="two"><span class="bdg t-done">Spoke to them</span><small>Sep 24, 2026 · Grace Ade</small></div>' : '<span class="xs mut">None yet</span>';
+      if (lt >= 6.5) A.pop(lastCell.firstChild, lt, 6.5, { from: 0.8 });
+      const [lx, ly] = at(logBtn, d.frame, -30, 0);
+      const [sx, sy] = at(save, d.frame, -10, -4);
+      d.zoom(lt, [[0, 1, 0.5, 0.5], [1.8, 1, 0.5, 0.5], [2.3, 1.45, 0.3, 0.42], [3.3, 1.45, 0.3, 0.42], [3.7, 1.25, 0.75, 0.42], [4.1, 1.4, 0.5, 0.42], [6.3, 1.4, 0.5, 0.42], [6.8, 1.35, 0.72, 0.42]]);
+      move(lt, [[3.1, 1100, 750], [3.8, lx, ly], [4.2, lx, ly], [5.8, sx + 60, sy + 60], [6.1, sx, sy], [6.6, sx, sy], [7.2, 900, 780]], [3.95, 6.2], 3.1);
     };
   }
 
-  /* ── 3 · The Gate (Front desk) ─────────────────────────────────── */
+  /* ── 3 · The gate (Front desk) ─────────────────────────────────── */
 
   function gate(root, sc, F) {
     const caps = captions(root, sc, { x: 120, y: 380 });
-    const b = browser(root, F, { x: 790, y: 180, w: 1030, h: 720, url: 'greenfield.soteria.app/attendance/gate', active: 'The Gate' });
-    h('div', '', b.main, `<div class="crumb">School day</div><div class="h1">The gate</div><div class="sub">Signing children out during the day, and back in.</div>`);
-    const find = h('div', 'gate-find', b.main, `<div class="label">Find a pupil</div>`);
-    const field = h('div', 'field', find, `${ICON.search}<span class="q"></span>`);
-    const q = field.querySelector('.q');
-    const pupil = h('div', 'card gate-pupil', b.main, `<span class="avatar">CO</span><div><b>Chiamaka Obi</b><div class="muted" style="font-size:13.5px">JSS1 Blue · GFC/2024/0117</div></div><span class="pill" style="margin-left:auto">In school</span>`);
-    const whoL = h('div', 'label gate-l', b.main, 'Who is collecting?');
-    const adults = h('div', 'gate-adults', b.main);
-    const mk = (name, rel, ok, extra = '') => h('div', 'card adult' + (ok ? '' : ' barred'), adults,
-      `<div class="adult-top"><span class="avatar">${initials(name)}</span><span class="tick">${ok ? ICON.check : ICON.lock}</span></div><b>${name}</b><div class="muted">${rel}</div>${extra}`);
-    const mum = mk('Mrs Ngozi Obi', 'Mother · permitted', true);
-    mk('Mr Emeka Obi', 'Father · permitted', true);
-    const barred = mk('Mr Chidi Okafor', 'Not permitted to collect', false, '<div class="why">On file since 12 Jan 2026</div><span class="pill alert np">NOT PERMITTED</span>');
-    const np = barred.querySelector('.np');
-    const whyL = h('div', 'label gate-l', b.main, 'Why are they leaving?');
-    const chips = h('div', 'gate-chips', b.main);
-    const med = h('span', 'pill big', chips, 'Medical appointment');
-    ['Family emergency', 'Early closure', 'Other'].forEach((c) => h('span', 'pill big', chips, c));
-    const go = h('div', 'btn gate-go', b.main, 'Sign out at 12:15');
-    const toast = h('div', 'toast', b.main, `${ICON.check}Chiamaka Obi signed out to Mrs Ngozi Obi · 12:15`);
-    const move = pointer(b.win);
+    const d = desk(root, F, { x: 830, y: 200, url: 'greenfield.soteria.app/attendance/gate', active: 'The Gate' });
+    h('div', '', d.main, `<div class="h1s">The gate</div><div class="subs">Sign a pupil out during the day, and back in when they return.</div>`);
+    const card = h('div', 'cd', d.main);
+    card.style.cssText = 'margin-top:24px;padding:20px 24px 24px';
+    h('div', 'lbl', card, 'Find a pupil').style.marginTop = '12px';
+    const search = h('div', 'inp', card);
+    search.style.height = '44px';
+    const results = h('div', 'gate-res', card, `<div class="row" style="justify-content:space-between"><span class="b5">Obi, Chiamaka</span><span class="xs mut num">GFC/2024/0117</span></div><div class="row" style="justify-content:space-between"><span class="b5">Obi, Chidinma</span><span class="xs mut num">GFC/2022/0088</span></div>`);
+    const chosen = h('div', 'gate-chosen', card);
+    chosen.innerHTML = `<div class="b6" style="font-size:18px;line-height:28px;margin-top:16px">Obi, Chiamaka</div>
+      <div class="lbl" style="margin-top:12px">Why are they leaving?</div><div class="inp" style="width:256px">Appointment<span class="chev">${I('ChevronDown')}</span></div>
+      <div class="caps-l" style="margin:16px 0 8px">Who is collecting them?</div>`;
+    const list = h('div', 'gate-list', chosen);
+    const opt = (name, sub, barred) => h('div', 'gate-opt' + (barred ? ' barred' : ''), list, `<span class="radio"></span><div><div>${name}</div><div class="xs ${barred ? 'red' : 'mut'}">${sub}</div></div>`);
+    const mum = opt('Mrs Ngozi Obi', 'mother · primary contact');
+    opt('Mr Emeka Obi', 'father');
+    const barred = opt('Mr Chidi Okafor', 'Not permitted to collect this pupil', true);
+    const go = h('div', 'btn-a lg', chosen);
+    go.style.marginTop = '16px';
+    h('div', 'caps-l', d.main, "Today's movements").style.margin = '32px 0 12px';
+    const moves = h('div', 'cd gate-moves', d.main);
+    const newMove = h('div', 'gate-move', moves, `<div>Obi, Chiamaka</div><div class="xs mut">Left 12:15 PM with Mrs Ngozi Obi</div>`);
+    h('div', 'gate-move', moves, `<div>Bello, Amina</div><div class="xs mut">Left 9:40 AM with Mr Yusuf Bello · back 11:05 AM</div>`);
+    const signed = toast(d.app, 'Signed out');
+    const move = pointer(d.frame);
 
     return (lt) => {
       caps(lt);
-      A.slide(b.win, lt, 0, { dx: 80, dur: 0.7 });
-      const typedQ = typed(lt, 0.6, 'Chiamaka', 16);
-      q.innerHTML = typedQ ? `${typedQ}<span class="caret"></span>` : '<span class="ph">Name or admission number</span>';
-      A.rise(pupil, lt, 1.25, { dy: 12 });
-      A.rise(whoL, lt, 1.55, { dy: 10 });
-      [...adults.children].forEach((c, i) => A.rise(c, lt, 1.65 + i * 0.1, { dy: 16, o: c === barred ? 0.62 : 1 }));
-      // Trying the barred adult: the card refuses with a shake and says why.
-      if (lt > 3.0 && lt < 3.45) barred.style.transform = `translateX(${Math.sin((lt - 3.0) * 60) * 9 * (1 - prog(lt, 3.0, 0.45))}px)`;
-      if (lt >= 3.0) barred.style.opacity = 1;
-      A.pop(np, lt, 3.0);
-      mum.classList.toggle('sel', lt >= 3.95);
-      A.rise(whyL, lt, 4.2, { dy: 10 });
-      A.rise(chips, lt, 4.25, { dy: 10 });
-      A.rise(go, lt, 4.3, { dy: 10 });
-      med.classList.toggle('solid', lt >= 4.65);
-      set(go, { o: lt >= 4.3 ? ease.outCubic(prog(lt, 4.3, 0.3)) : 0, s: lt >= 5.05 && lt < 5.2 ? 0.95 : 1 });
-      const P = (el) => at(el, b.win, -10, -6);
-      move(lt, [[2.2, 900, 650], [2.85, ...P(barred)], [3.5, ...P(barred)], [3.9, ...P(mum)], [4.3, ...P(mum)], [4.6, ...P(med)], [4.75, ...P(med)], [5.0, ...P(go)]], [3.0, 3.95, 4.65, 5.05], 2.2);
-      A.rise(toast, lt, 5.3, { dy: 16 });
-      place(toast, { x: 30, y: 604 });
+      A.slide(d.win, lt, 0, { dx: 80, dur: 0.7 });
+      const picked = lt >= 1.65 && lt < 4.45;
+      const q = lt >= 4.45 ? '' : typed(lt, 0.6, 'Chiamaka', 16);
+      search.innerHTML = q ? `${q}${!picked && lt < 1.65 ? '<span class="caret-a"></span>' : ''}` : '<span class="ph">Name or admission number</span>';
+      search.classList.toggle('focus', lt >= 0.5 && lt < 1.65);
+      results.style.display = q && !picked ? 'block' : 'none';
+      chosen.style.display = picked ? 'block' : 'none';
+      const who = lt >= 3.65 ? mum : lt >= 2.45 ? barred : null;
+      [...list.children].forEach((o) => o.querySelector('.radio').classList.toggle('on', o === who));
+      // Choosing the barred adult turns the button red: releasing needs an override.
+      go.className = 'btn-a lg' + (who === barred ? ' danger' : who ? '' : ' dis');
+      go.innerHTML = `${I('LogOut')}${who === barred ? 'Release to Mr Chidi Okafor…' : 'Sign out'}`;
+      if (who === barred) A.pop(go, lt, 2.45, { from: 0.9, dur: 0.3 });
+      else set(go, { s: lt >= 4.3 && lt < 4.45 ? 0.96 : 1 });
+      if (lt >= 4.45) A.rise(newMove, lt, 4.5, { dy: -10 });
+      else newMove.style.display = 'none';
+      if (lt >= 4.45) newMove.style.display = 'block';
+      if (lt < 6.4) A.slide(signed, lt, 4.5, { dx: 40, dur: 0.4 });
+      else set(signed, { o: 1 - prog(lt, 6.4, 0.3) });
+      // Measure each target with its panel shown (offsets of hidden elements are 0),
+      // then restore what this moment actually shows.
+      const P = (el, dx, dy = -2) => at(el, d.frame, dx, dy);
+      const shown = [results.style.display, chosen.style.display];
+      results.style.display = 'block'; chosen.style.display = 'none';
+      const r1 = P(results.firstChild, -200);
+      results.style.display = 'none'; chosen.style.display = 'block';
+      const pb = P(barred, -380), pm = P(mum, -380), pg = P(go, -10);
+      [results.style.display, chosen.style.display] = shown;
+      d.zoom(lt, [[0, 1, 0.5, 0.5], [0.4, 1, 0.5, 0.5], [0.9, 1.3, 0.5, 0.25], [1.9, 1.3, 0.5, 0.3], [2.3, 1.4, 0.45, 0.42], [4.6, 1.4, 0.45, 0.42], [5.2, 1.15, 0.5, 0.45]]);
+      move(lt, [[1.0, 900, 700], [1.45, ...r1], [1.8, ...r1], [2.3, ...pb], [3.3, ...pb], [3.55, ...pm], [3.9, ...pm], [4.25, ...pg], [4.8, ...pg], [5.4, 1100, 820]], [1.6, 2.4, 3.6, 4.3], 1.0);
     };
   }
 
-  /* ── 4 · Invoice (Bursar → Parent) ─────────────────────────────── */
+  /* ── 4 · The bill (Bursar → Parent) ────────────────────────────── */
 
   function invoice(root, sc, F) {
     const s = F.story;
     const bal = s.feeTotal - s.feePaid;
     const caps = captions(root, sc, { x: 120, y: 330 });
-    const b = browser(root, F, { x: 790, y: 180, w: 1030, h: 720, url: 'greenfield.soteria.app/fees', active: 'Fees' });
-    h('div', '', b.main, `<div class="crumb">Money</div><div class="h1">Fees</div>`);
-    h('div', 'tabs', b.main, '<span class="on">Invoices</span><span>Payments</span><span>Fee structures</span>');
-    const card = h('div', 'card', b.main);
-    const cols = 'grid-template-columns: 1.5fr 0.9fr 0.95fr 0.95fr 0.95fr 1.05fr';
-    h('div', 'tbl-row tbl-head', card, ['Pupil', 'Class', 'Total', 'Paid', 'Balance', ''].map((c) => `<div>${c}</div>`).join('')).style.cssText = cols;
-    const inv = [
-      ['Amina Bello', 'JSS1 Blue', 185000, 185000],
-      [s.pupil, s.pupilClass, s.feeTotal, s.feePaid],
-      ['Chuka Eze', 'SS2 Green', 210000, 150000],
-      ['Folake Adewale', 'JSS3 Blue', 185000, 185000],
-      ['Musa Abdullahi', 'SS1 Gold', 210000, 0],
-    ];
-    let send;
-    const rows = inv.map(([n, c, tot, paid]) => {
-      const row = h('div', 'tbl-row', card);
-      row.style.cssText = cols;
-      const due = tot - paid;
-      row.innerHTML = `<div><b style="font-weight:600">${n}</b></div><div class="muted">${c}</div><div class="num">${naira(tot)}</div><div class="num">${naira(paid)}</div><div class="num" style="font-weight:600">${naira(due)}</div>`;
-      const act = h('div', '', row, due ? '<span class="btn ghost sm">Send link</span>' : '<span class="pill">Paid</span>');
-      if (n === s.pupil) { send = act.firstChild; row.classList.add('focus'); }
-      return row;
-    });
-    const sent = h('div', 'toast', b.main, `${ICON.check}Link sent by SMS to ${s.guardianPhone}`);
-    const move = pointer(b.win);
+    const d = desk(root, F, { x: 830, y: 200, url: 'greenfield.soteria.app/fees/invoices/inv-0413', active: 'Fees' });
+    h('div', 'tabs-u', d.main, [['Price list', 'BadgeDollarSign'], ['Invoices', 'ReceiptText'], ['Receipts', 'HandCoins'], ['Concessions', 'BadgePercent'], ['Optional fees', 'Bus'], ['Arrears', 'TrendingDown']].map(([t, i]) => `<span class="${t === 'Invoices' ? 'on' : ''}">${I(i)}${t}</span>`).join(''));
+    const head = h('div', 'row', d.main, `<div class="grow"><div class="mut row gap8" style="font-size:13px">${I('ArrowLeft', 'i14')}Invoices</div><div class="h1s b7" style="margin-top:4px">INV-2026-0413</div><div class="subs">Adeyemi, Tobi · GFC/2025/0339 · JSS2 · First Term</div></div>`);
+    head.style.alignItems = 'flex-start';
+    h('div', 'row gap8', head, `<span class="bdg t-active">Issued</span>`);
+    const pdf = h('span', 'btn-a out', head.lastChild, `${I('Download')}PDF`);
+    h('span', 'btn-a out', head.lastChild, 'Cancel');
+    const card = h('div', 'cd cd-p', d.main);
+    card.style.marginTop = '24px';
+    h('div', 'cd-t', card, 'What is charged');
+    const lines = [['Tuition', 150000], ['Development levy', 15000], ['Books and materials', 12000], ['Sports and clubs', 8000]];
+    h('div', 'inv-lines', card, lines.map(([k, v]) => `<div class="row"><span class="grow">${k}</span><span class="num">${naira2(v)}</span></div>`).join('') + `<div class="row tot"><span class="grow">Total</span><span class="num b7" style="font-size:18px">${naira2(s.feeTotal)}</span></div>`);
+    h('div', 'inv-meta3', d.main, `<div><div class="mut">Issued</div><div class="num">2026-09-07</div></div><div><div class="mut">Due</div><div class="num">2026-09-30</div></div><div><div class="mut">Concessions</div><div class="num">₦0.00</div></div>`);
+    const dl = h('div', 'dl-chip', d.app, `${I('FileText')}<div><div class="b5">invoice-INV-2026-0413.pdf</div><div class="xs mut">86 KB · Done</div></div>`);
+    const move = pointer(d.frame);
 
-    const ph = phone(root, { x: 1300, y: 125, time: '14:00' });
-    const lock = h('div', 'lock', ph.screen, `<div class="lock-time">14:00</div><div class="lock-date">Thursday 24 September</div>`);
-    const notif = h('div', 'notif', lock, `<div class="notif-app">${ICON.msg}MESSAGES<span>now</span></div><b>${s.school}</b><div>${s.pupil.split(' ')[0]}'s ${s.term.replace(/ \d.*/, '')} bill is ready. View it here: greenfield.soteria.app/invoice/7fk2Q…</div>`);
-    const page = h('div', 'inv', ph.screen);
-    page.innerHTML = `<div style="height:54px"></div><div class="phone-url">${ICON.lock}greenfield.soteria.app/invoice/7fk2Q…</div>
-      <div class="inv-body">
-        <div class="inv-school"><span class="logo">${s.school[0]}</span>${s.school}</div>
-        <div class="inv-meta">Fee invoice · ${s.term}<br><b>${s.pupil}</b> · ${s.pupilClass}</div>
-        <div class="inv-due"><div class="k">Still to pay</div><div class="v num">₦0</div></div>
-        <div class="inv-line r1"><span>Total</span><b class="num">${naira(s.feeTotal)}</b></div>
-        <div class="inv-line r2"><span>Paid so far</span><b class="num">${naira(s.feePaid)}</b></div>
-        <div class="inv-sec">Payments received</div>
-        <div class="inv-pay"><span>12 Sep 2026 · Bank transfer</span><b class="num">${naira(s.feePaid)}</b></div>
-      </div>`;
-    const due = page.querySelector('.inv-due');
-    const dueV = due.querySelector('.v');
-    const [r1, r2, sec, pay] = ['.r1', '.r2', '.inv-sec', '.inv-pay'].map((q) => page.querySelector(q));
+    // The parent's phone: the school sends the PDF, whose link opens the bill.
+    const ph = phone(root, { x: 1300, y: 140, time: '14:00' });
+    const chat = h('div', 'chat', ph.content, `<div class="chat-h">${I('ChevronLeft', 'i20')}<span class="sb-logo" style="width:32px;height:32px;border-radius:50%;font-size:13px">G</span><div><div class="b6">${s.school}</div><div class="xs mut">Bursary</div></div></div><div class="chat-body"></div>`);
+    const body = chat.querySelector('.chat-body');
+    const msg = h('div', 'bubble', body, `<div class="att">${I('FileText', 'i20')}<div><div class="b5">invoice-INV-2026-0413.pdf</div><div class="xs mut">PDF · 1 page</div></div></div><div style="margin-top:8px">Good afternoon Ma. ${s.pupil.split(' ')[0]}'s ${s.term.split(' ').slice(0, 2).join(' ')} bill. You can also open it here:</div><div class="link">greenfield.soteria.app/invoice/7fk2Q…</div><div class="xs mut r" style="margin-top:4px">2:00 PM</div>`);
+    const link = msg.querySelector('.link');
+    // (public)/invoice/[token]/page.tsx
+    const pub = h('div', 'pub', ph.content);
+    pub.innerHTML = `<div class="phone-url" style="margin:-58px -32px 22px">${I('Lock', 'i14')}greenfield.soteria.app/invoice/7fk2Q…</div>
+      <div style="text-align:center"><div class="b7" style="font-size:20px;line-height:28px">${s.school}</div><div class="mut">Invoice INV-2026-0413 · ${s.term}</div></div>
+      <div class="cd due"><div class="mut">Still to pay</div><div class="due-v num">₦0.00</div><div class="mut">Due Sep 30, 2026</div></div>
+      <div class="cd pub-card"><div class="b6" style="font-size:16px">${s.pupil}</div><div class="mut" style="margin:6px 0 18px">${s.pupilClass} · GFC/2025/0339</div>${lines.map(([k, v]) => `<div class="pl"><span>${k}</span><span class="num">${naira2(v)}</span></div>`).join('')}<div class="pl tot"><span>Total</span><span class="num b7">${naira2(s.feeTotal)}</span></div><div class="pl mut" style="border:none"><span>Paid so far</span><span class="num">– ${naira2(s.feePaid)}</span></div></div>`;
+    const due = pub.querySelector('.due');
+    const dueV = pub.querySelector('.due-v');
     const tap = tapper(ph.screen);
 
     return (lt) => {
       caps(lt);
-      // Phase A: the bursar sends the link.
-      if (lt < 3.0) A.slide(b.win, lt, 0, { dx: 80, dur: 0.7 });
+      if (lt < 3.0) A.slide(d.win, lt, 0, { dx: 80, dur: 0.7 });
       else {
         const k = ease.inCubic(prog(lt, 3.0, 0.4));
-        set(b.win, { o: 1 - k, x: -60 * k, s: 1 - 0.06 * k, blur: 6 * k });
+        set(d.win, { o: 1 - k, x: -60 * k, s: 1 - 0.06 * k, blur: 6 * k });
       }
-      rows.forEach((r, i) => A.rise(r, lt, 0.3 + i * 0.07, { dy: 12 }));
-      const [sx, sy] = at(send, b.win, -8, -4);
-      move(lt, [[0.8, 700, 690], [1.5, sx, sy]], [1.7], 0.8);
-      A.rise(sent, lt, 1.9, { dy: 14 });
-      place(sent, { x: 30, y: 604 });
-      // Phase B: the parent's phone.
+      set(pdf, { s: lt >= 1.5 && lt < 1.65 ? 0.95 : 1 });
+      A.slide(dl, lt, 1.75, { dy: 20, dur: 0.4 });
+      const [px, py] = at(pdf, d.frame, -8, -2);
+      d.zoom(lt, [[0, 1, 0.5, 0.5], [0.6, 1, 0.5, 0.5], [1.1, 1.3, 0.75, 0.22], [3, 1.3, 0.75, 0.22]]);
+      move(lt, [[0.8, 700, 700], [1.35, px, py]], [1.5], 0.8);
       A.slide(ph.el, lt, 3.2, { dy: 140, dur: 0.6 });
-      A.slide(notif, lt, 3.65, { dy: -40, dur: 0.45, s: 0.94 });
-      const nc = centre(notif, ph.screen);
-      tap(lt, [[4.1, nc.x, nc.y]]);
-      const up = ease.outQuint(prog(lt, 4.25, 0.45));
-      page.style.transform = `translateY(${(1 - up) * 830}px)`;
-      // Hidden until it starts counting: a flash of ₦0 would read as "nothing owed".
+      A.slide(msg, lt, 3.6, { dy: 20, dur: 0.4, s: 0.96 });
+      const lc = centre(link, ph.screen);
+      tap(lt, [[4.1, lc.x, lc.y]]);
+      pub.style.transform = `translateY(${(1 - ease.outQuint(prog(lt, 4.25, 0.45))) * 800}px)`;
       dueV.style.opacity = lt >= 4.6 ? 1 : 0;
-      dueV.textContent = naira(count(lt, 4.6, 0.8, 0, bal, ease.outExpo));
-      A.rise(r1, lt, 5.4, { dy: 10 });
-      A.rise(r2, lt, 5.55, { dy: 10 });
-      A.rise(sec, lt, 5.8, { dy: 10 });
-      A.rise(pay, lt, 5.9, { dy: 10 });
+      dueV.textContent = naira2(Math.round(count(lt, 4.6, 0.8, 0, bal, ease.outExpo)));
       due.classList.toggle('ring', lt >= 7.0);
     };
   }
 
-  /* ── 5 · Ledger (Bursar) ───────────────────────────────────────── */
+  /* ── 5 · Receipts → the ledger (Bursar) ────────────────────────── */
 
   function ledger(root, sc, F) {
     const s = F.story;
     const bal = s.feeTotal - s.feePaid;
     const caps = captions(root, sc, { x: 120, y: 360 });
-    const b = browser(root, F, { x: 790, y: 180, w: 1030, h: 720, url: 'greenfield.soteria.app/ledger', active: 'Fees' });
-    // Before: the fees page under a Record payment dialog.
-    const fees = h('div', 'layer', b.main, `<div class="crumb">Money</div><div class="h1">Fees</div><div class="tabs"><span>Invoices</span><span class="on">Payments</span><span>Fee structures</span></div><div class="card ghost-rows">${'<div></div>'.repeat(6)}</div>`);
-    const dim = h('div', 'dim', b.main);
-    const dlg = h('div', 'card dialog', b.main, `<div class="h1" style="font-size:21px">Record payment</div><div class="sub">${s.pupil} · ${s.term} · Balance ${naira(bal)}</div>`);
-    h('div', 'label', dlg, 'Amount');
-    const amt = h('div', 'field num', dlg);
-    h('div', 'label', dlg, 'Method');
-    const seg = h('div', 'seg', dlg);
-    const segs = ['Cash', 'Bank transfer', 'POS'].map((m) => h('span', '', seg, m));
-    h('div', 'label', dlg, 'Reference');
-    const ref = h('div', 'field', dlg);
-    const rec = h('div', 'btn', dlg, 'Record payment');
-    rec.style.width = '100%';
-    // After: the journal.
-    const led = h('div', 'layer', b.main, `<div class="crumb">Money</div><div class="h1">Ledger</div><div class="tabs"><span class="on">Journal</span><span>Accounts</span><span>Trial balance</span></div>`);
-    const je = h('div', 'card je', led, `<div class="je-head"><div><b>JE-2026-0913</b> <span class="muted">· 24 Sep 2026</span><div class="muted" style="font-size:13.5px;margin-top:2px">Fee payment — ${s.pupil}</div></div><span class="pill">Posted</span></div>`);
-    const jcols = 'grid-template-columns: 1fr 110px 110px';
-    h('div', 'tbl-row tbl-head', je, '<div>Account</div><div style="text-align:right">Debit</div><div style="text-align:right">Credit</div>').style.cssText = jcols;
-    const l1 = h('div', 'tbl-row', je, `<div>1010 · Bank — GTBank Operating</div><div class="num r">${naira(bal)}</div><div class="r muted">—</div>`);
-    const l2 = h('div', 'tbl-row', je, `<div>1200 · Fees receivable — ${s.pupil.split(' ')[0]} A.</div><div class="r muted">—</div><div class="num r">${naira(bal)}</div>`);
-    const tot = h('div', 'tbl-row je-tot', je, `<div><span class="pill solid bal">${ICON.check.replace('<svg', '<svg width="12" height="12"')} Balanced</span></div><div class="num r">${naira(bal)}</div><div class="num r">${naira(bal)}</div>`);
-    [l1, l2, tot].forEach((r) => (r.style.cssText = jcols));
-    const balPill = tot.querySelector('.bal');
-    const older = [
-      ['JE-2026-0912', 'Fee payment — Amina Bello', 185000],
-      ['JE-2026-0911', 'Expense — Diesel for the generator', 62000],
-    ].map(([id, d, n]) => h('div', 'card je-old', led, `<b>${id}</b><span class="muted">${d}</span><span class="num" style="margin-left:auto">${naira(n)}</span>`));
-    const move = pointer(b.win);
-    // The parent's view updating on its own.
-    const mini = phone(root, { x: 1610, y: 420, time: '16:10' });
-    mini.el.classList.add('mini');
-    mini.content.innerHTML = `<div class="phone-url">${ICON.lock}greenfield.soteria.app/invoice/7fk2Q…</div><div class="inv-body"><div class="inv-school"><span class="logo">${s.school[0]}</span>${s.school}</div><div class="inv-due"><div class="k">Still to pay</div><div class="v num"></div></div><div class="inv-line"><span>Paid so far</span><b class="num pf"></b></div><div style="margin-top:18px"><span class="pill solid big full">${ICON.check.replace('<svg', '<svg width="14" height="14"')} Paid in full</span></div></div>`;
-    const mDue = mini.content.querySelector('.v');
-    const mPaid = mini.content.querySelector('.pf');
-    const full = mini.content.querySelector('.full');
+    const d = desk(root, F, { x: 830, y: 200, url: 'greenfield.soteria.app/fees/payments', active: 'Fees' });
+    // Before: Receipts, with "Record a payment" open.
+    const rec = h('div', 'layer-a', d.main);
+    h('div', 'tabs-u', rec, [['Price list', 'BadgeDollarSign'], ['Invoices', 'ReceiptText'], ['Receipts', 'HandCoins'], ['Concessions', 'BadgePercent'], ['Optional fees', 'Bus'], ['Arrears', 'TrendingDown']].map(([t, i]) => `<span class="${t === 'Receipts' ? 'on' : ''}">${I(i)}${t}</span>`).join(''));
+    h('div', 'row', rec, `<div class="grow"><div class="h1s">Receipts</div><div class="subs">Money received, and what it settled.</div></div><span class="btn-a">${I('Plus')}Record a payment</span>`);
+    const rcard = h('div', 'cd', rec);
+    rcard.style.marginTop = '24px';
+    const rcols = '1.2fr 1.4fr 1fr 0.9fr 1fr 0.8fr 110px';
+    const rrow = (no, ref, who, adm, m, on, amt) => [[`<div class="two">${no}${ref ? `<small class="num">${ref}</small>` : ''}</div>`, ''], [`<div class="two">${who}<small class="num">${adm}</small></div>`, ''], [on, 'num mut'], [m, 'mut'], [naira2(amt), 'r num b6'], ['—', 'r mut'], [`<span class="row gap12" style="justify-content:flex-end">${I('Download')}Void</span>`, 'r']];
+    const R = table(rcard, rcols, ['Receipt', 'Child', 'Paid on', 'Method', '>Amount', '>Unapplied', ''], [
+      rrow('RCT-2026-0391', 'GTB-2409-5521', 'Adeyemi, Tobi', 'GFC/2025/0339', 'Bank transfer', 'Sep 24, 2026', bal),
+      rrow('RCT-2026-0390', 'ZEN-2309-1142', 'Adewale, Folake', 'GFC/2024/0150', 'Bank transfer', 'Sep 23, 2026', 185000),
+      rrow('RCT-2026-0389', '', 'Bello, Amina', 'GFC/2026/0012', 'Cash', 'Sep 22, 2026', 185000),
+      rrow('RCT-2026-0388', 'POS-88213', 'Eze, Chuka', 'GFC/2022/0077', 'POS', 'Sep 19, 2026', 150000),
+    ]);
+    R.rows.forEach((r) => (r.style.height = '61px'));
+    const newRec = R.rows[0];
+    const ovl = h('div', 'ovl', d.app);
+    const dlg = h('div', 'dlg', d.app, `<div class="dlg-x">${I('X')}</div><div class="dlg-t">Record a payment</div><div class="subs">Anything not applied to a bill is kept as the family's credit.</div>
+      <div class="grid2"><div><div class="lbl">Who it is for</div><div class="inp who"><span class="ph">Child</span><span class="chev">${I('ChevronDown')}</span></div></div><div><div class="lbl">Amount</div><div class="inp amt num"></div></div>
+      <div><div class="lbl">Method</div><div class="inp" style="width:145px">Bank transfer<span class="chev">${I('ChevronDown')}</span></div></div><div><div class="lbl">Paid on</div><div class="inp num">24/09/2026<span class="chev">${I('Calendar')}</span></div></div>
+      <div><div class="lbl">Into</div><div class="inp" style="width:195px">GTBank — operating<span class="chev">${I('ChevronDown')}</span></div></div><div><div class="lbl">Bank reference</div><div class="inp ref num"></div></div></div>
+      <div class="lbl" style="margin-top:16px">Who paid</div><div class="inp"><span class="ph">Often not the registered guardian</span></div>
+      <div class="settle"><div class="row"><span class="grow">What it settles</span><span class="mut left num"></span></div><div class="row" style="margin-top:10px"><div class="grow"><div>Adeyemi, Tobi <span class="mut">— First Term</span></div><div class="xs mut num">${naira2(bal)} outstanding</div></div><div class="inp r num" style="width:128px;justify-content:flex-end;height:32px"><span class="mut">—</span></div></div><div class="row xs mut gap8" style="margin-top:10px">${I('Info', 'i14')}Leave these empty to settle the child's own bills oldest first.</div></div>
+      <div class="row" style="justify-content:flex-end;gap:8px;margin-top:16px"><span class="btn-a out">Cancel</span><span class="btn-a go">Record payment</span></div>`);
+    dlg.style.top = '120px';
+    const [who, amt, ref, left, go] = ['.who', '.amt', '.ref', '.left', '.go'].map((q) => dlg.querySelector(q));
+    const recorded = toast(d.app, 'Receipt RCT-2026-0391 recorded');
+    // After: the ledger, journal open.
+    const led = h('div', 'layer-a', d.main);
+    h('div', '', led, `<div class="h1">Ledger</div><div class="lead">Every naira in and out, as the books record it.</div>`);
+    const books = h('div', 'cd books', led, `<div class="row gap8 b6" style="font-size:18px">${I('CircleCheck', 'i20')}The books balance</div><div class="subs">Debits equal credits, as of today.</div><div class="books-3"><div><div class="caps-l" style="letter-spacing:0;font-weight:500">Total debits</div><div class="bv num"></div></div><div><div class="caps-l" style="letter-spacing:0;font-weight:500">Total credits</div><div class="bv num"></div></div><div><div class="caps-l" style="letter-spacing:0;font-weight:500">Difference</div><div class="bv num">₦0.00</div></div></div>`);
+    const [dv, cv] = books.querySelectorAll('.bv');
+    h('div', 'tabs-p', led, '<span>Accounts</span><span class="on">Journal</span>').style.marginTop = '24px';
+    h('div', 'inp', led, `Everything<span class="chev">${I('ChevronDown')}</span>`).style.cssText = 'width:200px;margin-top:16px';
+    const jcard = h('div', 'cd', led);
+    jcard.style.marginTop = '16px';
+    const J = table(jcard, '170px 170px 1fr 160px', ['Date', 'Type', 'Description', '>Amount'], [
+      [['Sep 24, 2026', 'mut num'], ['<span class="bdg t-neutral">Fee payment</span>', ''], `Fee payment RCT-2026-0391 — Adeyemi, Tobi`, [plain2(bal), 'r num']],
+      [['Sep 23, 2026', 'mut num'], ['<span class="bdg t-neutral">Fee payment</span>', ''], 'Fee payment RCT-2026-0390 — Adewale, Folake', ['185,000.00', 'r num']],
+      [['Sep 22, 2026', 'mut num'], ['<span class="bdg t-neutral">Expense</span>', ''], 'Diesel for the generator', ['62,000.00', 'r num']],
+      [['Sep 22, 2026', 'mut num'], ['<span class="bdg t-neutral">Fee payment</span>', ''], 'Fee payment RCT-2026-0389 — Bello, Amina', ['185,000.00', 'r num']],
+    ]);
+    J.rows.forEach((r) => (r.style.height = '39px'));
+    const jNew = J.rows[0];
+    const edlg = h('div', 'dlg', d.app, `<div class="dlg-x">${I('X')}</div><div class="dlg-t" style="padding-right:24px">Fee payment RCT-2026-0391 — Adeyemi, Tobi</div><div class="subs">Sep 24, 2026 · Fee payment</div>
+      <div class="cd" style="margin-top:16px;box-shadow:none;border-radius:8px;overflow:hidden"><div class="jl th"><span>Account</span><span class="r">Debit</span><span class="r">Credit</span></div><div class="jl"><span><span class="xs mut">BANK</span> GTBank — operating</span><span class="r num">${plain2(bal)}</span><span></span></div><div class="jl"><span><span class="xs mut">FEES_RECEIVABLE</span> Fees receivable<br><span class="xs mut">INV-2026-0413</span></span><span></span><span class="r num">${plain2(bal)}</span></div></div>`);
+    edlg.style.top = '380px';
+    const move = pointer(d.frame);
+    // The parent's bill, now settled.
+    const mini = phone(root, { x: 1620, y: 430, scale: 0.56, time: '16:10' });
+    const mp = h('div', 'pub', mini.content);
+    mp.innerHTML = `<div style="text-align:center"><div class="b7" style="font-size:20px;line-height:28px">${s.school}</div><div class="mut">Invoice INV-2026-0413 · ${s.term}</div></div>
+      <div class="cd due"><div class="stp"><div class="mut">Still to pay</div><div class="due-v num">${naira2(bal)}</div><div class="mut">Due Sep 30, 2026</div></div><div class="paid">${I('CircleCheck', 'i20')}<div class="b6" style="font-size:18px;color:#16a34a;margin-top:8px">Paid in full</div><div class="mut" style="margin-top:6px">Thank you. Nothing is outstanding on this bill.</div></div></div>
+      <div class="cd pub-card"><div class="b6" style="font-size:16px">${s.pupil}</div><div class="mut" style="margin:6px 0 10px">${s.pupilClass} · GFC/2025/0339</div><div class="pl tot"><span>Total</span><span class="num b7">${naira2(s.feeTotal)}</span></div><div class="pl mut" style="border:none"><span>Paid so far</span><span class="num pf"></span></div></div>`;
+    const [stp, paidEl, pf] = ['.stp', '.paid', '.pf'].map((q) => mp.querySelector(q));
 
     return (lt) => {
       caps(lt);
-      A.slide(b.win, lt, 0, { dx: 80, dur: 0.6 });
-      const after = lt >= 2.1;
-      b.setActive(after ? 'Ledger' : 'Fees');
-      set(fees, { o: after ? 0 : 1 });
+      A.slide(d.win, lt, 0, { dx: 80, dur: 0.6 });
+      const after = lt >= 2.8;
+      d.setActive(after ? 'Ledger' : 'Fees');
+      d.win.querySelector('.bw-url').innerHTML = `${I('Lock', 'i14')}greenfield.soteria.app/${after ? 'ledger' : 'fees/payments'}`;
+      set(rec, { o: after ? 0 : 1 });
       const close = prog(lt, 2.0, 0.15);
-      set(dim, { o: 1 - close });
-      if (lt < 2.0) A.pop(dlg, lt, 0.15, { from: 0.9, dur: 0.35 });
-      else set(dlg, { o: 1 - close, s: 1 - 0.04 * close });
-      const a = typed(lt, 0.5, '85,000', 14);
-      amt.innerHTML = `<span class="muted">₦</span>${a}${lt > 0.5 && lt < 1.0 ? '<span class="caret"></span>' : ''}`;
-      segs.forEach((el, i) => el.classList.toggle('on', i === 1 && lt >= 1.1));
-      const r = typed(lt, 1.2, 'GTB-2409-5521', 40);
-      ref.innerHTML = r ? r + (lt < 1.6 ? '<span class="caret"></span>' : '') : '<span class="ph">Bank reference</span>';
-      set(rec, { s: lt >= 1.8 && lt < 1.95 ? 0.97 : 1 });
-      const P = (el) => at(el, b.win, -10, -6);
-      move(lt, [[0.6, 1000, 700], [1.0, ...P(segs[1])], [1.35, ...P(segs[1])], [1.7, ...P(rec)]], [1.1, 1.8], 0.6);
-      if (lt >= 2.0) b.win.querySelector('.cursor').style.opacity = 1 - close;
-      set(led, { o: after ? ease.outCubic(prog(lt, 2.1, 0.25)) : 0 });
-      A.slide(je, lt, 2.2, { dy: 24, dur: 0.5 });
-      A.rise(l1, lt, 2.5, { dy: 8 });
-      A.rise(l2, lt, 2.75, { dy: 8 });
-      A.rise(tot, lt, 3.0, { dy: 8 });
-      A.pop(balPill, lt, 3.25);
-      older.forEach((o, i) => A.rise(o, lt, 2.4 + i * 0.1, { dy: 12, o: 0.6 }));
-      A.slide(mini.el, lt, 3.3, { dy: 60, dur: 0.6 });
-      mDue.textContent = naira(count(lt, 3.7, 0.8, bal, 0, ease.inOutCubic));
-      mPaid.textContent = naira(count(lt, 3.7, 0.8, s.feePaid, s.feeTotal, ease.inOutCubic));
-      A.pop(full, lt, 4.5);
+      const dk = lt < 2.0 ? ease.outCubic(prog(lt, 0.15, 0.25)) : 1 - close;
+      set(ovl, { o: dk });
+      set(dlg, { o: dk, s: lerp(0.96, 1, dk) });
+      who.innerHTML = lt >= 0.45 ? `Adeyemi, Tobi (GFC/2025/0339)<span class="chev">${I('ChevronDown')}</span>` : `<span class="ph">Child</span><span class="chev">${I('ChevronDown')}</span>`;
+      const a = typed(lt, 0.6, String(bal), 14);
+      amt.innerHTML = a || '<span class="ph">200000</span>';
+      amt.classList.toggle('focus', lt >= 0.55 && lt < 1.05);
+      left.textContent = `${naira2(a ? Number(a) : 0)} left to apply`;
+      const r = typed(lt, 1.1, 'GTB-2409-5521', 40);
+      ref.innerHTML = r || '<span class="ph">TRF/2026/09/8871</span>';
+      set(go, { s: lt >= 1.85 && lt < 2.0 ? 0.96 : 1 });
+      if (lt < 2.05) newRec.style.display = 'none';
+      else { newRec.style.display = 'grid'; newRec.style.background = `rgba(209,250,229,${0.7 * (1 - prog(lt, 2.4, 0.4))})`; }
+      if (lt < 2.8) A.slide(recorded, lt, 2.1, { dx: 40, dur: 0.35 });
+      else recorded.style.opacity = 0;
+      // The ledger: the books still balance, with the new entry on top.
+      set(led, { o: after ? ease.outCubic(prog(lt, 2.8, 0.25)) : 0 });
+      const tot = 74943400 + bal * ease.outCubic(prog(lt, 3.0, 0.6));
+      dv.textContent = naira2(tot);
+      cv.textContent = naira2(tot);
+      jNew.style.background = lt >= 2.8 && lt < 4.6 ? `rgba(209,250,229,${0.7 * (1 - prog(lt, 4.0, 0.6))})` : '#fff';
+      const eo = lt >= 3.85 ? ease.outCubic(prog(lt, 3.85, 0.2)) : 0;
+      const eclose = lt >= 6.9 ? prog(lt, 6.9, 0.2) : 0;
+      set(edlg, { o: eo * (1 - eclose), s: lerp(0.96, 1, eo) });
+      if (!after) ovl.style.opacity = dk;
+      else set(ovl, { o: eo * (1 - eclose) });
+      const [gx, gy] = at(go, d.frame, -10, -4);
+      const [jx, jy] = at(jNew, d.frame, -200, 0);
+      d.zoom(lt, [[0, 1.35, 0.5, 0.42], [1.9, 1.35, 0.5, 0.42], [2.4, 1, 0.5, 0.5], [2.8, 1, 0.5, 0.5], [3.3, 1.25, 0.4, 0.45], [3.7, 1.25, 0.4, 0.45], [4.0, 1.35, 0.5, 0.52], [6.9, 1.35, 0.5, 0.52], [7.3, 1.1, 0.4, 0.4]]);
+      move(lt, [[0.9, 1000, 820], [1.6, gx, gy], [2.3, gx, gy], [3.2, jx + 100, jy + 80], [3.6, jx, jy], [4.2, jx, jy]], [1.85, 3.7], 0.9, 4.3);
+      A.slide(mini.el, lt, 4.4, { dy: 60, dur: 0.6 });
+      const pk = ease.outCubic(prog(lt, 5.0, 0.35));
+      set(stp, { o: 1 - pk });
+      set(paidEl, { o: pk, s: lerp(0.9, 1, pk) });
+      pf.textContent = '– ' + naira2(lerp(s.feePaid, s.feeTotal, pk));
     };
   }
 
@@ -514,47 +609,54 @@
   function payroll(root, sc, F) {
     const s = F.story;
     const caps = captions(root, sc, { x: 120, y: 360 });
-    const b = browser(root, F, { x: 790, y: 180, w: 1030, h: 720, url: 'greenfield.soteria.app/payroll', active: 'Pay runs' });
-    const wrap = h('div', 'pr', b.main, `<div class="crumb">Pay</div><div class="h1">${s.payrollMonth} pay run</div><div class="sub">${s.payrollStaff} staff · ${s.school}</div>`);
-    const steps = h('div', 'steps', wrap);
-    const names = ['Calculate', 'Approve', 'Disburse', 'Payslips'];
-    const st = names.map((n, i) => {
-      const el = h('div', 'step', steps, `<span class="dot">${ICON.check}</span><span>${n}</span>`);
-      const bar = i < names.length - 1 ? h('div', 'step-bar', steps, '<i></i>') : null;
-      return { el, bar };
-    });
+    const d = desk(root, F, { x: 700, y: 200, url: 'greenfield.soteria.app/payroll/september-2026', active: 'Pay runs' });
+    h('div', 'mut row gap8', d.main, `Pay runs ${I('ChevronRight', 'i14')} Payroll ${I('ChevronRight', 'i14')} ${s.payrollMonth}`);
+    h('div', 'row gap12', d.main, `<div class="h1">${s.payrollMonth}</div><span class="bdg t-waiting">Processing</span>`).style.marginTop = '8px';
+    h('div', 'lead', d.main, 'Sep 1, 2026 – Sep 30, 2026 · Paid Sep 25, 2026');
     const gross = s.payrollTotal + 2640000;
-    const sums = [['Gross pay', gross], ['Deductions', 2640000], ['Net pay', s.payrollTotal]].map(([k, v]) => {
-      const el = h('div', 'card pr-sum', wrap, `<span class="muted">${k}</span><b class="num"></b>`);
-      return { el, v, b: el.querySelector('b') };
+    const stats = h('div', 'pr-stats', d.main);
+    const sv = [['Employees', 'Users', s.payrollStaff, (v) => Math.round(v)], ['Total Gross', 'TrendingUp', gross, naira2], ['Total Deductions', 'TrendingDown', 2640000, naira2], ['Total Net', 'DollarSign', s.payrollTotal, naira2]].map(([k, ic, v, f], i) => {
+      const el = h('div', 'cd pr-stat', stats, `<div class="row mut" style="justify-content:space-between"><span>${k}</span><span style="color:${['#737373', '#16a34a', '#dc2626', '#0a0a0a'][i]}">${I(ic)}</span></div><div class="pr-v num"></div>`);
+      return { el, v, f, out: el.querySelector('.pr-v') };
     });
-    const posted = h('div', 'card pr-post', wrap, `<span class="pill solid">${ICON.check.replace('<svg', '<svg width="12" height="12"')} Posted to ledger</span><span class="muted num">JE-2026-0925 · Salaries DR ${nairaShort(s.payrollTotal)} · Bank CR ${nairaShort(s.payrollTotal)}</span>`);
-
-    const ph = phone(root, { x: 1545, y: 215, time: '9:41' });
-    ph.el.classList.add('mid');
-    const lines = [['Basic salary', 380000], ['Housing', 95000], ['Transport', 40000], ['PAYE tax', -68300], ['Pension (8%)', -34200]];
-    ph.content.innerHTML = `<div class="slip"><div class="crumb">My Pay</div><div class="h1">Payslip</div><div class="sub">${s.payrollMonth} · ${s.educator} · Educator</div>
-      <div class="inv-due"><div class="k">Net pay</div><div class="v num"></div></div>
-      ${lines.map(([k, v]) => `<div class="inv-line"><span>${k}</span><b class="num">${v < 0 ? '−' : ''}${naira(Math.abs(v))}</b></div>`).join('')}</div>`;
-    const net = ph.content.querySelector('.v');
-    const lineEls = [...ph.content.querySelectorAll('.inv-line')];
+    const buckets = h('div', 'pr-buckets', d.main);
+    [['Draft', '#94a3b8', 0], ['Approved', '#3b82f6', s.payrollStaff], ['Paid', '#22c55e', 0]].forEach(([k, c, n]) => h('div', 'cd pr-b', buckets, `<div class="row gap8 mut"><span style="width:7px;height:7px;border-radius:50%;background:${c}"></span>${k}</div><div class="b7 num" style="font-size:20px;margin-top:4px">${n}</div>${n ? `<div class="xs mut num">${naira2(s.payrollTotal)}</div>` : ''}`));
+    h('div', 'tabs-p', d.main, '<span class="on">Salaries</span><span>Adjustments</span><span>Payslips</span><span>Bank file</span><span>Ledger check</span><span>Variance</span>').style.marginTop = '24px';
+    const card = h('div', 'cd', d.main);
+    card.style.marginTop = '16px';
+    const staff = [['Eze, Amaka', 515000, 102500], ['Ade, Grace', 480000, 95300], ['Garba, Yusuf', 455000, 89900], ['Okafor, Ngozi', 430000, 84100]];
+    const T = table(card, '48px 1.6fr 1fr 1fr 1fr 1fr 110px', ['<span class="cbx"></span>', 'Employee', '>Gross', '>Deductions', '>Net', 'Status', '>Actions'], staff.map(([n, g, dd]) => [['<span class="cbx"></span>', ''], n, [naira2(g), 'r num'], [naira2(dd), 'r num red'], [naira2(g - dd), 'r num b7'], ['<span class="bdg t-active">Approved</span>', ''], [`<span class="row gap12" style="justify-content:flex-end">${I('Eye')}<span style="color:#2563eb">${I('CreditCard')}</span></span>`, 'r']]));
+    T.rows.forEach((r) => (r.style.height = '60px'));
+    // Amaka's own view: My Pay on her phone.
+    const ph = phone(root, { x: 1560, y: 205, scale: 0.8, time: '9:41' });
+    const { main } = phoneApp(ph.content, 'AE');
+    h('div', '', main, `<div class="h1">My Pay</div><div class="lead" style="margin-top:0">${s.educator.replace(/^Mrs /, '')} · GFC-E-014 · T3 · Educator</div>`);
+    const slips = h('div', 'cd cd-p', main);
+    slips.style.cssText += 'margin-top:20px;padding:24px 24px 12px';
+    h('div', 'b6', slips, 'Payslips').style.fontSize = '18px';
+    const P = table(slips, '1.1fr 1fr 1.2fr', ['Period', 'Reference', '>Net pay'], [
+      [['<div class="two">September<br>2026</div>', ''], ['<span class="xs mut num">PAY-2026-<br>09-014</span>', ''], ['<span class="sep"></span>', 'r num b5']],
+      [['<div class="two">August<br>2026</div>', ''], ['<span class="xs mut num">PAY-2026-<br>08-014</span>', ''], [naira2(s.payslipNet), 'r num']],
+      [['<div class="two">July<br>2026</div>', ''], ['<span class="xs mut num">PAY-2026-<br>07-014</span>', ''], [naira2(405200), 'r num']],
+    ]);
+    P.t.style.marginTop = '16px';
+    P.th.style.background = '#f8fafc';
+    const sep = P.rows[0].querySelector('.sep');
+    const ytd = h('div', 'cd cd-p', main, `<div class="b6" style="font-size:18px">Year to date (2026)</div><div class="subs">Across 9 pay periods.</div><div class="caps-l" style="margin-top:16px;letter-spacing:0;font-weight:500">Net paid</div><div class="b6 num" style="font-size:16px;margin-top:4px">₦3,712,500.00</div>`);
+    ytd.style.marginTop = '16px';
 
     return (lt) => {
       caps(lt);
-      A.slide(b.win, lt, 0, { dx: 80, dur: 0.6 });
-      st.forEach(({ el, bar }, i) => {
-        const on = lt >= 0.5 + i * 0.5;
-        el.classList.toggle('done', on);
-        if (bar) bar.firstChild.style.width = prog(lt, 0.5 + i * 0.5, 0.5) * 100 + '%';
+      A.slide(d.win, lt, 0, { dx: 80, dur: 0.6 });
+      sv.forEach((x, i) => {
+        A.rise(x.el, lt, 0.2 + i * 0.08, { dy: 10 });
+        x.out.textContent = x.f(count(lt, 0.4, 1.4, 0, x.v, ease.outCubic));
       });
-      sums.forEach((x, i) => {
-        A.rise(x.el, lt, 0.4 + i * 0.1, { dy: 10 });
-        x.b.textContent = naira(count(lt, 0.5, 1.6, 0, x.v, ease.outCubic));
-      });
-      A.rise(posted, lt, 3.5, { dy: 12 });
+      T.rows.forEach((r, i) => A.rise(r, lt, 0.9 + i * 0.08, { dy: 10 }));
+      d.zoom(lt, [[0, 1, 0.5, 0.5], [0.2, 1, 0.5, 0.5], [0.7, 1.25, 0.32, 0.3], [2.4, 1.25, 0.32, 0.3], [2.9, 1.15, 0.3, 0.55]]);
       A.slide(ph.el, lt, 2.3, { dy: 120, dur: 0.6 });
-      net.textContent = naira(count(lt, 2.6, 0.8, 0, s.payslipNet, ease.outExpo));
-      lineEls.forEach((el, i) => A.rise(el, lt, 2.8 + i * 0.07, { dy: 8 }));
+      sep.textContent = naira2(Math.round(count(lt, 2.7, 0.8, 0, s.payslipNet, ease.outExpo)));
+      P.rows[0].style.background = lt >= 2.7 ? `rgba(219,234,254,${0.8 * (1 - prog(lt, 4.2, 0.8))})` : '#fff';
     };
   }
 
@@ -562,47 +664,39 @@
 
   function end(root, sc, F) {
     const s = F.story;
-    const b = browser(root, F, { x: 300, y: 180, w: 1320, h: 720, url: 'greenfield.soteria.app', active: 'Dashboard' });
-    h('div', '', b.main, `<div class="crumb">Home</div><div class="h1">Good afternoon</div><div class="sub">${s.school} · Thursday 24 September</div>`);
-    const grid = h('div', 'kpis', b.main);
-    const kpis = [
-      ['Fees collected this term', 48200000, nairaShort, '87% of billed'],
-      ['Outstanding', 6100000, nairaShort, '142 pupils'],
-      ['Attendance today', 94, (v) => Math.round(v) + '%', '4 to follow up'],
-      [`Payroll · ${s.payrollMonth.split(' ')[0]}`, s.payrollTotal, nairaShort, 'Approved · posted'],
-    ].map(([k, v, fmt, note]) => {
-      const el = h('div', 'card kpi', grid, `<div class="k-label">${k}</div><div class="k-val num"></div><div class="k-note">${note}</div>`);
-      return { el, v, fmt, val: el.querySelector('.k-val') };
+    const d = desk(root, F, { x: 330, y: 150, scale: 0.875, url: 'greenfield.soteria.app', active: 'Dashboard' });
+    // (dashboard)/page.tsx for the owner: what waits on them, then the figures.
+    h('div', '', d.main, `<div class="h1">Welcome back, Adebayo</div><div class="lead">Here's an overview of ${s.school}'s payroll status</div>`);
+    h('div', 'caps-l', d.main, 'Waiting on you').style.cssText = 'margin:24px 0 12px;font-size:13px';
+    const waits = h('div', 'dash-waits', d.main);
+    [['Inbox', '2 decisions waiting on you', ''], ['ClipboardCheck', '3 registers not taken today', ''], ['BadgeDollarSign', '14 invoices overdue', '₦1,240,000.00 owed']].forEach(([ic, t, sub]) => h('div', 'cd dash-wait', waits, `<span style="color:#ea580c">${I(ic, 'i20')}</span><div class="grow"><div>${t}</div>${sub ? `<div class="xs mut num">${sub}</div>` : ''}</div>${I('ArrowRight')}`));
+    const stats = h('div', 'dash-stats', d.main);
+    const sv = [['Total Employees', 'Users', s.payrollStaff, (v) => Math.round(v), 'Active employees'], ['Monthly Payroll', 'Calculator', s.payrollTotal + 2640000, compact, 'Sep 2026 gross'], ['Active Loans', 'Receipt', 11, (v) => Math.round(v), 'Outstanding loans'], ['Outstanding Balance', 'Landmark', 3840000, compact, 'Total loan balance']].map(([k, ic, v, f, sub]) => {
+      const el = h('div', 'cd stat', stats, `<div class="stat-top"><span>${k}</span><span class="stat-ic">${I(ic)}</span></div><div class="stat-v num"></div><div class="stat-s">${sub}</div>`);
+      return { el, v, f, out: el.querySelector('.stat-v') };
     });
-    const lower = h('div', 'dash-lower', b.main);
-    h('div', 'card wait', lower, `<div class="risk-title">Waiting on you</div>${['Approve October pay run draft', '4 pupils to follow up', '2 invoices overdue over 30 days', '1 expense over budget'].map((t) => `<div class="wait-row">${t}<span class="muted">›</span></div>`).join('')}`);
-    const chart = h('div', 'card chartc', lower, '<div class="risk-title">Fees in vs payroll out <span class="muted" style="font-weight:500;font-size:12.5px;margin-left:auto">last 6 months</span></div>');
-    const bars = h('div', 'bars', chart);
-    const pairs = [[62, 40], [48, 41], [30, 41], [86, 42], [70, 43], [58, 43]].map(([a, c], i) => {
-      const g = h('div', 'bar-g', bars);
-      return { a: h('i', 'fee', g), c: h('i', 'pay', g), av: a, cv: c, i };
-    });
-    h('div', 'bars-x muted', chart, ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'].map((m) => `<span>${m}</span>`).join(''));
+    const fees = h('div', 'cd cd-p', d.main, `<div class="row"><div class="grow"><div class="cd-t">Fees</div><div class="subs" style="margin-top:0">${s.term}</div></div><span class="mut row gap8" style="font-size:13px">Arrears ${I('ArrowRight', 'i14')}</span></div><div class="fees-4"><div><div class="xs mut">Billed</div><div class="fv num">₦55,400,000.00</div></div><div><div class="xs mut">Collected</div><div class="fv num" style="color:#16a34a">₦48,200,000.00 <span class="xs mut">87%</span></div></div><div><div class="xs mut">Outstanding</div><div class="fv num">₦7,200,000.00 <span class="xs mut">142 owing</span></div></div><div><div class="xs mut">Net this session</div><div class="fv num">₦16,800,000.00</div></div></div>`);
+    fees.style.marginTop = '24px';
+    const school = h('div', 'cd cd-p', d.main, `<div class="row"><div class="grow"><div class="cd-t">The school</div><div class="subs" style="margin-top:0">Who is here, and who is coming.</div></div><span class="mut row gap8" style="font-size:13px">Pupils ${I('ArrowRight', 'i14')}</span></div><div class="school-3"><div class="row gap12">${I('GraduationCap', 'i20')}<div><div class="b7 num" style="font-size:24px">612</div><div class="xs mut">on the roll</div></div></div><div class="row gap12">${I('School', 'i20')}<div><div class="b7 num" style="font-size:24px">24</div><div class="xs mut">classes</div></div></div><div class="row gap12">${I('ClipboardList', 'i20')}<div><div class="b7 num" style="font-size:24px">9</div><div class="xs mut">applications waiting</div></div></div></div>`);
+    school.style.marginTop = '24px';
 
     const mark = place(h('div', 'wordmark', root, F.brand.product), { y: 300 });
     mark.style.fontSize = '200px';
     const tag = place(h('div', 'wordmark', root, F.brand.tagline), { y: 560 });
     tag.style.cssText += 'font-size:58px;font-weight:600;letter-spacing:-0.03em;color:var(--t-inkMuted)';
-    const cta = place(h('div', 'cta', root, `${F.brand.cta}${ICON.arrow.replace('<svg', '<svg width="32" height="32"')}`), { y: 700 });
+    const cta = place(h('div', 'cta', root, `${F.brand.cta}<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`), { y: 700 });
     const url = F.brand.ctaUrl ? place(h('div', 'cta-url', root, F.brand.ctaUrl), { y: 820 }) : null;
 
     return (lt) => {
       const out = ease.inCubic(prog(lt, 2.2, 0.45));
-      set(b.win, { o: ease.outCubic(prog(lt, 0, 0.3)) * (1 - out), s: lerp(1.06, 1, ease.outQuint(prog(lt, 0, 0.8))) * lerp(1, 0.86, out), blur: 10 * out });
-      kpis.forEach((k, i) => {
-        A.rise(k.el, lt, 0.15 + i * 0.08, { dy: 14 });
-        k.val.textContent = k.fmt(count(lt, 0.3, 1.2, 0, k.v));
+      set(d.win, { o: ease.outCubic(prog(lt, 0, 0.3)) * (1 - out), s: lerp(1.06, 1, ease.outQuint(prog(lt, 0, 0.8))) * lerp(1, 0.86, out), blur: 10 * out });
+      [...waits.children].forEach((c, i) => A.rise(c, lt, 0.15 + i * 0.08, { dy: 12 }));
+      sv.forEach((x, i) => {
+        A.rise(x.el, lt, 0.35 + i * 0.08, { dy: 12 });
+        x.out.textContent = x.f(count(lt, 0.4, 1.2, 0, x.v));
       });
-      pairs.forEach((p) => {
-        const g = ease.outCubic(prog(lt, 0.5 + p.i * 0.08, 0.6));
-        p.a.style.height = p.av * g + '%';
-        p.c.style.height = p.cv * g + '%';
-      });
+      A.rise(fees, lt, 0.7, { dy: 12 });
+      A.rise(school, lt, 0.8, { dy: 12 });
       A.slam(mark, lt, 2.5, { from: 1.25, dur: 0.3 });
       A.rise(tag, lt, 3.0, { dy: 24 });
       if (lt < 3.5) set(cta, { o: 0 });
