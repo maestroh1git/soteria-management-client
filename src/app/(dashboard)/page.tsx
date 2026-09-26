@@ -30,6 +30,7 @@ import { AttendanceTile } from '@/components/dashboard/attendance-tile';
 import { FeesWidget } from '@/components/dashboard/fees-widget';
 import { BudgetWidget } from '@/components/dashboard/budget-widget';
 import { NeedsYou } from '@/features/home/needs-you';
+import { OwnerOverview } from '@/features/home/owner-overview';
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card';
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils/currency';
 import {
@@ -60,7 +61,7 @@ const DEPT_COLORS = [
 ];
 
 export default function DashboardPage() {
-    const { fullName, tenantName } = useAuth();
+    const { fullName, tenantName, tenantOrgType } = useAuth();
 
     /**
      * Who is looking.
@@ -84,6 +85,16 @@ export default function DashboardPage() {
     // registrar's with the school; everyone's with what is waiting on them.
     const moneyFirst = can('ledger.read') && !can('payroll.process');
     const schoolFirst = !seesPayroll && can('admissions.read');
+
+    // The school's owner, or whoever runs all of it: may read the money, the
+    // roll and the payroll. Their home leads with how the school is doing
+    // (OwnerOverview) rather than with payroll, which is where this page began.
+    const ownerHome =
+        tenantOrgType === 'SCHOOL' &&
+        seesPayroll &&
+        canDetail &&
+        can('fees.read') &&
+        can('attendance.report');
 
     // A plain member of staff — the EMPLOYEE role and nothing that runs the
     // school or the payroll. The admin dashboard below is not theirs to read;
@@ -262,6 +273,15 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-8">
+            {ownerHome ? (
+                <OwnerOverview
+                    firstName={fullName.split(' ')[0]}
+                    tenantName={tenantName}
+                    payrollGross={summary?.totalGrossSalary}
+                    payrollMonth={MONTH_LABELS[displayMonth - 1]}
+                />
+            ) : (
+            <>
             {/* Welcome header */}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">
@@ -281,6 +301,8 @@ export default function DashboardPage() {
 
             {/* What is waiting on this person, before anything else (C4.10). */}
             <NeedsYou />
+            </>
+            )}
 
             {/* Onboarding checklist (self-hides once complete/dismissed) */}
             <GettingStartedCard />
@@ -304,7 +326,7 @@ export default function DashboardPage() {
                 false about itself — and `hasNoData` above cannot catch it,
                 because it tests `totalEmployees === 0` on data that is
                 undefined when the request failed. */}
-            {seesPayroll &&
+            {ownerHome ? null : seesPayroll &&
             ((summaryFailed && !monthlySummary) ||
                 (loansFailed && !loanPortfolio)) ? (
                 <EmptyState
@@ -354,7 +376,7 @@ export default function DashboardPage() {
 
             {/* Today's attendance, and — louder — the registers nobody has
                 taken. Hides itself for a tenant with no classes. */}
-            <AttendanceTile />
+            {!ownerHome && <AttendanceTile />}
 
             {/* The school, for the people who run it. Self-gates on org type
                 and role, and stays hidden until there is a roll. */}
@@ -362,7 +384,7 @@ export default function DashboardPage() {
 
             {/* Fees in against costs out — both sides from the ledger. Hides
                 itself for a tenant that has never billed anything. */}
-            {!moneyFirst && <FeesWidget />}
+            {!moneyFirst && !ownerHome && <FeesWidget />}
             {!moneyFirst && <BudgetWidget />}
 
             {/* Upcoming events. This was a three-column grid holding a single

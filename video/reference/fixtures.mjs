@@ -181,3 +181,10 @@ on('GET', /^\/me\/employee$/, () => ({ id: 'e1', employeeNumber: 'GFC-E-014', fi
 on('GET', /^\/me\/payslips$/, () => [['September 2026', 412500, '2026-09-25'], ['August 2026', 412500, '2026-08-25'], ['July 2026', 405200, '2026-07-24']].map(([p, n, d], i) => ({ id: 'ps' + i, fileName: `payslip-${i}.pdf`, status: 'GENERATED', generatedAt: d + 'T10:00:00Z', payPeriod: p, netSalary: n, reference: `PAY-2026-0${9 - i}-014` })));
 on('GET', /^\/me\/ytd/, () => ({ year: 2026, contractualSalary: 4635000, additionalEarnings: 0, grossSalary: 4635000, totalDeductions: 922500, netSalary: 3712500, deductionsByComponent: { 'PAYE tax': 614700, 'Pension (8%)': 307800 }, periodsIncluded: 9 }));
 on('GET', /^\/me\/loans$/, () => []);
+
+// ── Owner dashboard: fees in vs payroll cost ──────────────────────
+// Fees arrive in lumps at the start of each term; payroll is steady.
+on('GET', /^\/reports\/fees-vs-payroll$/, () => ({
+  months: [[4, 21400000, 16980000], [5, 8200000, 17050000], [6, 3100000, 17120000], [7, 1200000, 17310000], [8, 600000, 17380000], [9, 48200000, 17460000]]
+    .map(([month, fees, pay]) => ({ year: 2026, month, feesIn: fees.toFixed(2), payrollCost: pay.toFixed(2) })),
+}));
