@@ -90,7 +90,7 @@ export default function RegisterPage() {
 
     return (
         <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-            <CardContent className="pt-6">
+            <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         {serverError && (

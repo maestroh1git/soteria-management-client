@@ -50,7 +50,7 @@ function SummaryCards() {
     summary?.byCategory.find((b) => b.category === cat)?.count ?? 0;
 
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
       {CATEGORY_META.map(({ key, label, icon: Icon, color }) => (
         <Card key={key}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -88,7 +88,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
 
   return (
     <div className="flex flex-wrap gap-3 items-end">
-      <div className="flex-1 min-w-48">
+      <div className="w-full sm:w-auto sm:flex-1 sm:min-w-48">
         <Input
           placeholder="User ID or name…"
           value={filters.userId ?? ''}
@@ -100,7 +100,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
         value={filters.entityType ?? '_all'}
         onValueChange={(v) => onChange({ ...filters, entityType: v === '_all' ? undefined : v, page: 1 })}
       >
-        <SelectTrigger className="w-44">
+        <SelectTrigger className="w-full sm:w-44">
           <SelectValue placeholder="Entity type" />
         </SelectTrigger>
         <SelectContent>
@@ -113,7 +113,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
         value={filters.action ?? '_all'}
         onValueChange={(v) => onChange({ ...filters, action: v === '_all' ? undefined : v, page: 1 })}
       >
-        <SelectTrigger className="w-40">
+        <SelectTrigger className="w-full sm:w-40">
           <SelectValue placeholder="Action" />
         </SelectTrigger>
         <SelectContent>
@@ -126,7 +126,7 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
         value={filters.category ?? '_all'}
         onValueChange={(v) => onChange({ ...filters, category: v === '_all' ? undefined : v, page: 1 })}
       >
-        <SelectTrigger className="w-40">
+        <SelectTrigger className="w-full sm:w-40">
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
@@ -135,17 +135,17 @@ function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
         </SelectContent>
       </Select>
 
-      <div className="flex gap-2 items-center">
+      <div className="flex w-full gap-2 items-center sm:w-auto">
         <Input
           type="date"
-          className="w-36"
+          className="min-w-0 flex-1 sm:w-36 sm:flex-none"
           value={filters.fromDate ?? ''}
           onChange={(e) => onChange({ ...filters, fromDate: e.target.value || undefined, page: 1 })}
         />
         <span className="text-muted-foreground text-sm">to</span>
         <Input
           type="date"
-          className="w-36"
+          className="min-w-0 flex-1 sm:w-36 sm:flex-none"
           value={filters.toDate ?? ''}
           onChange={(e) => onChange({ ...filters, toDate: e.target.value || undefined, page: 1 })}
         />

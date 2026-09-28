@@ -33,7 +33,7 @@ export function PayrollLedgerCheck({ payPeriodId }: { payPeriodId: string }) {
     if (isLoading) {
         return (
             <Card>
-                <CardContent className="flex items-center gap-2 pt-6 text-sm text-muted-foreground">
+                <CardContent className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> Checking the books…
                 </CardContent>
             </Card>

@@ -191,7 +191,7 @@ export default function LoansPage() {
             />
 
             {/* Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Active Loans</CardTitle>
@@ -211,14 +211,14 @@ export default function LoansPage() {
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Disbursed</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                     </CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{formatMoney(totalDisbursed)}</p></CardContent>
+                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl">{formatMoney(totalDisbursed)}</p></CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Outstanding</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                     </CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{formatMoney(totalOutstanding)}</p></CardContent>
+                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl">{formatMoney(totalOutstanding)}</p></CardContent>
                 </Card>
             </div>
 

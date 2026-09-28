@@ -77,7 +77,7 @@ export default function PublicInvoicePage({
         return (
             <div className="mx-auto max-w-lg px-4 py-16">
                 <Card>
-                    <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
+                    <CardContent className="flex flex-col items-center gap-3 text-center">
                         <AlertCircle className="h-8 w-8 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">{error}</p>
                     </CardContent>
@@ -100,7 +100,7 @@ export default function PublicInvoicePage({
             </div>
 
             <Card>
-                <CardContent className="pt-6 text-center">
+                <CardContent className="text-center">
                     {settled ? (
                         <div className="flex flex-col items-center gap-2">
                             <CheckCircle2 className="h-8 w-8 text-green-600" />

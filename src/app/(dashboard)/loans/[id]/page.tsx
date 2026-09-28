@@ -334,7 +334,7 @@ export default function LoanDetailPage() {
                 {/* ── History Tab ── */}
                 <TabsContent value="history">
                     <Card>
-                        <CardContent className="pt-6">
+                        <CardContent>
                             {historyLoading ? (
                                 <LoadingSkeleton rows={5} />
                             ) : history.length === 0 ? (

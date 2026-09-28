@@ -49,16 +49,10 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
-    Cell,
 } from 'recharts';
 import { EmployeeLink } from '@/components/common/entity-link';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const DEPT_COLORS = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
-];
 
 export default function DashboardPage() {
     const { fullName, tenantName, tenantOrgType } = useAuth();
@@ -450,31 +444,36 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             {deptCostData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={deptCostData} layout="vertical">
-                                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                        <XAxis
-                                            type="number"
-                                            className="text-xs"
-                                            tickFormatter={(v: number) => formatCompactCurrency(v).replace('NGN ', '')}
-                                        />
-                                        <YAxis
-                                            dataKey="department"
-                                            type="category"
-                                            className="text-xs"
-                                            width={120}
-                                        />
-                                        <Tooltip
-                                            formatter={(value) => formatCurrency(value as number)}
-                                            contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
-                                        />
-                                        <Bar dataKey="cost" name="Gross Cost" radius={[0, 4, 4, 0]}>
-                                            {deptCostData.map((_, index) => (
-                                                <Cell key={index} fill={DEPT_COLORS[index % DEPT_COLORS.length]} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                /* A ranked list, not a chart: each department's
+                                   figure is the thing to read, and a horizontal
+                                   bar chart spent a third of a phone's width on
+                                   its names and crowded its axis. The bar gives
+                                   the proportion; the number gives the amount. */
+                                <ul className="space-y-3">
+                                    {[...deptCostData]
+                                        .sort((a, b) => b.cost - a.cost)
+                                        .map((d, _, all) => (
+                                            <li key={d.department}>
+                                                <div className="flex items-baseline justify-between gap-3 text-sm">
+                                                    <span className="min-w-0 truncate">
+                                                        {d.department}
+                                                        <span className="ml-1.5 text-xs text-muted-foreground">
+                                                            {d.employees} {d.employees === 1 ? 'person' : 'people'}
+                                                        </span>
+                                                    </span>
+                                                    <span className="shrink-0 font-medium tabular-nums">
+                                                        {formatCurrency(d.cost)}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1.5 h-2 rounded-full bg-muted">
+                                                    <div
+                                                        className="h-2 rounded-full bg-[#3b82f6]"
+                                                        style={{ width: `${all[0].cost > 0 ? (100 * d.cost) / all[0].cost : 0}%` }}
+                                                    />
+                                                </div>
+                                            </li>
+                                        ))}
+                                </ul>
                             ) : (
                                 <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
                                     {deptFailed

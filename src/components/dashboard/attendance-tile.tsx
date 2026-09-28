@@ -43,7 +43,7 @@ export function AttendanceTile() {
     if (data.dayType === null) {
         return (
             <Card>
-                <CardContent className="py-5">
+                <CardContent>
                     <p className="text-sm font-medium text-muted-foreground">
                         Attendance today
                     </p>
@@ -66,7 +66,7 @@ export function AttendanceTile() {
     if (!data.isTeachingDay) {
         return (
             <Card>
-                <CardContent className="py-5">
+                <CardContent>
                     <p className="text-sm font-medium text-muted-foreground">
                         Attendance today
                     </p>
@@ -82,7 +82,7 @@ export function AttendanceTile() {
 
     return (
         <Card className="overflow-hidden">
-            <CardContent className="py-5">
+            <CardContent>
                 <p className="text-sm font-medium text-muted-foreground">
                     Attendance today
                 </p>

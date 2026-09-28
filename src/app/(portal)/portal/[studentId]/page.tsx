@@ -160,7 +160,7 @@ export default function ChildStatementPage({
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <Card>
-                    <CardContent className="py-4">
+                    <CardContent>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                             Owed now
                         </p>
@@ -180,7 +180,7 @@ export default function ChildStatementPage({
                 </Card>
                 {credit > 0 && (
                     <Card>
-                        <CardContent className="py-4">
+                        <CardContent>
                             <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Credit on account
                             </p>

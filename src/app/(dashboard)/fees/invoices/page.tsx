@@ -411,7 +411,7 @@ function RunDialog({
                     <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
                         <div className="grid grid-cols-3 gap-3">
                             <Card>
-                                <CardContent className="pt-6">
+                                <CardContent>
                                     <p className="text-xs text-muted-foreground">
                                         Will be billed
                                     </p>
@@ -421,7 +421,7 @@ function RunDialog({
                                 </CardContent>
                             </Card>
                             <Card>
-                                <CardContent className="pt-6">
+                                <CardContent>
                                     <p className="text-xs text-muted-foreground">Total</p>
                                     <p className="text-2xl font-bold tabular-nums">
                                         <Money value={preview.total} />
@@ -429,7 +429,7 @@ function RunDialog({
                                 </CardContent>
                             </Card>
                             <Card>
-                                <CardContent className="pt-6">
+                                <CardContent>
                                     <p className="text-xs text-muted-foreground">Skipped</p>
                                     <p className="text-2xl font-bold">
                                         {preview.skipped.length}

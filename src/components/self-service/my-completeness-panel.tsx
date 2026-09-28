@@ -56,7 +56,7 @@ export function MyCompletenessPanel({ onFillIn }: { onFillIn: () => void }) {
     if (data.missing.length === 0) {
         return (
             <Card>
-                <CardContent className="flex items-center gap-3 py-4">
+                <CardContent className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     <div>
                         <p className="text-sm font-medium">Everything we need is on file</p>

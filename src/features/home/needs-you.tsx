@@ -98,7 +98,7 @@ export function NeedsYou({ variant = 'tiles' }: { variant?: 'tiles' | 'list' }) 
                     return (
                         <Link key={item.key} href={item.href} className="group">
                             <Card className="h-full transition-colors group-hover:border-primary/50">
-                                <CardContent className="flex items-center gap-3 py-4">
+                                <CardContent className="flex items-center gap-3">
                                     <Icon className="h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
                                     <span className="min-w-0 flex-1 text-sm font-medium">
                                         {look.label(item.count)}

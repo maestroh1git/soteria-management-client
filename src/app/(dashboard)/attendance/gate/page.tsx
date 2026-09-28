@@ -100,7 +100,7 @@ export default function GatePage() {
             </div>
 
             <Card>
-                <CardContent className="space-y-4 py-5">
+                <CardContent className="space-y-4">
                     <div className="space-y-1.5">
                         <Label htmlFor="gate-search">Find a pupil</Label>
                         <Input

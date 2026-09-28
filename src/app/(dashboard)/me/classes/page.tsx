@@ -61,7 +61,7 @@ export default function MyClassesPage() {
 
             {classes.map((c) => (
                 <Card key={c.classArmId}>
-                    <CardContent className="space-y-5 py-5">
+                    <CardContent className="space-y-5">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h2 className="text-lg font-semibold">
