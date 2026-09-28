@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Check, X, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Check, CheckCheck, X, Trash2, Loader2, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,10 @@ import {
     useApproveAdjustment,
     useRejectAdjustment,
     useDeleteAdjustment,
+    useApproveManyAdjustments,
 } from '@/lib/hooks/use-payroll-adjustments';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { BulkAdjustmentDialog } from './bulk-adjustment-dialog';
 import { useEmployees } from '@/lib/hooks/use-employees';
 import { useSalaryComponents } from '@/features/staff/salary-components/hooks';
 import type {
@@ -61,16 +64,20 @@ export function AdjustmentsPanel({
 }) {
     const { data: adjustments = [], isLoading } = useAdjustments(payPeriodId);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [bulkOpen, setBulkOpen] = useState(false);
+    const [confirmAll, setConfirmAll] = useState(false);
 
     const approveMutation = useApproveAdjustment();
+    const approveMany = useApproveManyAdjustments();
     const rejectMutation = useRejectAdjustment();
     const deleteMutation = useDeleteAdjustment();
 
-    const pendingCount = adjustments.filter((a) => a.status === 'PENDING').length;
+    const pending = adjustments.filter((a) => a.status === 'PENDING');
+    const pendingCount = pending.length;
 
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <CardTitle className="text-lg">Adjustments</CardTitle>
                     <p className="text-sm text-muted-foreground">
@@ -78,11 +85,25 @@ export function AdjustmentsPanel({
                         Only approved adjustments are applied when payroll runs.
                     </p>
                 </div>
-                {!readOnly && canRaise && (
-                    <Button size="sm" onClick={() => setDialogOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> Add
-                    </Button>
-                )}
+                <div className="flex flex-wrap gap-2">
+                    {!readOnly && canApprove && pendingCount > 1 && (
+                        <Button size="sm" variant="outline" onClick={() => setConfirmAll(true)}>
+                            <CheckCheck className="mr-2 h-4 w-4" /> Approve all {pendingCount}
+                        </Button>
+                    )}
+                    {!readOnly && canRaise && (
+                        <>
+                            {/* The same one-off for many people: a 13th
+                                month, an end-of-year bonus, a levy. */}
+                            <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)}>
+                                <Users className="mr-2 h-4 w-4" /> For many
+                            </Button>
+                            <Button size="sm" onClick={() => setDialogOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> Add
+                            </Button>
+                        </>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
                 {pendingCount > 0 && (
@@ -137,12 +158,34 @@ export function AdjustmentsPanel({
             {/* Only for those who raise adjustments: its staff list is theirs
                 to read, and an Approver opening the run was refused it. */}
             {canRaise && (
-                <AdjustmentFormDialog
-                    open={dialogOpen}
-                    onOpenChange={setDialogOpen}
-                    payPeriodId={payPeriodId}
-                />
+                <>
+                    <AdjustmentFormDialog
+                        open={dialogOpen}
+                        onOpenChange={setDialogOpen}
+                        payPeriodId={payPeriodId}
+                    />
+                    <BulkAdjustmentDialog
+                        open={bulkOpen}
+                        onOpenChange={setBulkOpen}
+                        payPeriodId={payPeriodId}
+                    />
+                </>
             )}
+
+            <ConfirmDialog
+                open={confirmAll}
+                onOpenChange={setConfirmAll}
+                title={`Approve all ${pendingCount} pending adjustments?`}
+                description="Each will be applied the next time payroll runs for this period. Check the amounts in the list first."
+                confirmLabel={`Approve ${pendingCount}`}
+                loading={approveMany.isPending}
+                onConfirm={() =>
+                    approveMany.mutate(
+                        pending.map((a) => a.id),
+                        { onSuccess: () => setConfirmAll(false) },
+                    )
+                }
+            />
         </Card>
     );
 }

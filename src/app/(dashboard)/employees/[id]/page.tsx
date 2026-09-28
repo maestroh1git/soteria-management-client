@@ -2,7 +2,7 @@
 
 import { use, useMemo } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Calendar, Briefcase, Pencil } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Briefcase, Pencil, UserRound, Layers, Users, Hash, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -145,11 +145,12 @@ export default function EmployeeDetailPage({
                                     label="Date of Birth"
                                     value={formatDate(employee.dateOfBirth)}
                                 />
-                                <InfoRow label="Gender" value={employee.gender} />
+                                <InfoRow icon={<UserRound className="h-4 w-4" />} label="Gender" value={employee.gender} />
                                 {employee.address && (
                                     <InfoRow icon={<MapPin className="h-4 w-4" />} label="Address" value={employee.address} />
                                 )}
                                 <InfoRow
+                                    icon={<Users className="h-4 w-4" />}
                                     label="Next of kin"
                                     value={
                                         employee.nextOfKinName
@@ -173,16 +174,17 @@ export default function EmployeeDetailPage({
                                 <CardTitle className="text-lg">Employment Details</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <InfoRow label="Employee #" value={employee.employeeNumber} />
+                                <InfoRow icon={<Hash className="h-4 w-4" />} label="Employee #" value={employee.employeeNumber} />
                                 <InfoRow
                                     icon={<Briefcase className="h-4 w-4" />}
                                     label="Position"
                                     value={employee.role?.name ?? '—'}
                                 />
                                 {employee.role?.department && (
-                                    <InfoRow label="Department" value={employee.role.department.name} />
+                                    <InfoRow icon={<Building2 className="h-4 w-4" />} label="Department" value={employee.role.department.name} />
                                 )}
                                 <InfoRow
+                                    icon={<Layers className="h-4 w-4" />}
                                     label="Grade"
                                     value={
                                         employee.grade

@@ -25,11 +25,18 @@ export function AccessChecklist({
 }) {
     const lockedRoles = locked?.roles ?? [];
     return (
-        <div role="group" aria-labelledby={labelledBy} className="grid gap-2 sm:grid-cols-2">
+        // One divided list on a phone, where eleven separate boxes and the gaps
+        // between them made the invite dialog taller than the screen; two
+        // columns of boxes from 640px up.
+        <div
+            role="group"
+            aria-labelledby={labelledBy}
+            className="divide-y rounded-md border sm:grid sm:grid-cols-2 sm:gap-2 sm:divide-y-0 sm:border-0"
+        >
             {lockedRoles.map((role) => (
                 <div
                     key={`locked-${role}`}
-                    className="flex items-start gap-2 rounded-md border border-dashed bg-muted/30 p-2 text-sm"
+                    className="flex items-start gap-2 bg-muted/30 px-3 py-2 text-sm sm:rounded-md sm:border sm:border-dashed sm:p-2"
                 >
                     <Checkbox className="mt-0.5" checked disabled aria-label={`${ACCESS_LABELS[role] ?? role}, from ${locked!.from}`} />
                     <span>
@@ -44,7 +51,7 @@ export function AccessChecklist({
             {options.filter((r) => !lockedRoles.includes(r) || value.includes(r)).map((role) => (
                 <label
                     key={role}
-                    className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm hover:bg-muted/40"
+                    className="flex cursor-pointer items-start gap-2 px-3 py-2 text-sm hover:bg-muted/40 sm:rounded-md sm:border sm:p-2"
                 >
                     <Checkbox
                         className="mt-0.5"

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, UserPlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,7 @@ import {
     useUpdateSalaryComponent,
 } from '@/features/staff/salary-components/hooks';
 import { PageHeader } from '@/components/layout/page-header';
+import { BulkComponentDialog } from '@/components/employees/bulk-component-dialog';
 
 const APPLICABILITY_BY_ORG_TYPE: Record<string, string[]> = {
     SCHOOL: ['ALL_STAFF', 'TEACHING_STAFF', 'ADMIN_STAFF', 'SUPERVISORS', 'SUPPORT_STAFF'],
@@ -71,6 +72,8 @@ export default function SalaryComponentsPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SalaryComponent | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<SalaryComponent | null>(null);
+    // The component being added to staff, from its row or straight after it is created.
+    const [assignTarget, setAssignTarget] = useState<SalaryComponent | null>(null);
 
     const createMutation = useCreateSalaryComponent();
 
@@ -170,6 +173,17 @@ export default function SalaryComponentsPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
+                                            aria-label={`Add ${comp.name} to staff`}
+                                            title="Add to staff"
+                                            onClick={() => setAssignTarget(comp)}
+                                        >
+                                            <UserPlus className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            aria-label={`Edit ${comp.name}`}
                                             onClick={() => openEdit(comp)}
                                         >
                                             <Pencil className="h-4 w-4" />
@@ -178,6 +192,7 @@ export default function SalaryComponentsPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-red-600"
+                                            aria-label={`Delete ${comp.name}`}
                                             onClick={() => setDeleteTarget(comp)}
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -224,10 +239,19 @@ export default function SalaryComponentsPage() {
                             { onSuccess: () => { setEditTarget(null); setDialogOpen(false); } },
                         );
                     } else {
-                        createMutation.mutate(dto, { onSuccess: () => setDialogOpen(false) });
+                        createMutation.mutate(dto, {
+                            // A new component is on nobody yet: offer to add it
+                            // to the staff who should have it, straight away.
+                            onSuccess: (created) => {
+                                setDialogOpen(false);
+                                if (created) setAssignTarget(created as SalaryComponent);
+                            },
+                        });
                     }
                 }}
             />
+
+            <BulkComponentDialog component={assignTarget} onClose={() => setAssignTarget(null)} />
 
             <ConfirmDialog
                 open={!!deleteTarget}

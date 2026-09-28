@@ -6,7 +6,10 @@ import {
     approveAdjustment,
     rejectAdjustment,
     deleteAdjustment,
+    createAdjustmentsForMany,
+    approveManyAdjustments,
     type CreatePayrollAdjustmentDto,
+    type BulkPayrollAdjustmentDto,
 } from '@/lib/api/payroll-adjustments';
 
 const key = (payPeriodId: string, employeeId?: string) =>
@@ -66,5 +69,32 @@ export function useDeleteAdjustment() {
   return useAdjustmentMutation(
     (id: string) => deleteAdjustment(id),
     'Adjustment deleted',
+  );
+}
+
+/**
+ * The same one-off for a group. A preview (`dryRun`) changes nothing, so it
+ * neither invalidates nor toasts; the real call does both.
+ */
+export function useCreateAdjustmentsForMany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: BulkPayrollAdjustmentDto) => createAdjustmentsForMany(dto),
+    onSuccess: (res) => {
+      if (res.dryRun) return;
+      qc.invalidateQueries({ queryKey: ['payroll-adjustments'] });
+      qc.invalidateQueries({ queryKey: ['salaries'] });
+      toast.success(
+        `${res.created.length} adjustment${res.created.length === 1 ? '' : 's'} raised — pending approval`,
+      );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useApproveManyAdjustments() {
+  return useAdjustmentMutation(
+    (ids: string[]) => approveManyAdjustments(ids),
+    'Adjustments approved — they will apply on the next run',
   );
 }
