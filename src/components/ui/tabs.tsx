@@ -25,8 +25,12 @@ function Tabs({
   )
 }
 
+// Horizontal lists are at least one row tall rather than exactly one, so a
+// list that wraps (`flex-wrap`) grows instead of spilling over what follows,
+// and one that does not wrap scrolls sideways on a phone instead of cutting
+// its last tabs off.
 const tabsListVariants = cva(
-  "rounded-lg p-[3px] group-data-[orientation=horizontal]/tabs:h-9 data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "rounded-lg p-[3px] group-data-[orientation=horizontal]/tabs:min-h-9 group-data-[orientation=horizontal]/tabs:max-w-full group-data-[orientation=horizontal]/tabs:justify-start group-data-[orientation=horizontal]/tabs:overflow-x-auto [scrollbar-width:none] data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
   {
     variants: {
       variant: {

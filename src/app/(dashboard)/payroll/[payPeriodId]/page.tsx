@@ -327,14 +327,14 @@ export default function PayrollWorkspacePage() {
             />
 
             {/* Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Employees</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{employeeCount}</p>
+                        <p className="text-base font-bold tabular-nums sm:text-2xl">{employeeCount}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -343,7 +343,7 @@ export default function PayrollWorkspacePage() {
                         <TrendingUp className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{formatCurrency(totalGross)}</p>
+                        <p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(totalGross)}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -352,7 +352,7 @@ export default function PayrollWorkspacePage() {
                         <TrendingDown className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{formatCurrency(totalDeductions)}</p>
+                        <p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(totalDeductions)}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -361,7 +361,7 @@ export default function PayrollWorkspacePage() {
                         <DollarSign className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{formatCurrency(totalNet)}</p>
+                        <p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(totalNet)}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -500,7 +500,7 @@ export default function PayrollWorkspacePage() {
                 ) : (
                     <>
                         <div className="rounded-lg border bg-card">
-                            <table className="w-full text-sm">
+                            <table data-stack className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b bg-muted/50">
                                         <th className="w-10 px-4 py-3">

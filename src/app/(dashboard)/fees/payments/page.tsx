@@ -140,7 +140,7 @@ export default function PaymentsPage() {
             ) : (
                 <Card>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table data-stack className="w-full text-sm">
                             <thead className="border-b bg-muted/40">
                                 <tr>
                                     <th className="px-4 py-3 text-left font-medium">Receipt</th>

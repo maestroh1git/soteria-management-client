@@ -87,7 +87,7 @@ function typeBadge(type: string) {
 function BracketTable({ brackets }: { brackets: TaxBracket[] }) {
     return (
         <div className="mt-3 rounded-md border overflow-hidden">
-            <table className="w-full text-xs">
+            <table data-stack className="w-full text-xs">
                 <thead className="bg-slate-50">
                     <tr>
                         <th className="text-left px-3 py-2 font-medium text-slate-500">Min Amount</th>

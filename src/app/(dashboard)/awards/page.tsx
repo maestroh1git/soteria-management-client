@@ -147,7 +147,7 @@ export default function AwardsPage() {
                         {data.total} {data.total === 1 ? 'award' : 'awards'}.
                     </p>
                     <div className="overflow-x-auto rounded-lg border">
-                        <table className="w-full min-w-[720px] text-sm">
+                        <table data-stack className="w-full sm:min-w-[720px] text-sm">
                             <caption className="sr-only">
                                 Awards recorded across the school
                             </caption>

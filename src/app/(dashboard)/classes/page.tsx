@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Users, CalendarRange, Loader2, ArrowRight } from 'lucide-react';
+import { Plus, Pencil, Users, CalendarRange, Loader2, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +59,7 @@ import type {
     ClassArm,
 } from '@/lib/api/academics';
 import { useTabParam } from '@/lib/hooks/use-tab-param';
+import { formatDateRange } from '@/lib/utils/dates';
 
 /**
  * The school's shape: the ladder of levels, the classes on each rung, and the
@@ -285,67 +286,77 @@ function ClassesPageInner() {
                                         <CardDescription>
                                             {armsFor(l.id).length === 0
                                                 ? 'No classes on this level yet — children cannot be placed here.'
-                                                : `${armsFor(l.id).length} class(es)`}
+                                                : armsFor(l.id).length === 1
+                                                  ? '1 class'
+                                                  : `${armsFor(l.id).length} classes`}
                                         </CardDescription>
                                     </CardHeader>
+                                    {armsFor(l.id).length > 0 && (
                                     <CardContent>
-                                        <div className="flex flex-wrap gap-2">
-                                            {armsFor(l.id).map((a) => (
-                                                <div key={a.id} className="flex items-center">
-                                                    <Link href={`/classes/${a.id}`}>
-                                                        <Button
-                                                            variant="outline"
-                                                            className={`gap-2 ${canManage ? 'rounded-r-none border-r-0' : ''}`}
+                                        {/* One full-width row per class, so every class reads
+                                            the same way whatever the length of its teacher's
+                                            name: the class, then how full, then who has it. */}
+                                        <ul className="divide-y rounded-lg border">
+                                            {armsFor(l.id).map((a) => {
+                                                const full = a.capacity !== null && (a.enrolled ?? 0) >= a.capacity;
+                                                return (
+                                                    <li key={a.id} className="flex items-stretch">
+                                                        <Link
+                                                            href={`/classes/${a.id}`}
+                                                            className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 first:rounded-l-lg"
                                                         >
-                                                            <Users className="h-4 w-4" />
-                                                            {l.name} {a.name}
+                                                            <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-sm font-medium">
+                                                                    {l.name} {a.name}
+                                                                </p>
+                                                                {/* A class with nobody on it is a register
+                                                                    nobody can take, so say so here rather
+                                                                    than leaving it to be discovered. */}
+                                                                <p
+                                                                    className={`truncate text-xs ${
+                                                                        a.formTeacherId
+                                                                            ? 'text-muted-foreground'
+                                                                            : 'text-amber-600 dark:text-amber-400'
+                                                                    }`}
+                                                                >
+                                                                    {a.formTeacherId
+                                                                        ? (a.formTeacherName ?? 'Educator set')
+                                                                        : 'No educator'}
+                                                                </p>
+                                                            </div>
                                                             {/* How full: pupils against seats, and
                                                                 a full class says so. */}
                                                             <span
-                                                                className={
-                                                                    a.capacity !== null && (a.enrolled ?? 0) >= a.capacity
+                                                                className={`shrink-0 text-sm tabular-nums ${
+                                                                    full
                                                                         ? 'font-medium text-amber-700 dark:text-amber-400'
                                                                         : 'text-muted-foreground'
-                                                                }
+                                                                }`}
                                                             >
-                                                                ·{' '}
                                                                 {a.capacity !== null
-                                                                    ? `${a.enrolled ?? 0}/${a.capacity} seats${(a.enrolled ?? 0) >= a.capacity ? ', full' : ''}`
+                                                                    ? `${a.enrolled ?? 0}/${a.capacity}${full ? ', full' : ''}`
                                                                     : `${a.enrolled ?? 0} pupils`}
                                                             </span>
-                                                            {/* A class with nobody on it is a register
-                                                                nobody can take, so say so here rather
-                                                                than leaving it to be discovered. */}
-                                                            <span
-                                                                className={
-                                                                    a.formTeacherId
-                                                                        ? 'text-muted-foreground'
-                                                                        : 'text-amber-600 dark:text-amber-400'
-                                                                }
+                                                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                        </Link>
+                                                        {canManage && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-auto w-11 shrink-0 rounded-none rounded-r-lg border-l"
+                                                                onClick={() => openEditArm(a)}
+                                                                aria-label={`Edit ${l.name} ${a.name}`}
                                                             >
-                                                                ·{' '}
-                                                                {a.formTeacherId
-                                                                    ? (a.formTeacherName ?? 'educator set')
-                                                                    : 'no educator'}
-                                                            </span>
-                                                            <ArrowRight className="h-3 w-3" />
-                                                        </Button>
-                                                    </Link>
-                                                    {canManage && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="rounded-l-none"
-                                                            onClick={() => openEditArm(a)}
-                                                            aria-label="Edit class"
-                                                        >
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
+                                                                <Pencil className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     </CardContent>
+                                    )}
                                 </Card>
                             ))}
                         </div>
@@ -354,7 +365,7 @@ function ClassesPageInner() {
 
                 <TabsContent value="session" className="space-y-4">
                     <Card>
-                        <CardHeader className="flex flex-row items-start justify-between">
+                        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                                 <CardTitle className="text-lg">Academic session</CardTitle>
                                 <CardDescription>
@@ -384,15 +395,15 @@ function ClassesPageInner() {
                                 sessions.map((s) => (
                                     <div
                                         key={s.id}
-                                        className="flex items-center justify-between rounded-lg border p-3"
+                                        className="flex items-center justify-between gap-2 rounded-lg border p-3"
                                     >
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <p className="font-medium">{s.name}</p>
                                                 {s.isCurrent && <Badge>Current</Badge>}
                                             </div>
                                             <p className="text-sm text-muted-foreground">
-                                                {s.startDate} → {s.endDate}
+                                                {formatDateRange(s.startDate, s.endDate)}
                                             </p>
                                         </div>
                                         {canManage && (
@@ -424,7 +435,7 @@ function ClassesPageInner() {
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-start justify-between">
+                        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                                 <CardTitle className="text-lg">
                                     Terms {current ? `— ${current.name}` : ''}
@@ -457,28 +468,28 @@ function ClassesPageInner() {
                                     {terms.map((t) => (
                                         <div
                                             key={t.id}
-                                            className="flex items-center justify-between rounded-lg border p-3"
+                                            className="flex items-center gap-3 rounded-lg border p-3"
                                         >
-                                            <div className="flex items-center gap-2">
-                                                <CalendarRange className="h-4 w-4 text-muted-foreground" />
-                                                <span className="font-medium">{t.name}</span>
-                                                {t.isCurrent && <Badge variant="secondary">Current</Badge>}
+                                            <CalendarRange className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium">{t.name}</span>
+                                                    {t.isCurrent && <Badge variant="secondary">Current</Badge>}
+                                                </div>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {formatDateRange(t.startDate, t.endDate)}
+                                                </p>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-muted-foreground">
-                                                    {t.startDate} → {t.endDate}
-                                                </span>
-                                                {canManage && (
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        onClick={() => openEditTerm(t)}
-                                                        aria-label="Edit term"
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
+                                            {canManage && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => openEditTerm(t)}
+                                                    aria-label={`Edit ${t.name}`}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

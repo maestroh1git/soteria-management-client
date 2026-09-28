@@ -285,7 +285,7 @@ export default function LoanDetailPage() {
                     />
                 ) : (
                     <div className="rounded-lg border bg-card">
-                        <table className="w-full text-sm">
+                        <table data-stack className="w-full text-sm">
                             <thead>
                                 <tr className="border-b bg-muted/50">
                                     <th className="px-4 py-3 text-left font-medium">#</th>

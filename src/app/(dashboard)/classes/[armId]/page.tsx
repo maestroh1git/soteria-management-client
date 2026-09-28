@@ -127,7 +127,7 @@ export default function ClassRegisterPage({
                         />
                     ) : (
                         <div className="overflow-x-auto rounded-md border">
-                            <table className="w-full text-sm">
+                            <table data-stack className="w-full text-sm">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-3 py-2 text-left font-medium">Adm. No.</th>

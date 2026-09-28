@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { StoreHydration } from '@/components/providers/store-hydration';
+import { TableLabels } from '@/components/providers/table-labels';
 import { useState } from 'react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -31,6 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             >
                 <TooltipProvider>
                     <StoreHydration />
+                    <TableLabels />
                     {children}
                     <Toaster richColors position="top-right" />
                 </TooltipProvider>

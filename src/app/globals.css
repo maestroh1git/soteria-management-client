@@ -126,3 +126,91 @@
     @apply bg-background text-foreground;
   }
 }
+/*
+ * A table marked `data-stack` becomes one card per row under 640px: the row's
+ * first named cell heads the card and every other cell sits on its own line,
+ * its column's name on the left and the value on the right. Labels come from
+ * the header (components/providers/table-labels.tsx). Tables where a row is
+ * edited in place (a grid of inputs) stay tables and scroll.
+ *
+ * Unlayered on purpose, so it wins over the cells' own padding and alignment
+ * utilities without !important.
+ */
+@media (max-width: 639.98px) {
+  table[data-stack],
+  table[data-stack] > tbody,
+  table[data-stack] > tfoot {
+    display: block;
+    width: 100%;
+  }
+  table[data-stack] > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  table[data-stack] tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    column-gap: 0.75rem;
+  }
+  table[data-stack] td {
+    display: flow-root;
+    flex: 0 0 100%;
+    min-width: 0;
+    padding: 0.125rem 0;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  table[data-stack] td::before {
+    content: attr(data-label);
+    float: left;
+    margin-right: 1rem;
+    color: var(--muted-foreground);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    text-align: left;
+    white-space: nowrap;
+  }
+  table[data-stack] td[data-stack-title] {
+    flex: 1 1 0;
+    padding-bottom: 0.25rem;
+    font-weight: 500;
+    text-align: left;
+  }
+  /* The title line: a leading checkbox, the title, then the row's buttons. */
+  table[data-stack] td {
+    order: 2;
+  }
+  table[data-stack] td[data-stack-bare]:first-child {
+    order: 0;
+    flex: 0 0 auto;
+    padding-bottom: 0.25rem;
+  }
+  table[data-stack] td[data-stack-title],
+  table[data-stack] td[data-stack-bare]:last-child {
+    order: 1;
+  }
+  table[data-stack] td[data-stack-bare]:last-child:not(:first-child) {
+    flex: 0 0 auto;
+  }
+  table[data-stack] td[data-stack-full] {
+    text-align: left;
+  }
+  table[data-stack] td[data-stack-title]::before,
+  table[data-stack] td[data-stack-bare]::before,
+  table[data-stack] td[data-stack-full]::before {
+    content: none;
+  }
+  table[data-stack] td > .flex {
+    justify-content: flex-end;
+  }
+  table[data-stack] td[data-stack-title] > .flex {
+    justify-content: flex-start;
+  }
+}
