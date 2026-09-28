@@ -330,7 +330,7 @@ export default function ReportsPage() {
                                 subject="the loan portfolio" title="No data" description="No loan data available." />
                         ) : (
                             <>
-                                <div className="grid gap-4 md:grid-cols-3">
+                                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
                                     <Card>
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-sm text-muted-foreground">Active Loans</CardTitle>
@@ -341,13 +341,13 @@ export default function ReportsPage() {
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-sm text-muted-foreground">Total Disbursed</CardTitle>
                                         </CardHeader>
-                                        <CardContent><p className="text-2xl font-bold">{formatCurrency(loanPortfolio.totalDisbursed)}</p></CardContent>
+                                        <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(loanPortfolio.totalDisbursed)}</p></CardContent>
                                     </Card>
-                                    <Card>
+                                    <Card className="col-span-2 md:col-span-1">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-sm text-muted-foreground">Outstanding Balance</CardTitle>
                                         </CardHeader>
-                                        <CardContent><p className="text-2xl font-bold text-red-600">{formatCurrency(loanPortfolio.totalOutstandingBalance)}</p></CardContent>
+                                        <CardContent><p className="text-base font-bold tabular-nums text-red-600 sm:text-2xl">{formatCurrency(loanPortfolio.totalOutstandingBalance)}</p></CardContent>
                                     </Card>
                                 </div>
 

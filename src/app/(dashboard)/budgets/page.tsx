@@ -114,7 +114,7 @@ export default function BudgetsPage() {
                         const pct = Math.min(v.usedPercent ?? 0, 100);
                         return (
                             <Card key={v.budgetId}>
-                                <CardContent className="space-y-3 pt-6">
+                                <CardContent className="space-y-3">
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export default function BudgetsPage() {
                                         />
                                     </div>
 
-                                    <div className="grid gap-4 sm:grid-cols-4">
+                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                                         <Figure label="Budget" value={v.budgeted} />
                                         <Figure label="Spent" value={v.actual} />
                                         <Figure

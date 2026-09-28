@@ -142,7 +142,7 @@ export default function InvoiceDetailPage() {
 
             {invoice.status === 'CANCELLED' && invoice.cancellationReason && (
                 <Card className="border-red-300 bg-red-50 dark:bg-red-950/30">
-                    <CardContent className="pt-6 text-sm">
+                    <CardContent className="text-sm">
                         <span className="font-medium">Cancelled.</span>{' '}
                         {invoice.cancellationReason} The posting was reversed; the
                         original entry is still in the ledger.

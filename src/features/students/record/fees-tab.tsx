@@ -82,7 +82,7 @@ export function FeesTab({
         <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <p className="text-xs text-muted-foreground">Owed now</p>
                         <p className="text-2xl font-bold">
                             <Money value={owed} tone />
@@ -90,7 +90,7 @@ export function FeesTab({
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <p className="text-xs text-muted-foreground">Credit not yet applied</p>
                         <p className="text-2xl font-semibold">
                             <Money value={credit} />
@@ -107,7 +107,7 @@ export function FeesTab({
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <p className="text-xs text-muted-foreground">Optional fees</p>
                         {takes.length === 0 ? (
                             <p className="text-sm text-muted-foreground">None taken.</p>

@@ -233,7 +233,7 @@ export default function ImportStudentsPage() {
 
             {options && options.classes.length === 0 && (
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <p className="text-sm text-muted-foreground">
                             No classes are set up yet. A roll cannot be imported until the
                             school’s class levels and arms exist — children have to be

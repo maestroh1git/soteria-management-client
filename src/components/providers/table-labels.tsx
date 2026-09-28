@@ -32,7 +32,7 @@ export function TableLabels() {
                     // but its label adds nothing on a card.
                     const raw = th.textContent?.trim() ?? '';
                     const text =
-                        th.hasAttribute('data-stack-bare') || /^actions?$/i.test(raw) ? '' : raw;
+                        th.hasAttribute('data-stack-bare') || /^actions$/i.test(raw) ? '' : raw;
                     for (let i = 0; i < th.colSpan; i++) heads.push(text);
                 }
                 const rows = [

@@ -254,7 +254,7 @@ export default function AdmissionsPage() {
                 </Card>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {(
                     [
                         ['APPLIED', 'Awaiting you'],
@@ -268,7 +268,7 @@ export default function AdmissionsPage() {
                         className={`cursor-pointer transition hover:border-primary/50 ${status === s ? 'border-primary' : ''}`}
                         onClick={() => setStatus(status === s ? undefined : s)}
                     >
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-2xl font-semibold">{count(s)}</p>
                             <p className="text-sm text-muted-foreground">{title}</p>
                         </CardContent>

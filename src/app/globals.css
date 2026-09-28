@@ -162,6 +162,7 @@
     display: flow-root;
     flex: 0 0 100%;
     min-width: 0;
+    max-width: none;
     padding: 0.125rem 0;
     text-align: right;
     white-space: normal;

@@ -120,7 +120,7 @@ export default function ArrearsPage() {
                         />
                     ) : (
                         <>
-                            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                                 {[
                                     ['Not yet due', debtors.totals.current],
                                     ['1–30 days', debtors.totals.days30],
@@ -129,7 +129,7 @@ export default function ArrearsPage() {
                                     ['Over 90 days', debtors.totals.days90Plus],
                                 ].map(([label, value], i) => (
                                     <Card key={label as string}>
-                                        <CardContent className="pt-6">
+                                        <CardContent>
                                             <p className="text-xs text-muted-foreground">
                                                 {label}
                                             </p>
@@ -398,7 +398,7 @@ export default function ArrearsPage() {
                             <>
                                 <div className="grid gap-3 sm:grid-cols-3">
                                     <Card>
-                                        <CardContent className="pt-6">
+                                        <CardContent>
                                             <p className="text-xs text-muted-foreground">Earned</p>
                                             <p className="text-2xl font-bold tabular-nums text-green-700 dark:text-green-400">
                                                 <Money value={income.totalRevenue} />
@@ -406,7 +406,7 @@ export default function ArrearsPage() {
                                         </CardContent>
                                     </Card>
                                     <Card>
-                                        <CardContent className="pt-6">
+                                        <CardContent>
                                             <p className="text-xs text-muted-foreground">Spent</p>
                                             <p className="text-2xl font-bold tabular-nums">
                                                 <Money value={income.totalExpenses} />
@@ -414,7 +414,7 @@ export default function ArrearsPage() {
                                         </CardContent>
                                     </Card>
                                     <Card>
-                                        <CardContent className="pt-6">
+                                        <CardContent>
                                             <p className="text-xs text-muted-foreground">
                                                 Net this session
                                             </p>

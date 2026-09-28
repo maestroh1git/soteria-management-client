@@ -187,7 +187,7 @@ export default function ReconcilePage() {
                           : 'border-red-300 bg-red-50 dark:bg-red-950/30'
                 }
             >
-                <CardContent className="flex items-start gap-3 pt-6">
+                <CardContent className="flex items-start gap-3">
                     {report.reconciled ? (
                         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
                     ) : (
@@ -197,7 +197,7 @@ export default function ReconcilePage() {
                 </CardContent>
             </Card>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
                     ['Books say', report.bookBalance],
                     ['Bank says', report.statementBalance],
@@ -205,7 +205,7 @@ export default function ReconcilePage() {
                     ['Adjusted bank', report.adjustedBank],
                 ].map(([label, value]) => (
                     <Card key={label as string}>
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-xs text-muted-foreground">{label}</p>
                             <p className="text-lg font-bold tabular-nums">
                                 <Money value={value as string} />
@@ -217,7 +217,7 @@ export default function ReconcilePage() {
 
             {!closed && (selectedBank.length > 0 || selectedBook.length > 0) && (
                 <Card className="border-primary">
-                    <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3">
                         <div className="text-sm">
                             <span className="font-medium tabular-nums">
                                 <Money value={(bankKobo / 100).toFixed(2)} />
