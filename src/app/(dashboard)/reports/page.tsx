@@ -194,31 +194,31 @@ export default function ReportsPage() {
                                             <Users className="h-4 w-4" /> Employees
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="px-4 sm:px-6"><p className="text-base font-bold tabular-nums sm:text-2xl">{summary.summary.totalEmployees}</p></CardContent>
+                                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl">{summary.summary.totalEmployees}</p></CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="px-4 pb-2 sm:px-6">
                                         <CardTitle className="text-sm text-muted-foreground">Gross Salary</CardTitle>
                                     </CardHeader>
-                                    <CardContent className="px-4 sm:px-6"><p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.summary.totalGrossSalary)}</p></CardContent>
+                                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.summary.totalGrossSalary)}</p></CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="px-4 pb-2 sm:px-6">
                                         <CardTitle className="text-sm text-muted-foreground">Deductions</CardTitle>
                                     </CardHeader>
-                                    <CardContent className="px-4 sm:px-6"><p className="text-base font-bold tabular-nums sm:text-2xl text-red-600">{formatCurrency(summary.summary.totalDeductions)}</p></CardContent>
+                                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl text-red-600">{formatCurrency(summary.summary.totalDeductions)}</p></CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="px-4 pb-2 sm:px-6">
                                         <CardTitle className="text-sm text-muted-foreground">Tax</CardTitle>
                                     </CardHeader>
-                                    <CardContent className="px-4 sm:px-6"><p className="text-base font-bold tabular-nums sm:text-2xl text-amber-600">{formatCurrency(summary.summary.totalTax)}</p></CardContent>
+                                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl text-amber-600">{formatCurrency(summary.summary.totalTax)}</p></CardContent>
                                 </Card>
                                 <Card className="col-span-2 md:col-span-1">
                                     <CardHeader className="px-4 pb-2 sm:px-6">
                                         <CardTitle className="text-sm text-muted-foreground">Net Salary</CardTitle>
                                     </CardHeader>
-                                    <CardContent className="px-4 sm:px-6"><p className="text-base font-bold tabular-nums sm:text-2xl text-green-600">{formatCurrency(summary.summary.totalNetSalary)}</p></CardContent>
+                                    <CardContent><p className="text-base font-bold tabular-nums sm:text-2xl text-green-600">{formatCurrency(summary.summary.totalNetSalary)}</p></CardContent>
                                 </Card>
                             </div>
 

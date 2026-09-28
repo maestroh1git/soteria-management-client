@@ -54,6 +54,9 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { AccessChecklist } from '@/features/access/components/access-checklist';
 import { ACCESS_LABELS, grantableAccess } from '@/features/access/roles';
 
+/** FULL_TIME → "Full time". */
+const roleTypeLabel = (t: string) => t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, ' ');
+
 export default function PositionsPage() {
     const { data: roles = [], isLoading } = usePositions();
     // Roles should be grouped under a department (powers the department-scoped
@@ -142,7 +145,7 @@ export default function PositionsPage() {
                                     {role.department?.name || '—'}
                                 </td>
                                 <td className="px-4 py-3">
-                                    <Badge variant="outline">{role.roleType}</Badge>
+                                    <Badge variant="outline">{roleTypeLabel(role.roleType)}</Badge>
                                 </td>
                                 <td className="px-4 py-3">
                                     {role.accessRoles?.length ? (
@@ -382,7 +385,7 @@ function RoleFormDialog({
                                             <SelectContent>
                                                 {Object.values(RoleType).map((t) => (
                                                     <SelectItem key={t} value={t}>
-                                                        {t.replace(/_/g, ' ')}
+                                                        {roleTypeLabel(t)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

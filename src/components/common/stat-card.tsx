@@ -39,7 +39,7 @@ export function StatCard({
                 : 'text-slate-500';
 
     return (
-        <Card className={cn('relative overflow-hidden', className)}>
+        <Card className={cn('relative gap-0 overflow-hidden py-0', className)}>
             <CardContent className="p-4 sm:p-6">
                 {/*
                  * The label and the icon share the top row; the figure gets a
@@ -51,14 +51,17 @@ export function StatCard({
                  * The label reserves two lines whether it needs them or not, so
                  * four cards side by side line their figures up even when one
                  * title wraps and the others do not.
+                 *
+                 * On a phone, two cards share a row and the icon would take a
+                 * third of the width from the label, so it is left off there.
                  */}
                 <div className="flex items-start justify-between gap-3">
                     <p className="min-h-[2.4rem] text-sm font-medium leading-snug text-muted-foreground">
                         {title}
                     </p>
                     {Icon && (
-                        <div className="shrink-0 rounded-lg bg-primary/10 p-2 sm:p-2.5">
-                            <Icon className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+                        <div className="hidden shrink-0 rounded-lg bg-primary/10 p-2.5 sm:block">
+                            <Icon className="h-5 w-5 text-primary" />
                         </div>
                     )}
                 </div>

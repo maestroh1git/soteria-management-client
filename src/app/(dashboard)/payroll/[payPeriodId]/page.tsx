@@ -329,38 +329,38 @@ export default function PayrollWorkspacePage() {
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between px-4 pb-2 sm:px-6">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Employees</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
+                    <CardContent>
                         <p className="text-base font-bold tabular-nums sm:text-2xl">{employeeCount}</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between px-4 pb-2 sm:px-6">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Gross</CardTitle>
                         <TrendingUp className="h-4 w-4 text-green-500" />
                     </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
+                    <CardContent>
                         <p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(totalGross)}</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between px-4 pb-2 sm:px-6">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Deductions</CardTitle>
                         <TrendingDown className="h-4 w-4 text-red-500" />
                     </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
+                    <CardContent>
                         <p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(totalDeductions)}</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between px-4 pb-2 sm:px-6">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Net</CardTitle>
                         <DollarSign className="h-4 w-4 text-primary" />
                     </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
+                    <CardContent>
                         <p className="text-base font-bold tabular-nums sm:text-2xl">{formatCurrency(totalNet)}</p>
                     </CardContent>
                 </Card>
