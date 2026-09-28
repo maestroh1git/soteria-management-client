@@ -1,4 +1,5 @@
 import api from './client';
+import type { StaffTarget, TargetedStaff } from './staff-target';
 import type {
   CompletenessSummary,
   Employee,
@@ -159,6 +160,33 @@ export async function addEmployeeSalaryComponent(
   dto: EmployeeSalaryComponentDto,
 ): Promise<EmployeeSalaryComponent> {
   return await api.post('/employees/salary-components', dto) as unknown as EmployeeSalaryComponent;
+}
+
+export interface BulkEmployeeSalaryComponentDto {
+  salaryComponentId: string;
+  target: StaffTarget;
+  /** Each person's value; the component's own default when left out. */
+  value?: number;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  dryRun?: boolean;
+}
+
+export interface BulkComponentResult {
+  dryRun: boolean;
+  matched: number;
+  added: TargetedStaff[];
+  skipped: Array<TargetedStaff & { reason: string }>;
+}
+
+/** One of the school's components, on everyone in a group who lacks it. */
+export async function addSalaryComponentToMany(
+  dto: BulkEmployeeSalaryComponentDto,
+): Promise<BulkComponentResult> {
+  return (await api.post(
+    '/employees/salary-components/bulk',
+    dto,
+  )) as unknown as BulkComponentResult;
 }
 
 export async function updateEmployeeSalaryComponent(

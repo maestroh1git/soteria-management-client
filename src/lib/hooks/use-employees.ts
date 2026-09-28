@@ -11,6 +11,7 @@ import {
     deleteBankDetails,
     getEmployeeSalaryComponents,
     addEmployeeSalaryComponent,
+    addSalaryComponentToMany,
     updateEmployeeSalaryComponent,
     deactivateEmployeeSalaryComponent,
     getEmployeeCompleteness,
@@ -20,6 +21,7 @@ import {
     type UpdateEmployeeDto,
     type CreateBankDetailsDto,
     type EmployeeSalaryComponentDto,
+    type BulkEmployeeSalaryComponentDto,
 } from '@/lib/api/employees';
 import { toast } from 'sonner';
 
@@ -230,6 +232,27 @@ export function useAddEmployeeSalaryComponent() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to assign salary component');
+    },
+  });
+}
+
+/**
+ * One of the school's components, on everyone in a group who lacks it. A
+ * preview (`dryRun`) changes nothing; the real call refreshes every record.
+ */
+export function useAddSalaryComponentToMany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: BulkEmployeeSalaryComponentDto) => addSalaryComponentToMany(dto),
+    onSuccess: (res) => {
+      if (res.dryRun) return;
+      qc.invalidateQueries({ queryKey: ['employees'] });
+      toast.success(
+        `Added to ${res.added.length} ${res.added.length === 1 ? 'person' : 'people'}`,
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Could not add the component');
     },
   });
 }

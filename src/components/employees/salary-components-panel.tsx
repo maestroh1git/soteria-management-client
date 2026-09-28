@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Plus, Pencil, PowerOff, Loader2 } from 'lucide-react';
 
@@ -101,9 +102,11 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
     const [componentId, setComponentId] = useState('');
     const [value, setValue] = useState('');
     const [effectiveFrom, setEffectiveFrom] = useState(today());
+    const [effectiveTo, setEffectiveTo] = useState('');
     // Edit form
     const [editValue, setEditValue] = useState('');
     const [editFrom, setEditFrom] = useState('');
+    const [editTo, setEditTo] = useState('');
 
     // A component can only be attached once while active — offering a duplicate
     // just to have the server reject it is the control that does nothing.
@@ -118,6 +121,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
         setComponentId('');
         setValue('');
         setEffectiveFrom(today());
+        setEffectiveTo('');
         setAddOpen(true);
     };
 
@@ -132,12 +136,22 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
         setEditing(sc);
         setEditValue(String(Number(sc.value)));
         setEditFrom(sc.effectiveFrom?.slice(0, 10) ?? today());
+        setEditTo(sc.effectiveTo?.slice(0, 10) ?? '');
     };
 
+    // An end date is optional, for an allowance that runs for a set time; it
+    // cannot come before the start.
     const addValid =
-        componentId && value.trim() !== '' && Number(value) >= 0 && effectiveFrom;
+        componentId &&
+        value.trim() !== '' &&
+        Number(value) >= 0 &&
+        effectiveFrom &&
+        (!effectiveTo || effectiveTo >= effectiveFrom);
     const editValid =
-        editValue.trim() !== '' && Number(editValue) >= 0 && editFrom;
+        editValue.trim() !== '' &&
+        Number(editValue) >= 0 &&
+        editFrom &&
+        (!editTo || editTo >= editFrom);
 
     const submitAdd = async () => {
         if (!addValid) return;
@@ -146,6 +160,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
             salaryComponentId: componentId,
             value: Number(value),
             effectiveFrom,
+            ...(effectiveTo ? { effectiveTo } : {}),
         });
         setAddOpen(false);
     };
@@ -155,21 +170,28 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
         await update.mutateAsync({
             id: editing.id,
             employeeId,
-            dto: { value: Number(editValue), effectiveFrom: editFrom },
+            dto: {
+                value: Number(editValue),
+                effectiveFrom: editFrom,
+                ...(editTo ? { effectiveTo: editTo } : {}),
+            },
         });
         setEditing(null);
     };
 
     return (
         <Card>
-            <CardHeader className="flex flex-row items-start justify-between">
+            <CardHeader className="flex flex-row items-start justify-between gap-3">
                 <div>
                     <CardTitle className="text-lg">Salary Components</CardTitle>
                     <CardDescription>
                         Earnings and deductions linked to this employee
                     </CardDescription>
                 </div>
-                {canEdit && available.length > 0 && (
+                {/* Always offered to editors, even when the school has nothing
+                    left to add: the dialog then says where new components are
+                    made, rather than the button silently vanishing. */}
+                {canEdit && (
                     <Button size="sm" onClick={startAdd}>
                         <Plus className="mr-2 h-4 w-4" />
                         Add component
@@ -196,7 +218,8 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                     <th className="px-4 py-3 text-left font-medium">Component</th>
                                     <th className="px-4 py-3 text-left font-medium">Type</th>
                                     <th className="px-4 py-3 text-right font-medium">Value</th>
-                                    <th className="px-4 py-3 text-left font-medium">Effective From</th>
+                                    <th className="px-4 py-3 text-left font-medium">From</th>
+                                    <th className="px-4 py-3 text-left font-medium">Until</th>
                                     <th className="px-4 py-3 text-left font-medium">Status</th>
                                     {canEdit && <th className="px-4 py-3" />}
                                 </tr>
@@ -226,6 +249,9 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                             </td>
                                             <td className="px-4 py-3 text-muted-foreground">
                                                 {formatDate(sc.effectiveFrom)}
+                                            </td>
+                                            <td className="px-4 py-3 text-muted-foreground">
+                                                {sc.effectiveTo ? formatDate(sc.effectiveTo) : 'No end date'}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <Badge variant={active ? 'default' : 'secondary'}>
@@ -276,6 +302,22 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                         </DialogDescription>
                     </DialogHeader>
 
+                    {available.length === 0 ? (
+                        <div className="space-y-3 text-sm">
+                            <p>
+                                Everything the school pays is already on this person. To give
+                                them something new — an allowance only some staff get — create
+                                it first in Salary components, then add it here.
+                            </p>
+                            <p className="text-muted-foreground">
+                                For a one-off, like a bonus this month, use Adjustments on the
+                                pay run instead.
+                            </p>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/setup/salary-components">Go to Salary components</Link>
+                            </Button>
+                        </div>
+                    ) : (
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="employees-salary-components-pane-component">Component</Label>
@@ -313,26 +355,40 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="employees-salary-components-pane-effective-from">Effective from</Label>
-                            <Input id="employees-salary-components-pane-effective-from"
-                                type="date"
-                                value={effectiveFrom}
-                                onChange={(e) => setEffectiveFrom(e.target.value)}
-                            />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="employees-salary-components-pane-effective-from">From</Label>
+                                <Input id="employees-salary-components-pane-effective-from"
+                                    type="date"
+                                    value={effectiveFrom}
+                                    onChange={(e) => setEffectiveFrom(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="employees-salary-components-pane-effective-to">Until (optional)</Label>
+                                <Input id="employees-salary-components-pane-effective-to"
+                                    type="date"
+                                    min={effectiveFrom}
+                                    value={effectiveTo}
+                                    onChange={(e) => setEffectiveTo(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
+                    )}
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setAddOpen(false)}>
-                            Cancel
+                            {available.length === 0 ? 'Close' : 'Cancel'}
                         </Button>
-                        <Button onClick={submitAdd} disabled={!addValid || add.isPending}>
-                            {add.isPending && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            )}
-                            Add component
-                        </Button>
+                        {available.length > 0 && (
+                            <Button onClick={submitAdd} disabled={!addValid || add.isPending}>
+                                {add.isPending && (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                )}
+                                Add component
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -368,13 +424,24 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                 }
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="employees-salary-components-pane-effective-from-2">Effective from</Label>
-                            <Input id="employees-salary-components-pane-effective-from-2"
-                                type="date"
-                                value={editFrom}
-                                onChange={(e) => setEditFrom(e.target.value)}
-                            />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="employees-salary-components-pane-effective-from-2">From</Label>
+                                <Input id="employees-salary-components-pane-effective-from-2"
+                                    type="date"
+                                    value={editFrom}
+                                    onChange={(e) => setEditFrom(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="employees-salary-components-pane-effective-to-2">Until (optional)</Label>
+                                <Input id="employees-salary-components-pane-effective-to-2"
+                                    type="date"
+                                    min={editFrom}
+                                    value={editTo}
+                                    onChange={(e) => setEditTo(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
 

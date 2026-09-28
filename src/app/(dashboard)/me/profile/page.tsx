@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, Mail, Phone, Calendar, MapPin, Briefcase, Building2, Hash, CalendarClock, Pencil } from 'lucide-react';
+import { AlertCircle, Mail, Phone, Calendar, MapPin, Briefcase, Building2, Hash, CalendarClock, Pencil, UserRound, Layers } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -116,7 +116,7 @@ export default function MyProfilePage() {
                             label="Date of birth"
                             value={p.dateOfBirth ? formatDate(p.dateOfBirth) : null}
                         />
-                        <InfoRow label="Gender" value={p.gender ? title(p.gender) : null} />
+                        <InfoRow icon={<UserRound className="h-4 w-4" />} label="Gender" value={p.gender ? title(p.gender) : null} />
                         <InfoRow icon={<MapPin className="h-4 w-4" />} label="Address" value={p.address} />
                     </CardContent>
                 </Card>
@@ -131,6 +131,7 @@ export default function MyProfilePage() {
                         <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Position" value={p.role} />
                         <InfoRow icon={<Building2 className="h-4 w-4" />} label="Department" value={p.department} />
                         <InfoRow
+                            icon={<Layers className="h-4 w-4" />}
                             label="Grade"
                             value={p.grade ? `${p.grade.code} — ${p.grade.name}` : null}
                         />
