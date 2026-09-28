@@ -44,6 +44,9 @@ import { formatDate } from '@/lib/utils/dates';
 import { currencySymbol } from '@/lib/utils/money';
 import { useTenantCurrency } from '@/lib/hooks/use-tenant-currency';
 
+const TYPE_LABELS: Record<string, string> = { EARNING: 'Earning', DEDUCTION: 'Deduction', TAX: 'Tax' };
+const typeLabel = (t?: string) => (t ? (TYPE_LABELS[t] ?? t) : '—');
+
 interface Props {
     employeeId: string;
     /** Editing is gated on the caller's role; viewing already is. */
@@ -211,7 +214,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <Badge variant="outline">
-                                                    {sc.salaryComponent?.type}
+                                                    {typeLabel(sc.salaryComponent?.type)}
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-3 text-right tabular-nums">
@@ -283,7 +286,7 @@ export function SalaryComponentsPanel({ employeeId, canEdit }: Props) {
                                 <SelectContent>
                                     {available.map((c: SalaryComponent) => (
                                         <SelectItem key={c.id} value={c.id}>
-                                            {c.name} · {c.type}
+                                            {c.name} · {typeLabel(c.type).toLowerCase()}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

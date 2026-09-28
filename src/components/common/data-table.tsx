@@ -234,7 +234,9 @@ export function DataTable<TData, TValue>({
 
     return (
         <div className="space-y-4">
-            {/* Toolbar: search + filters */}
+            {/* Toolbar: search + filters. Left out when there are neither, or
+                its empty row still takes a gap above the list. */}
+            {(searchKey || onSearchChange || searchText || filters.length > 0) && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 {(searchKey || onSearchChange || searchText) && (
                     <div className="relative w-full sm:w-72">
@@ -271,6 +273,7 @@ export function DataTable<TData, TValue>({
                     </Select>
                 ))}
             </div>
+            )}
 
             {/* Bulk actions bar */}
             {enableRowSelection && selectedCount > 0 && bulkActions && (

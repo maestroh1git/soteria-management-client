@@ -72,7 +72,7 @@ export function StudentAwards({
                     {awards.map((a) => (
                         <li key={a.id}>
                             <Card>
-                                <CardContent className="flex items-start gap-3 py-4">
+                                <CardContent className="flex items-start gap-3">
                                     <AwardIcon
                                         className="mt-0.5 h-4 w-4 flex-none text-amber-600 dark:text-amber-400"
                                         aria-hidden="true"

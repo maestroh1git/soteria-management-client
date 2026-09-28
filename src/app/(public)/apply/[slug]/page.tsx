@@ -194,7 +194,7 @@ export default function ApplyPage({
                             value={form.classLevelId}
                             onValueChange={(v) => set('classLevelId', v)}
                         >
-                            <SelectTrigger id="slug-page-class-applying-for">
+                            <SelectTrigger id="slug-page-class-applying-for" className="w-full">
                                 <SelectValue placeholder="Select a class" />
                             </SelectTrigger>
                             <SelectContent>
@@ -214,7 +214,7 @@ export default function ApplyPage({
                         <div className="space-y-2">
                             <Label htmlFor="slug-page-gender">Gender *</Label>
                             <Select value={form.gender} onValueChange={(v) => set('gender', v)}>
-                                <SelectTrigger id="slug-page-gender">
+                                <SelectTrigger id="slug-page-gender" className="w-full">
                                     <SelectValue placeholder="Select" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -316,7 +316,7 @@ export default function ApplyPage({
                             value={form.guardianRelationship}
                             onValueChange={(v) => set('guardianRelationship', v)}
                         >
-                            <SelectTrigger id="slug-page-you-are-the-childs">
+                            <SelectTrigger id="slug-page-you-are-the-childs" className="w-full">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

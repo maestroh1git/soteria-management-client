@@ -43,7 +43,7 @@ export function SupportNeedsFields({
                                     onCheckedChange={(v) => toggle(n.value, v === true)}
                                     className="mt-0.5"
                                 />
-                                <Label htmlFor={id} className="font-normal leading-snug">
+                                <Label htmlFor={id} className="flex-col items-start gap-0.5 font-normal leading-snug">
                                     <span className="block font-medium">{n.label}</span>
                                     <span className="block text-xs text-muted-foreground">{n.hint}</span>
                                 </Label>

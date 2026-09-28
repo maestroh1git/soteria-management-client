@@ -85,7 +85,7 @@ export function ChildAttendance({
     return (
         <div className="space-y-4">
             <Card>
-                <CardContent className="py-5">
+                <CardContent>
                     <p className="text-balance text-xl font-semibold leading-snug">
                         {data.sentence}
                     </p>

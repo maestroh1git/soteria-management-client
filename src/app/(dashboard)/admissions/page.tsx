@@ -240,7 +240,7 @@ export default function AdmissionsPage() {
 
             {canDecide && retentionDue.length > 0 && (
                 <Card className="border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20">
-                    <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3">
                         <p className="flex items-center gap-2 text-sm">
                             <Archive className="h-4 w-4 flex-none text-amber-700 dark:text-amber-400" aria-hidden />
                             {retentionDue.length} unsuccessful{' '}
