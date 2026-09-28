@@ -195,7 +195,7 @@ function LogTable({ filters }: { filters: AuditFilters }) {
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
-      <table className="w-full text-sm">
+      <table data-stack className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-3 text-left font-medium">Timestamp</th>

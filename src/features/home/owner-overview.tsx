@@ -70,7 +70,7 @@ export function OwnerOverview({
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 <StatCard
                     title="Fees collected this term"
                     value={fees ? formatCompactCurrency(fees.collected) : '—'}
@@ -201,7 +201,7 @@ function FeesVsPayrollCard() {
                         </BarChart>
                     </ResponsiveContainer>
                 ) : (
-                    <table className="w-full text-sm">
+                    <table data-stack className="w-full text-sm">
                         <thead>
                             <tr className="border-b text-left text-muted-foreground">
                                 <th className="py-2 font-medium">Month</th>

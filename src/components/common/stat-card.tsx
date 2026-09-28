@@ -40,7 +40,7 @@ export function StatCard({
 
     return (
         <Card className={cn('relative overflow-hidden', className)}>
-            <CardContent className="p-5 sm:p-6">
+            <CardContent className="p-4 sm:p-6">
                 {/*
                  * The label and the icon share the top row; the figure gets a
                  * line to itself underneath. Previously all three sat in one
@@ -57,12 +57,12 @@ export function StatCard({
                         {title}
                     </p>
                     {Icon && (
-                        <div className="shrink-0 rounded-lg bg-primary/10 p-2.5">
-                            <Icon className="h-5 w-5 text-primary" />
+                        <div className="shrink-0 rounded-lg bg-primary/10 p-2 sm:p-2.5">
+                            <Icon className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
                         </div>
                     )}
                 </div>
-                <p className="text-xl font-bold tracking-tight tabular-nums whitespace-nowrap sm:text-2xl">
+                <p className="text-lg font-bold tracking-tight tabular-nums whitespace-nowrap sm:text-2xl">
                     {value}
                 </p>
                 {subtitle && (

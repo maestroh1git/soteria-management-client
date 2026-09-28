@@ -265,7 +265,7 @@ export default function FeesPage() {
                     ) : (
                         <Card>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table data-stack className="w-full text-sm">
                                     <thead className="border-b bg-muted/40">
                                         <tr>
                                             <th className="sticky left-0 z-10 bg-muted/40 px-4 py-3 text-left font-medium">
@@ -369,7 +369,7 @@ export default function FeesPage() {
                     ) : (
                         <Card>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table data-stack className="w-full text-sm">
                                     <thead className="border-b bg-muted/40">
                                         <tr>
                                             <th className="px-4 py-3 text-left font-medium">Fee</th>

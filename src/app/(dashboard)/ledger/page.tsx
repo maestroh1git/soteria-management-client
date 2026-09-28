@@ -141,7 +141,7 @@ export default function LedgerPage() {
                                 />
                             ) : (
                                 <div className="overflow-x-auto rounded-md border">
-                                    <table className="w-full text-sm">
+                                    <table data-stack className="w-full text-sm">
                                         <thead className="bg-muted/50">
                                             <tr>
                                                 <th className="px-3 py-2 text-left font-medium">Code</th>
@@ -205,7 +205,7 @@ export default function LedgerPage() {
                         />
                     ) : (
                         <div className="overflow-x-auto rounded-md border">
-                            <table className="w-full text-sm">
+                            <table data-stack className="w-full text-sm">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-3 py-2 text-left font-medium">Date</th>
@@ -258,7 +258,7 @@ export default function LedgerPage() {
                     </DialogHeader>
                     {entry && (
                         <div className="overflow-x-auto rounded-md border">
-                            <table className="w-full text-sm">
+                            <table data-stack className="w-full text-sm">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-3 py-2 text-left font-medium">Account</th>
