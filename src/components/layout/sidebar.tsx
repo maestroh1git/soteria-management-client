@@ -10,6 +10,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { filterNavigation } from './nav-config';
 import { NavGroups } from './nav-groups';
 import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
+import { useMediaQuery } from '@/lib/hooks/use-media-query';
+import { useState } from 'react';
 
 
 const ORG_TYPE_LABEL: Record<string, string> = {
@@ -26,7 +28,24 @@ const ORG_TYPE_LABEL: Record<string, string> = {
 export function Sidebar() {
     const { tenantName, tenantOrgType, mayReach } = useAuth();
     const { word: learnerWord } = useLearnerTerm();
-    const { sidebarCollapsed, toggleSidebar } = useUIStore();
+    const { sidebarCollapsed: savedCollapsed, toggleSidebar } = useUIStore();
+    /*
+     * Between 1024px and 1280px — a tablet held upright, a small laptop — the
+     * full sidebar took a quarter of the screen, and every page laid out for
+     * "large" was squeezed into what was left: summary figures cut off
+     * mid-number, tables clipped on the right. There the sidebar starts as
+     * the icon rail; opening it lasts until the screen next changes size.
+     * The saved preference is for wide screens only.
+     */
+    const wide = useMediaQuery('(min-width: 1280px)');
+    const [openedNarrow, setOpenedNarrow] = useState(false);
+    const [wasWide, setWasWide] = useState(wide);
+    if (wasWide !== wide) {
+        setWasWide(wide);
+        setOpenedNarrow(false);
+    }
+    const sidebarCollapsed = wide ? savedCollapsed : !openedNarrow;
+    const toggle = wide ? toggleSidebar : () => setOpenedNarrow((o) => !o);
     const { data: branding } = useBranding();
     const logoUrl = brandingImageUrl(branding?.logoUrl);
     const brandColor = branding?.primaryColor ?? null;
@@ -87,7 +106,7 @@ export function Sidebar() {
             <div className="border-t p-3">
                 <button
                     type="button"
-                    onClick={toggleSidebar}
+                    onClick={toggle}
                     aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     className="flex items-center justify-center w-full rounded-lg py-2 text-sm text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
                 >

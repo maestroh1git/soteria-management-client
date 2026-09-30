@@ -129,12 +129,12 @@ export default function ArrearsPage() {
                                     ['Over 90 days', debtors.totals.days90Plus],
                                 ].map(([label, value], i) => (
                                     <Card key={label as string}>
-                                        <CardContent>
+                                        <CardContent className="@container px-4">
                                             <p className="text-xs text-muted-foreground">
                                                 {label}
                                             </p>
                                             <p
-                                                className={`text-xl font-bold tabular-nums ${
+                                                className={`figure-fit font-bold tabular-nums ${
                                                     i === 4 && Number(value) > 0
                                                         ? 'text-red-600'
                                                         : ''
