@@ -605,7 +605,7 @@ export function EmployeeForm({
                                         form.setValue('roleId', '');
                                     }}
                                 >
-                                    <SelectTrigger id="employees-employee-form-department">
+                                    <SelectTrigger id="employees-employee-form-department" className="w-full">
                                         <SelectValue placeholder="Select a department" />
                                     </SelectTrigger>
                                     <SelectContent>

@@ -40,7 +40,7 @@ export function StatCard({
 
     return (
         <Card className={cn('relative gap-0 overflow-hidden py-0', className)}>
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="@container p-4 sm:p-6">
                 {/*
                  * The label and the icon share the top row; the figure gets a
                  * line to itself underneath. Previously all three sat in one
@@ -65,7 +65,7 @@ export function StatCard({
                         </div>
                     )}
                 </div>
-                <p className="text-lg font-bold tracking-tight tabular-nums whitespace-nowrap sm:text-2xl">
+                <p className="figure-fit font-bold tracking-tight tabular-nums">
                     {value}
                 </p>
                 {subtitle && (

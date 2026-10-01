@@ -4,6 +4,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * A summary figure (₦1,457,500.00) sized to the card it sits in, not the
+ * screen. Screen breakpoints guessed wrong wherever the sidebar or a fifth
+ * card took the room: the amount was cut off mid-number. Put `@container` on
+ * the element around it; the figure scales between 1rem and 1.5rem to fit a
+ * thirteen-character amount on one line.
+ */
+@utility figure-fit {
+  font-size: clamp(1rem, 11.5cqw, 1.5rem);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

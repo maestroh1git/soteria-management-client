@@ -78,9 +78,17 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 
   return (
     <FormItemContext.Provider value={{ id }}>
+      {/*
+        content-start: in a two-column row the shorter field is stretched to
+        its neighbour's height, and a grid hands that spare height out between
+        its rows — the label drifted down, out of line with the one beside it.
+        A select fills its field like an input does rather than hugging its
+        placeholder; its trigger is matched by role because FormControl
+        replaces its data-slot.
+      */}
       <div
         data-slot="form-item"
-        className={cn("grid gap-2", className)}
+        className={cn("grid content-start gap-2 [&>[role=combobox]]:w-full", className)}
         {...props}
       />
     </FormItemContext.Provider>
