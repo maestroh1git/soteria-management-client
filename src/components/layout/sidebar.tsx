@@ -58,7 +58,7 @@ export function Sidebar() {
         <aside
             className={cn(
                 'hidden lg:flex flex-col border-r bg-white dark:bg-slate-950 transition-all duration-300 ease-in-out',
-                sidebarCollapsed ? 'w-[68px]' : 'w-64',
+                sidebarCollapsed ? 'w-24' : 'w-64',
             )}
         >
             {/* Logo area */}
@@ -98,7 +98,12 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <ScrollArea className="flex-1 min-h-0 overflow-hidden px-3 py-4">
+            <ScrollArea
+                className={cn(
+                    'flex-1 min-h-0 overflow-hidden py-4',
+                    sidebarCollapsed ? 'px-2' : 'px-3',
+                )}
+            >
                 <NavGroups groups={filteredNavigation} rail={sidebarCollapsed} />
             </ScrollArea>
 

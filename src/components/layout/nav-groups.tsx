@@ -7,7 +7,6 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { NavGroup } from './nav-config';
 import { useApprovals } from '@/features/approvals/hooks';
 
@@ -109,7 +108,7 @@ export function NavGroups({
                             {group.items.map((item) => {
                                 const isActive = item.href === activeHref;
                                 const count = countFor(item);
-                                const link = (
+                                return (
                                     <Link
                                         key={item.href}
                                         href={item.href}
@@ -120,7 +119,8 @@ export function NavGroups({
                                             isActive
                                                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400'
                                                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900',
-                                            rail && 'justify-center px-2',
+                                            // Named under the icon: the list is too long to learn by icon.
+                                            rail && 'flex-col justify-center gap-1 px-1 text-center',
                                         )}
                                     >
                                         <span className="relative">
@@ -130,9 +130,9 @@ export function NavGroups({
                                             )}
                                         </span>
                                         {rail ? (
-                                            <span className="sr-only">
+                                            <span className="line-clamp-2 w-full break-words text-[10px] leading-tight">
                                                 {item.title}
-                                                {count > 0 && `, ${count} waiting`}
+                                                {count > 0 && <span className="sr-only">, {count} waiting</span>}
                                             </span>
                                         ) : (
                                             <span className="flex flex-1 items-center justify-between">
@@ -148,17 +148,6 @@ export function NavGroups({
                                             </span>
                                         )}
                                     </Link>
-                                );
-                                if (!rail) return link;
-                                // The rail's only label: shown on hover and on focus, at once.
-                                return (
-                                    <Tooltip key={item.href}>
-                                        <TooltipTrigger asChild>{link}</TooltipTrigger>
-                                        <TooltipContent side="right" sideOffset={8}>
-                                            {item.title}
-                                            {count > 0 && ` · ${count} waiting`}
-                                        </TooltipContent>
-                                    </Tooltip>
                                 );
                             })}
                         </div>
