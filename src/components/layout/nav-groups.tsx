@@ -114,13 +114,13 @@ export function NavGroups({
                                         href={item.href}
                                         onClick={onNavigate}
                                         aria-current={isActive ? 'page' : undefined}
-                                        title={rail ? item.title : undefined}
                                         className={cn(
                                             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                             isActive
                                                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400'
                                                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900',
-                                            rail && 'justify-center px-2',
+                                            // Named under the icon: the list is too long to learn by icon.
+                                            rail && 'flex-col justify-center gap-1 px-1 text-center',
                                         )}
                                     >
                                         <span className="relative">
@@ -130,9 +130,9 @@ export function NavGroups({
                                             )}
                                         </span>
                                         {rail ? (
-                                            <span className="sr-only">
+                                            <span className="line-clamp-2 w-full break-words text-[10px] leading-tight">
                                                 {item.title}
-                                                {count > 0 && `, ${count} waiting`}
+                                                {count > 0 && <span className="sr-only">, {count} waiting</span>}
                                             </span>
                                         ) : (
                                             <span className="flex flex-1 items-center justify-between">
