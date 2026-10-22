@@ -7,6 +7,7 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { NavGroup } from './nav-config';
 import { useApprovals } from '@/features/approvals/hooks';
 
@@ -108,13 +109,12 @@ export function NavGroups({
                             {group.items.map((item) => {
                                 const isActive = item.href === activeHref;
                                 const count = countFor(item);
-                                return (
+                                const link = (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         onClick={onNavigate}
                                         aria-current={isActive ? 'page' : undefined}
-                                        title={rail ? item.title : undefined}
                                         className={cn(
                                             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                             isActive
@@ -148,6 +148,17 @@ export function NavGroups({
                                             </span>
                                         )}
                                     </Link>
+                                );
+                                if (!rail) return link;
+                                // The rail's only label: shown on hover and on focus, at once.
+                                return (
+                                    <Tooltip key={item.href}>
+                                        <TooltipTrigger asChild>{link}</TooltipTrigger>
+                                        <TooltipContent side="right" sideOffset={8}>
+                                            {item.title}
+                                            {count > 0 && ` · ${count} waiting`}
+                                        </TooltipContent>
+                                    </Tooltip>
                                 );
                             })}
                         </div>

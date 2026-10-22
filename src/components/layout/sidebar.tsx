@@ -6,7 +6,7 @@ import { useBranding } from '@/lib/hooks/use-branding';
 import { brandingImageUrl } from '@/lib/api/branding';
 import { useUIStore } from '@/stores/ui-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { filterNavigation } from './nav-config';
 import { NavGroups } from './nav-groups';
 import { useLearnerTerm } from '@/lib/hooks/use-learner-term';
@@ -104,17 +104,26 @@ export function Sidebar() {
 
             {/* Collapse toggle */}
             <div className="border-t p-3">
+                {/* Labelled in the rail too: an unlabelled chevron was the only way
+                    back to the full sidebar, and people could not find it. */}
                 <button
                     type="button"
                     onClick={toggle}
+                    aria-expanded={!sidebarCollapsed}
                     aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                    className="flex items-center justify-center w-full rounded-lg py-2 text-sm text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                    className={cn(
+                        'flex items-center justify-center w-full rounded-lg py-2 text-sm text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-900 transition-colors',
+                        sidebarCollapsed && 'flex-col gap-1 text-[11px] font-medium',
+                    )}
                 >
                     {sidebarCollapsed ? (
-                        <ChevronRight className="h-4 w-4" />
+                        <>
+                            <PanelLeftOpen className="h-5 w-5" />
+                            <span>Expand</span>
+                        </>
                     ) : (
                         <>
-                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            <PanelLeftClose className="h-4 w-4 mr-2" />
                             <span>Collapse</span>
                         </>
                     )}
